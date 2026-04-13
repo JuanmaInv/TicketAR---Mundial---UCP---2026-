@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { TicketsModule } from './tickets/tickets.module';
+import { PaymentsModule } from './payments/payments.module';
+import { PassportCredentialsModule } from './passport-credentials/passport-credentials.module';
+import { ReservationsModule } from './reservations/reservations.module';
+import { StadiumSectorsModule } from './stadium-sectors/stadium-sectors.module';
+import { MatchesModule } from './matches/matches.module';
 
+
+//MODULO RAIZ QUE CONECTA A TODOS LOS MODULOS ANTERIORES
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [TicketsModule, PaymentsModule, PassportCredentialsModule, ReservationsModule, StadiumSectorsModule, MatchesModule],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
