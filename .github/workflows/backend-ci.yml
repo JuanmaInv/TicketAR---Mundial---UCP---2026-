@@ -1,8 +1,9 @@
 name: Backend CI (NestJS)
 
+
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "pzocikerwinBackend" ]
   pull_request:
     branches: [ "main" ]
 
