@@ -20,3 +20,11 @@ export interface DatosCompra {
   // Regla: solo se permiten entre 1 y 6 entradas
   cantidad: 1 | 2 | 3 | 4 | 5 | 6;
 }
+
+// Interfaz para los sectores del estadio (Ubicaciones)
+export interface Sector {
+  nombre: string;     // Ej: "Platea Alta", "General"
+  precio: number;
+  capacidad: number;
+  disponibles: number;
+}
