@@ -1,10 +1,10 @@
 name: Backend CI (NestJS)
 
-#CI integrada a la rama pzocikerwinBackend.
+# CI integrada a todas las ramas (main y funcionales).
 
 on:
   push:
-    branches: [ "pzocikerwinBackend" ]
+    branches: [ "main", "feat/**" ]
   pull_request:
     branches: [ "main" ]
 
