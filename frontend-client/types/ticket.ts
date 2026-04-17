@@ -1,22 +1,9 @@
-export interface Match {
+export interface Partido {
   id: string;
-  homeTeam: string;
-  awayTeam: string;
-  date: string;
-  stadium: string;
-}
-
-export interface Sector {
-  name: string;
-  price: number;
-  capacity: number;
-  available: number;
-}
-
-export interface Ticket {
-  id: number;
-  match: string;
-  price: number;
-  sector: string;
-  status: 'available' | 'reserved' | 'sold';
+  equipoLocal: string;
+  equipoVisitante: string;
+  fecha: string;
+  estadio: string;
+  precioBase: number;
+  imagenUrl?: string;
 }
