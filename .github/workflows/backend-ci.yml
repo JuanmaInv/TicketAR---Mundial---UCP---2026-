@@ -1,0 +1,38 @@
+name: Backend CI (NestJS)
+
+#CI integrada a la rama pzocikerwinBackend.
+
+on:
+  push:
+    branches: [ "pzocikerwinBackend" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validacion:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend-nest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: ./backend-nest/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        run: pnpm install
+
+      - name: Compilar proyecto (Build)
+        run: pnpm run build
