@@ -28,3 +28,24 @@ export interface Sector {
   capacidad: number;
   disponibles: number;
 }
+
+// Interfaz para el Paso 3: Ticket generado y estado de pago
+export interface Ticket {
+  id: string // ID del ticket
+  partidoId: string; // ID del partido
+  sector: string; // Sector del estadio
+  precio: number; // Precio del ticket
+  // Estados para manejar el flujo de reserva y confirmacion
+  // disponible: el ticket está disponible para la venta
+  // pendiente: el ticket está pendiente de pago (por error no se pudo pagar, entonces deja reservado a esa persona el ticket durante 15 minutos)
+  // vendido: el ticket ha sido vendido
+  estado: 'disponible' | 'pendiente' | 'vendido';
+  fechaCreacion?: string; // Fecha de creacion del ticket
+}
+
+//el backend tendra que tener una base de datos con las tablas: partidos, sectores, tickets y usuarios.
+///con la siguiente estructura o similar:
+//en partidos estaran los partidos (id, equipoLocal, equipoVisitante, fecha, estadio, precioBase, imagenUrl)
+//en sectores estaran los sectores (id, partidoId, nombre, precio, capacidad, disponibles)
+//en tickets estaran los tickets (id, partidoId, sectorId, precio, estado, fechaCreacion, idUsuario)
+//en usuarios estaran los usuarios (id, nombre, email de contacto, telefono, password?)
