@@ -1,5 +1,6 @@
 name: Backend CI (NestJS)
 
+#CI integrada a la rama pzocikerwinBackend.
 
 on:
   push:
