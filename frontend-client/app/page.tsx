@@ -42,12 +42,12 @@ export default function Home() {
                   En Venta
                 </span>
                 <span className="text-2xl font-bold text-white">
-                  ${ticket.price}
+                  ${ticket.precio}
                 </span>
               </div>
               
               <h3 className="mb-2 text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
-                {ticket.match}
+                {ticket.partidoId}
               </h3>
               
               <div className="mb-6 space-y-2">

@@ -7,6 +7,7 @@ export interface Partido {
   estadio: string;
   precioBase: number;
   imagenUrl?: string;
+  
 }
 
 // Interfaz para el Paso 2: Formulario de Datos del Comprador
