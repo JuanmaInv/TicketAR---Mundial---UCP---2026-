@@ -66,6 +66,16 @@ Las entidades representan cómo se ven las tablas de nuestra base de datos (Supa
 5. El **Servicio** se comunica con la **Base de Datos** para crear el registro en estado `reserved`.
 6. El **Servicio** devuelve el éxito al **Controlador**, y este responde al **Frontend** con los datos tipados.
 
+### ✅ Checklist: Pasos para Crear un Nuevo Módulo (La Receta)
+Cada vez que se aborde una nueva funcionalidad importante (ej. `payments`, `users`, `stadium-sectors`), se debe repetir este ciclo exacto:
+1. **Generar la estructura básica:** Usar el Nest CLI para crear el módulo, controlador y servicio (`nest g module nombre`, `nest g controller nombre`, `nest g service nombre`). *Asegúrate de estar en la carpeta correcta (`/backend-nest`).*
+2. **Crear la carpeta DTO:** Dentro de la nueva carpeta del módulo, crea un directorio `dto/` (ej. `src/tickets/dto/`).
+3. **Definir el contrato (DTO):** Crea un archivo (ej. `create-nombre.dto.ts`). Define la clase usando decoradores de `class-validator` (`@IsString()`, `@IsUUID()`, `@IsEnum()`) para establecer qué datos obligatorios debe enviar el frontend.
+4. **Acoplar el DTO al Controlador:** Ve al `.controller.ts`, importa el DTO que creaste y úsalo en el método correspondiente (`@Body() data: CreateNombreDto`). *¡Regla estricta: prohibido usar `any`!*
+5. **Inyectar el Servicio:** Asegúrate de que el controlador tenga acceso a su servicio inyectándolo en el constructor (`constructor(private readonly miService: MiService) {}`).
+6. **Delegar (El mesero pasa el pedido):** En el método del controlador, invoca la función del servicio y pásale la información ya validada (`return this.miService.crear(data);`).
+7. **Escribir la Lógica (El Chef cocina):** Por último, ve al `.service.ts` y escribe todas las reglas críticas de negocio e interacciones con la base de datos de Supabase.
+
 
 ## 🤖 Protocolo Erwin (IA Tutor)
 - **Método Socrático:** No dar código completo. Proporcionar pistas, teoría y fragmentos educativos.
