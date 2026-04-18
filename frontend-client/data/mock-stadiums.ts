@@ -5,7 +5,7 @@ export const MOCK_STADIUMS = [
         city: 'Ciudad de México',
         country: 'México',
         capacity: 87523,
-        sectors: ['Norte Alta', 'Sur Baja', 'VIP', 'Prensa'],
+        sectors: ['Popular', 'Palco', 'VIP', 'Prensa'],
         imageUrl: '/images/stadiums/azteca.jpg'
     },
     {
@@ -14,7 +14,7 @@ export const MOCK_STADIUMS = [
         city: 'New York/New Jersey',
         country: 'USA',
         capacity: 82500,
-        sectors: ['Lower Bowl', 'Mezzanine', 'Suite Level', 'Upper Bowl'],
+        sectors: ['Popular', 'Palco', 'VIP', 'Prensa'],
         imageUrl: '/images/stadiums/metlife.jpg'
     },
     {
@@ -23,7 +23,7 @@ export const MOCK_STADIUMS = [
         city: 'Los Angeles',
         country: 'USA',
         capacity: 70240,
-        sectors: ['Field Level', 'Premier Level', 'Club Level', 'Terrace'],
+        sectors: ['Popular', 'Palco', 'VIP', 'Prensa'],
         imageUrl: '/images/stadiums/sofi.jpg'
     },
     {
@@ -32,7 +32,7 @@ export const MOCK_STADIUMS = [
         city: 'Vancouver',
         country: 'Canadá',
         capacity: 54500,
-        sectors: ['Lower Bowl', 'Club Seats', 'Upper Bowl', 'Suites'],
+        sectors: ['Popular', 'Palco', 'VIP', 'Prensa'],
         imageUrl: '/images/stadiums/bcplace.jpg'
     },
     {
@@ -41,7 +41,7 @@ export const MOCK_STADIUMS = [
         city: 'Monterrey',
         country: 'México',
         capacity: 53500,
-        sectors: ['Planta Baja', 'Planta Alta', 'Club Seats', 'Suites'],
+        sectors: ['Popular', 'Palco', 'VIP', 'Prensa'],
         imageUrl: '/images/stadiums/bbva.jpg'
     }
 ];
