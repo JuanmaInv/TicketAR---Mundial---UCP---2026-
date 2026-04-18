@@ -1,12 +1,5 @@
 import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-
-// Sectores disponibles según nuestras reglas de negocio
-export enum SectorType {
-  PLATEA = 'PLATEA',
-  PALCO = 'PALCO',
-  POPULAR = 'POPULAR',
-  PRENSA = 'PRENSA',
-}
+import { SectorType } from '../../common/enums/sector-type.enum';
 
 export class CreateTicketDto {
   // Aquí usamos los decoradores de class-validator para asegurar que el Frontend nos envíe datos correctos
