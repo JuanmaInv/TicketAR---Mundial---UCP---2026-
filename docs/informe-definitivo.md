@@ -35,6 +35,38 @@ Desarrollar una plataforma de venta de entradas enfocada en la seguridad y elimi
 6. **Commits Semánticos:** Seguir el estándar definido en el proyecto.
 7. **Documentación:** Preferir metodologías *Docs-as-Code* (guardar en `/docs`) para que las reglas de negocio viajen con la versión de código correspondiente.
 
+## 🏗️ Arquitectura y Flujo de Desarrollo Backend (NestJS)
+El backend de TicketAR utiliza una **Arquitectura por Capas** estructurada en módulos. Esto garantiza que el código sea escalable, fácil de probar y de mantener. El desarrollo de cada nueva funcionalidad sigue estrictamente el siguiente flujo:
+
+### 1. Modularización (Modules)
+Cada funcionalidad importante (Auth, Tickets, Usuarios) tiene su propio módulo (`.module.ts`). Es el "organizador" que agrupa los Controladores y Servicios relacionados, manteniendo el código desacoplado.
+
+### 2. DTOs (Data Transfer Objects)
+Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript que validan los datos que entran a la API (usando `class-validator`). 
+- *Misión:* Actúan como un "escudo" de seguridad. Si el frontend envía datos incorrectos, el DTO rechaza la petición con un error 400 antes de que llegue a nuestra lógica.
+- *Beneficio:* Permiten que el equipo de Frontend sepa exactamente qué formato de JSON deben enviar.
+
+### 3. Controladores (Controllers)
+Los controladores (`.controller.ts`) reciben las peticiones HTTP (GET, POST, PUT, DELETE) desde internet.
+- *Regla de Oro:* **No tienen lógica de negocio**. Solo reciben la petición (ya validada por el DTO), llaman al Servicio correspondiente, y devuelven la respuesta HTTP.
+
+### 4. Servicios (Services)
+Los servicios (`.service.ts`) son el "cerebro" puro de la aplicación.
+- *Misión:* Aquí vive toda la regla de negocio (ej. verificar si el usuario ya tiene una entrada, calcular el tiempo de reserva temporal de 15 minutos, aplicar comisiones de reventa).
+
+### 5. Entidades y Acceso a Datos (Entities/CRUD)
+Las entidades representan cómo se ven las tablas de nuestra base de datos (Supabase) dentro del código.
+- *Misión:* El Servicio interactúa con la base de datos a través de repositorios/ORMs para hacer el CRUD (Create, Read, Update, Delete) de los registros.
+
+### 🔄 Resumen del Flujo de una Petición (Ej. Reserva de Entrada)
+1. El **Frontend (React)** hace una petición HTTP POST a `/tickets/reserve`.
+2. El **DTO** intercepta y valida que los datos sean correctos (ej. ID de usuario válido).
+3. El **Controlador** recibe los datos validados y los pasa al **Servicio**.
+4. El **Servicio** aplica la lógica de negocio (bloqueo temporal de 15 min).
+5. El **Servicio** se comunica con la **Base de Datos** para crear el registro en estado `reserved`.
+6. El **Servicio** devuelve el éxito al **Controlador**, y este responde al **Frontend** con los datos tipados.
+
+
 ## 🤖 Protocolo Erwin (IA Tutor)
 - **Método Socrático:** No dar código completo. Proporcionar pistas, teoría y fragmentos educativos.
 - **Foco Backend:** Erwin es Backend Engineer. Priorizar lógica de servicios, DTOs y seguridad en NestJS.
