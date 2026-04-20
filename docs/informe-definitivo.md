@@ -67,29 +67,44 @@ Las entidades representan cómo se ven las tablas de nuestra base de datos (Supa
 6. El **Servicio** devuelve el éxito al **Controlador**, y este responde al **Frontend** con los datos tipados.
 
 ### ✅ Flujo de Trabajo Backend: De Cero a Producción (La Receta)
-Para mantener una arquitectura limpia y predecible, cada nueva funcionalidad (ej. `payments`, `users`, `stadium-sectors`) debe seguir **estrictamente** este ciclo de desarrollo mental y técnico: `Modularización -> Entidades -> DTOs -> CRUD -> Build`.
+Para mantener una arquitectura limpia y predecible, cada nueva funcionalidad (ej. `payments`, `users`, `stadium-sectors`) debe seguir **estrictamente** este ciclo de desarrollo mental y técnico en el siguiente orden:
+`Módulo -> Entidad -> DTO -> Controlador -> Servicio (CRUD) -> Base de Datos -> Build`.
 
-**1. Modularización (El Esqueleto)**
-   - Usar el Nest CLI para generar la tríada básica: Módulo, Controlador y Servicio (`nest g module nombre`, `nest g controller nombre`, `nest g service nombre`).
-   - *Objetivo:* Dejar preparadas las columnas del código antes de escribir la lógica.
+**1. Módulo (El Esqueleto)**
+   - **Acción:** Usar el Nest CLI para generar la tríada básica del módulo (`nest g module nombre`, `nest g controller nombre`, `nest g service nombre`).
+   - **Detalle:** En NestJS, el Módulo agrupa las funcionalidades lógicamente. Aquí se declaran los controladores y se proveen los servicios. Es el punto de entrada que luego se conecta al `AppModule`.
+   - **Objetivo:** Dejar preparadas las carpetas, archivos base y las conexiones (imports/providers) antes de escribir la lógica, asegurando que el nuevo bloque esté integrado y aislado del resto de la aplicación.
 
-**2. Entidades (La Base de Datos)**
-   - Definir cómo se estructuran los datos en la base de datos (Supabase) mediante Types, Interfaces o el esquema del ORM.
-   - *Objetivo:* Saber qué columnas e información va a persistir nuestro sistema antes de decidir qué le vamos a pedir al usuario.
+**2. Entidad (El Plano de la Base de Datos)**
+   - **Acción:** Crear un archivo `.entity.ts` definiendo las propiedades (columnas) y tipos de datos.
+   - **Detalle:** Representa cómo se guardará la información en la base de datos (Supabase). Establece el modelo de dominio central para la funcionalidad (ej. qué campos exactos tiene un Usuario o un Sector).
+   - **Objetivo:** Tener un "plano" claro de qué información va a persistir nuestro sistema. Sin saber qué vamos a guardar, es imposible saber qué información exigirle al usuario en el siguiente paso.
 
-**3. DTOs (El Escudo Protector)**
-   - Crear el directorio `dto/` y definir el archivo (ej. `create-nombre.dto.ts`). Usar `class-validator` (`@IsString()`, `@IsEnum()`).
-   - Acoplar el DTO en el Controlador (`@Body() data: CreateNombreDto`).
-   - *Objetivo:* Garantizar que ninguna petición con datos basura alcance nuestra lógica de negocio. Regla estricta: ¡Prohibido usar `any`!
+**3. DTO (Data Transfer Object - El Escudo Protector)**
+   - **Acción:** Crear clases con decoradores de `class-validator` (ej. `@IsString()`, `@IsNotEmpty()`, `@IsEnum()`).
+   - **Detalle:** Define el contrato estricto de entrada y salida de nuestra API. Verifica automáticamente que los datos enviados por el frontend (React) tengan el formato exacto antes de que toquen nuestro código.
+   - **Objetivo:** Garantizar que ninguna petición con datos basura o malintencionados cruce nuestra frontera. Actúa como la primera línea de defensa para proteger la integridad del backend.
 
-**4. CRUD y Delegación (El Cerebro de la App)**
-   - **Delegar:** Inyectar el Servicio en el Controlador y pasarle el DTO validado (`return this.miService.create(data);`).
-   - **Hacer el CRUD:** Ir al `.service.ts` y escribir los métodos para Crear, Leer, Actualizar o Borrar (Create, Read, Update, Delete) comunicándose directamente con la base de datos de Supabase e implementando la lógica de negocio.
-   - *💡 Ventaja Arquitectónica (Aislamiento de la Base de Datos):* Al delegar el CRUD exclusivamente al Servicio, logramos que ni el Controlador, ni el DTO, ni el Frontend sepan qué base de datos usamos. Si el día de mañana migramos de Supabase a MongoDB o Firebase, **solo se modifica el código interno del Servicio**. El resto de la aplicación permanece intacto. [PUNTO DE INSERCIÓN FUTURO: Integración real con Supabase SDK].
+**4. Controlador (El Mesero)**
+   - **Acción:** Configurar rutas (ej. `@Get()`, `@Post()`), importar el DTO (`@Body() data: MiDto`) e inyectar el Servicio en el constructor.
+   - **Detalle:** Su única responsabilidad es escuchar las peticiones HTTP, recibir los datos ya validados por el DTO y delegar el trabajo pesado al Servicio. No debe tener lógica de negocio (nada de validaciones complejas o "ifs" de negocio).
+   - **Objetivo:** Actuar como enrutador eficiente. Recibe el pedido limpio, se lo pasa al "Chef" (el Servicio) y, cuando este termina, le devuelve la respuesta formateada al cliente.
 
-**5. Build (La Prueba de Fuego)**
-   - Ejecutar el comando de compilación (`pnpm run build` o `npm run build`) en la consola local antes de hacer un commit/push.
-   - *Objetivo:* Verificar que todo el TypeScript compila correctamente y que no existan errores de tipos cruzados entre Controladores, DTOs y Servicios. Si el build pasa, el código es seguro para el entorno de Integración Continua (CI).
+**5. Servicio y CRUD (El Chef)**
+   - **Acción:** Implementar los métodos de negocio (Create, Read, Update, Delete).
+   - **Detalle:** Aquí residen las reglas de negocio, los cálculos lógicos y la interacción con los datos. Es el cerebro de la aplicación.
+   - **Objetivo:** Procesar los datos. Inicialmente (usando *Mock-Driven Development*), guardamos en un array en memoria temporal para avanzar rápidamente en la lógica del negocio sin depender de servicios externos caídos o configuraciones complejas.
+
+**6. Base de Datos (La Bóveda)**
+   - **Acción:** Reemplazar las operaciones del array temporal en el Servicio por consultas reales (queries) a Supabase.
+   - **Detalle:** Este es el paso final de desarrollo donde conectamos nuestra aplicación a la persistencia real. Manejamos promesas, errores de base de datos y transacciones.
+   - **Objetivo:** Guardar los datos de forma permanente.
+   - **💡 Ventaja Arquitectónica Clave:** Al dejar esto para el final y aislar la lógica de DB exclusivamente dentro del Servicio, logramos que la base de datos sea un "detalle de implementación". Si el día de mañana migramos de Supabase a PostgreSQL clásico o MongoDB, **ni los Controladores, ni los DTOs, ni los Módulos se ven afectados**.
+
+**7. Build (La Prueba de Fuego)**
+   - **Acción:** Ejecutar el comando de compilación estricta (`pnpm run build` o equivalente).
+   - **Detalle:** El compilador revisa todo el código en busca de inconsistencias de tipos de TypeScript o errores de sintaxis que pasaron desapercibidos durante el desarrollo.
+   - **Objetivo:** Verificar que las interfaces, DTOs y Entidades se comuniquen perfectamente entre capas. Un "build" exitoso es nuestro sello de garantía de que el código es robusto y está listo para ser mergeado a la rama principal.
 
 
 ## 🤖 Protocolo Erwin (IA Tutor)
