@@ -4,6 +4,7 @@ import { StadiumSectorsService } from './stadium-sectors.service';
 
 @Module({
   controllers: [StadiumSectorsController],
-  providers: [StadiumSectorsService]
+  providers: [StadiumSectorsService],
+  exports: [StadiumSectorsService],
 })
 export class StadiumSectorsModule {}
