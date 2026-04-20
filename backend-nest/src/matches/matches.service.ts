@@ -1,25 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { CreateMatchDto } from './dto/create-match.dto';
-import { MatchEntity } from './entities/match.entity';
+import { CrearPartidoDto } from './dto/create-match.dto';
+import { PartidoEntidad } from './entities/match.entity';
 
 @Injectable()
-export class MatchesService {
-  private mockDatabase: MatchEntity[] = [];
+export class PartidosService {
+  private baseDeDatosSimulada: PartidoEntidad[] = [];
 
-  create(createMatchDto: CreateMatchDto) {
-    const newMatch: MatchEntity = {
+  crear(crearPartidoDto: CrearPartidoDto) {
+    const nuevoPartido: PartidoEntidad = {
       id: crypto.randomUUID(),
-      ...createMatchDto,
-      status: 'SCHEDULED',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      ...crearPartidoDto,
+      estado: 'PROGRAMADO',
+      fechaCreacion: new Date(),
+      fechaActualizacion: new Date(),
     };
 
-    this.mockDatabase.push(newMatch);
-    return newMatch;
+    this.baseDeDatosSimulada.push(nuevoPartido);
+    return nuevoPartido;
   }
 
-  findAll() {
-    return this.mockDatabase;
+  obtenerTodos() {
+    return this.baseDeDatosSimulada;
   }
 }

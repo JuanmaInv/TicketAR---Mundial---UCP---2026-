@@ -1,18 +1,18 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
-import { MatchesService } from './matches.service';
-import { CreateMatchDto } from './dto/create-match.dto';
+import { PartidosService } from './matches.service';
+import { CrearPartidoDto } from './dto/create-match.dto';
 
-@Controller('matches')
-export class MatchesController {
-  constructor(private readonly matchesService: MatchesService) {}
+@Controller('partidos')
+export class PartidosController {
+  constructor(private readonly partidosService: PartidosService) {}
 
   @Post()
-  create(@Body() createMatchDto: CreateMatchDto) {
-    return this.matchesService.create(createMatchDto);
+  crear(@Body() crearPartidoDto: CrearPartidoDto) {
+    return this.partidosService.crear(crearPartidoDto);
   }
 
   @Get()
-  findAll() {
-    return this.matchesService.findAll();
+  obtenerTodos() {
+    return this.partidosService.obtenerTodos();
   }
 }

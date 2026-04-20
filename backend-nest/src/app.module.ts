@@ -1,19 +1,19 @@
 import { Module } from '@nestjs/common';
-import { TicketsModule } from './tickets/tickets.module';
-import { PaymentsModule } from './payments/payments.module';
-import { PassportCredentialsModule } from './passport-credentials/passport-credentials.module';
-import { StadiumSectorsModule } from './stadium-sectors/stadium-sectors.module';
-import { MatchesModule } from './matches/matches.module';
-import { UsersModule } from './users/users.module';
+import { EntradasModule } from './tickets/tickets.module';
+import { PagosModule } from './payments/payments.module';
+import { CredencialesPasaporteModule } from './passport-credentials/passport-credentials.module';
+import { SectoresModule } from './stadium-sectors/stadium-sectors.module';
+import { PartidosModule } from './matches/matches.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
 
 @Module({
   imports: [
-    UsersModule,
-    MatchesModule,
-    StadiumSectorsModule,
-    TicketsModule,
-    PaymentsModule,
-    PassportCredentialsModule,
+    UsuariosModule,
+    PartidosModule,
+    SectoresModule,
+    EntradasModule,
+    PagosModule,
+    CredencialesPasaporteModule,
   ],
   controllers: [],
   providers: [],

@@ -1,20 +1,20 @@
 import { Controller, Post, Body, Get } from '@nestjs/common';
-import { PassportCredentialsService } from './passport-credentials.service';
-import { ValidatePassportDto } from './dto/validate-passport.dto';
+import { CredencialesService } from './passport-credentials.service';
+import { ValidarPasaporteDto } from './dto/validate-passport.dto';
 
-@Controller('passport-credentials')
-export class PassportCredentialsController {
+@Controller('credenciales-pasaporte')
+export class CredencialesController {
   constructor(
-    private readonly passportCredentialsService: PassportCredentialsService,
+    private readonly credencialesService: CredencialesService,
   ) {}
 
-  @Post('validate')
-  validate(@Body() validatePassportDto: ValidatePassportDto) {
-    return this.passportCredentialsService.validate(validatePassportDto);
+  @Post('validar')
+  validar(@Body() validarPasaporteDto: ValidarPasaporteDto) {
+    return this.credencialesService.validar(validarPasaporteDto);
   }
 
   @Get()
-  findAll() {
-    return this.passportCredentialsService.findAll();
+  obtenerTodas() {
+    return this.credencialesService.obtenerTodas();
   }
 }

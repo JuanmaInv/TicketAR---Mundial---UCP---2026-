@@ -1,10 +1,10 @@
-export class MatchEntity {
-  id: string; // UUID
-  teamA: string;
-  teamB: string;
-  matchDate: Date;
-  stadiumName: string;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED';
-  createdAt: Date;
-  updatedAt: Date;
+export class PartidoEntidad {
+  id: string; // UUID de Supabase
+  equipoLocal: string;
+  equipoVisitante: string;
+  fechaPartido: Date;
+  nombreEstadio: string;
+  estado: 'PROGRAMADO' | 'EN_CURSO' | 'FINALIZADO' | 'CANCELADO';
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
 }

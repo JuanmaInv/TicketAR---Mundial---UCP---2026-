@@ -1,51 +1,53 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateStadiumSectorDto } from './dto/create-stadium-sector.dto';
+import { CrearSectorDto } from './dto/create-stadium-sector.dto';
 import { StadiumSectorEntity } from './entities/stadium-sector.entity';
 
 @Injectable()
-export class StadiumSectorsService {
-  private mockDatabase: StadiumSectorEntity[] = [
+export class SectoresService {
+  private baseDeDatosSimulada: StadiumSectorEntity[] = [
     {
-      id: 'popular-north',
+      id: 'popular-norte',
       name: 'POPULAR',
       capacity: 10000,
       availableSeats: 10000,
-      price: 50,
+      price: 50000, // ARS
       createdAt: new Date(),
       updatedAt: new Date(),
     },
     {
-      id: 'platea-east',
+      id: 'platea-este',
       name: 'PLATEA',
       capacity: 5000,
       availableSeats: 5000,
-      price: 150,
+      price: 150000, // ARS
       createdAt: new Date(),
       updatedAt: new Date(),
     },
   ];
 
-  findAll() {
-    return this.mockDatabase;
+  obtenerTodos() {
+    return this.baseDeDatosSimulada;
   }
 
-  findOne(id: string) {
-    const sector = this.mockDatabase.find((s) => s.id === id);
+  obtenerUno(id: string) {
+    const sector = this.baseDeDatosSimulada.find((s) => s.id === id);
     if (!sector) {
       throw new NotFoundException('Sector de estadio no encontrado');
     }
     return sector;
   }
 
-  create(dto: CreateStadiumSectorDto) {
-    const newSector: StadiumSectorEntity = {
+  crear(dto: CrearSectorDto) {
+    const nuevoSector: StadiumSectorEntity = {
       id: crypto.randomUUID(),
-      ...dto,
-      availableSeats: dto.capacity,
+      name: dto.nombre,
+      capacity: dto.capacidad,
+      availableSeats: dto.capacidad,
+      price: dto.precio,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.mockDatabase.push(newSector);
-    return newSector;
+    this.baseDeDatosSimulada.push(nuevoSector);
+    return nuevoSector;
   }
 }

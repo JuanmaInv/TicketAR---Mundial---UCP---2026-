@@ -1,18 +1,18 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
-import { TicketsService } from './tickets.service';
-import { CreateTicketDto } from './dto/create-ticket.dto';
+import { EntradasService } from './tickets.service';
+import { CrearEntradaDto } from './dto/create-ticket.dto';
 
-@Controller('tickets')
-export class TicketsController {
-  constructor(private readonly ticketsService: TicketsService) {}
+@Controller('entradas')
+export class EntradasController {
+  constructor(private readonly entradasService: EntradasService) {}
 
   @Post()
-  create(@Body() createTicketDto: CreateTicketDto) {
-    return this.ticketsService.create(createTicketDto);
+  crear(@Body() crearEntradaDto: CrearEntradaDto) {
+    return this.entradasService.crear(crearEntradaDto);
   }
 
   @Get()
-  findAll() {
-    return this.ticketsService.findAll();
+  obtenerTodas() {
+    return this.entradasService.obtenerTodas();
   }
 }

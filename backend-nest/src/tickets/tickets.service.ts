@@ -1,60 +1,59 @@
 import { Injectable, ConflictException } from '@nestjs/common';
-import { CreateTicketDto } from './dto/create-ticket.dto';
+import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
 
 @Injectable()
-export class TicketsService {
-  // Mock Database
-  private mockDatabase: TicketEntity[] = [];
+export class EntradasService {
+  private baseDeDatosSimulada: TicketEntity[] = [];
 
-  create(createTicketDto: CreateTicketDto) {
+  crear(crearEntradaDto: CrearEntradaDto) {
     // 🚨 Regla Crítica: Máximo 1 entrada por sesión por usuario
-    // Validamos si el usuario ya tiene un ticket activo (RESERVED o PAID)
-    const activeTicket = this.mockDatabase.find(
-      (ticket) =>
-        ticket.userId === createTicketDto.userId &&
-        (ticket.status === TicketStatus.RESERVED ||
-          ticket.status === TicketStatus.PAID),
+    const entradaActiva = this.baseDeDatosSimulada.find(
+      (entrada) =>
+        entrada.userId === crearEntradaDto.idUsuario &&
+        (entrada.status === TicketStatus.RESERVED ||
+          entrada.status === TicketStatus.PAID),
     );
 
-    if (activeTicket) {
+    if (entradaActiva) {
       throw new ConflictException(
         'El usuario ya tiene una entrada activa o en reserva.',
       );
     }
 
-    // 🚨 Reserva: El servidor bloquea el lugar por 15 min
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+    // 🚨 Reserva: El servidor bloquea el lugar por 15 minutos
+    const expiracion = new Date();
+    expiracion.setMinutes(expiracion.getMinutes() + 15);
 
-    const newTicket: TicketEntity = {
+    const nuevaEntrada: TicketEntity = {
       id: crypto.randomUUID(),
-      ...createTicketDto,
+      userId: crearEntradaDto.idUsuario,
+      sectorId: crearEntradaDto.idSector,
       status: TicketStatus.RESERVED,
-      reservationExpiresAt: expiresAt,
+      reservationExpiresAt: expiracion,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    this.mockDatabase.push(newTicket);
-    return newTicket;
+    this.baseDeDatosSimulada.push(nuevaEntrada);
+    return nuevaEntrada;
   }
 
-  findAll() {
-    return this.mockDatabase;
+  obtenerTodas() {
+    return this.baseDeDatosSimulada;
   }
 
-  findOne(id: string) {
-    return this.mockDatabase.find((ticket) => ticket.id === id);
+  obtenerUna(id: string) {
+    return this.baseDeDatosSimulada.find((entrada) => entrada.id === id);
   }
 
-  markAsPaid(id: string) {
-    const ticket = this.findOne(id);
-    if (ticket) {
-      ticket.status = TicketStatus.PAID;
-      ticket.updatedAt = new Date();
+  marcarComoPagada(id: string) {
+    const entrada = this.obtenerUna(id);
+    if (entrada) {
+      entrada.status = TicketStatus.PAID;
+      entrada.updatedAt = new Date();
     }
-    return ticket;
+    return entrada;
   }
 }
