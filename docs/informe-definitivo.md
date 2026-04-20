@@ -107,8 +107,126 @@ Para mantener una arquitectura limpia y predecible, cada nueva funcionalidad (ej
    - **Objetivo:** Verificar que las interfaces, DTOs y Entidades se comuniquen perfectamente entre capas. Un "build" exitoso es nuestro sello de garantía de que el código es robusto y está listo para ser mergeado a la rama principal.
 
 
+## 🧩 Módulos Implementados y Diccionario de Datos (Frontend Contract)
+
+Para que el equipo de Frontend pueda trabajar en paralelo, a continuación se detallan los objetos (Entidades) y los contratos de entrada (DTOs) de cada módulo.
+
+### 1. Módulo de Usuarios (`Users`)
+Gestiona el perfil del hincha y su vinculación con el pasaporte.
+- **Entidad `User`:**
+  - `id`: string (UUID)
+  - `email`: string
+  - `fullName`: string
+  - `passportNumber`: string
+  - `nationality`: string
+  - `role`: enum ('USER', 'ADMIN', 'PRESS')
+- **DTO `CreateUserDto`:** Requeridos todos los campos de la entidad para el registro inicial.
+
+### 2. Módulo de Partidos (`Matches`)
+Catálogo de eventos deportivos.
+- **Entidad `Match`:**
+  - `id`: string (UUID)
+  - `teamA`: string
+  - `teamB`: string
+  - `matchDate`: Date (ISO string)
+  - `stadiumName`: string
+  - `status`: enum ('SCHEDULED', 'ONGOING', 'FINISHED', 'CANCELLED')
+- **DTO `CreateMatchDto`:** Requeridos `teamA`, `teamB`, `matchDate` y `stadiumName`.
+
+### 3. Módulo de Sectores (`StadiumSectors`)
+Control de inventario y precios por zona.
+- **Entidad `StadiumSector`:**
+  - `id`: string
+  - `name`: enum ('POPULAR', 'PLATEA', 'PALCO', 'PRENSA')
+  - `capacity`: number
+  - `availableSeats`: number
+  - `price`: number (Precio base en ARS - Pesos Argentinos)
+- **DTO `CreateStadiumSectorDto`:** Requeridos `name`, `capacity` y `price`.
+
+### 4. Módulo de Entradas (`Tickets`)
+Lógica central de reserva y venta.
+- **Entidad `Ticket`:**
+  - `id`: string (UUID)
+  - `userId`: string (Relación con User)
+  - `matchId`: string (Relación con Match)
+  - `sectorId`: string (Relación con Sector)
+  - `status`: enum ('RESERVED', 'PAID', 'CANCELLED')
+  - `reservedAt`: Date
+  - `expiresAt`: Date (reservedAt + 15 min)
+  - `qrCode`: string (URL o base64 generado tras el pago)
+- **DTO `CreateTicketDto`:** Requeridos `userId`, `matchId` y `sectorId`.
+
+### 5. Módulo de Pagos (`Payments`)
+Interfaz con pasarelas externas.
+- **Entidad `Payment`:**
+  - `id`: string
+  - `ticketId`: string
+  - `amount`: number
+  - `currency`: string (Default: 'ARS')
+  - `status`: enum ('PENDING', 'COMPLETED', 'FAILED')
+  - `gateway`: enum ('MERCADOPAGO', 'STRIPE')
+- **DTO `ProcessPaymentDto`:** Requeridos `ticketId` y el `payment_id` generado por el SDK de Mercado Pago.
+
+### 🚦 Endpoints de la API (Rutas Base)
+
+El backend expone los siguientes prefijos de ruta. Todas las peticiones deben incluir el header `Content-Type: application/json`.
+
+- `GET /matches`: Lista todos los partidos programados.
+- `GET /matches/:id`: Detalle de un partido y sus sectores disponibles.
+- `POST /tickets`: Inicia una reserva (Estado `RESERVED`).
+- `GET /tickets/:id`: Consulta estado de una entrada y tiempo restante de reserva.
+- `POST /payments`: Procesa el pago de una entrada reservada.
+- `GET /users/me`: Perfil del usuario autenticado (requiere Token).
+
+### 🛡️ Autenticación y Seguridad
+
+Utilizamos **Supabase Auth**. El flujo para el frontend es:
+1. El usuario se loguea en el frontend mediante Supabase Client.
+2. El frontend obtiene el `access_token` (JWT).
+3. **Obligatorio:** Cada petición al backend (excepto `GET /matches`) debe incluir el header:
+   `Authorization: Bearer <JWT_TOKEN>`
+
+### ⚠️ Manejo de Errores (Error Contract)
+
+El backend siempre responderá con una estructura estándar en caso de fallo, permitiendo al frontend mostrar mensajes amigables:
+
+```json
+{
+  "statusCode": 400,
+  "message": ["passportNumber must be a valid passport", "fullName is required"],
+  "error": "Bad Request",
+  "timestamp": "2026-04-20T12:00:00Z",
+  "path": "/users"
+}
+```
+
+### 🧠 Reglas de Negocio Críticas (Reminder)
+
+1. **La Regla de los 15 Minutos:** Al crear un Ticket, el backend guarda la fecha de expiración. El frontend debe mostrar una cuenta regresiva. Pasado ese tiempo, el ticket se marca como `CANCELLED` y el lugar se libera automáticamente.
+2. **Validación de Pasaporte:** No se permite emitir un ticket si el número de pasaporte no ha sido validado contra el servicio de migraciones (simulado en el módulo `passport-credentials`).
+3. **Un Ticket por Usuario:** El sistema bloqueará cualquier intento de compra si el usuario ya posee un ticket activo para el mismo partido.
+
+---
+
+### 🛠️ Enums Compartidos (Single Source of Truth)
+
+Para asegurar la integridad de los datos entre el backend y el frontend, se han definido enums globales. El frontend **debe** utilizar estos valores exactos al realizar peticiones:
+
+- **`SectorType` (`common/enums/sector-type.enum.ts`):**
+  - `POPULAR`: Acceso general.
+  - `PLATEA`: Asientos numerados.
+  - `PALCO`: Zona preferencial.
+  - `PRENSA`: Acceso exclusivo para periodistas acreditados.
+
+- **`TicketStatus` (`common/enums/ticket-status.enum.ts`):**
+  - `RESERVED`: El lugar está bloqueado por el servidor (15 min).
+  - `PAID`: Pago confirmado, QR generado.
+  - `CANCELLED`: Reserva expirada o pago rechazado.
+
+---
+
 ## 🤖 Protocolo Erwin (IA Tutor)
 - **Método Socrático:** No dar código completo. Proporcionar pistas, teoría y fragmentos educativos.
 - **Foco Backend:** Erwin es Backend Engineer. Priorizar lógica de servicios, DTOs y seguridad en NestJS.
 - **Contexto:** Si falta información, preguntar antes de asumir.
-- **Visión Fullstack y API (Nuevo):** Erwin debe explicar siempre cómo los controladores y endpoints de NestJS serán consumidos posteriormente desde el Frontend (React/Next.js con TypeScript) mediante DTOs e interfaces, asegurando que el backend exponga datos limpios y tipados.
+- **Visión Fullstack y API:** Erwin debe explicar siempre cómo los controladores y endpoints de NestJS serán consumidos posteriormente desde el Frontend (React/Next.js con TypeScript) mediante DTOs e interfaces, asegurando que el backend exponga datos limpios y tipados.
