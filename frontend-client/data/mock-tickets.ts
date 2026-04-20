@@ -2,31 +2,31 @@ import { Ticket } from '../types/ticket';
 
 export const MOCK_TICKETS: Ticket[] = [
   {
-    id: 1,
-    match: 'Argentina vs France',
-    price: 1500,
+    id: '1',
+    partidoId: 'Argentina vs Francia',
+    precio: 1500,
     sector: 'Platea San Martín',
-    status: 'available'
+    estado: 'disponible'
   },
   {
-    id: 2,
-    match: 'Brazil vs Germany',
-    price: 1200,
+    id: '2',
+    partidoId: 'Brasil vs Alemania',
+    precio: 1200,
     sector: 'Popular Norte',
-    status: 'available'
+    estado: 'disponible'
   },
   {
-    id: 3,
-    match: 'Uruguay vs Italy',
-    price: 900,
+    id: '3',
+    partidoId: 'Uruguay vs Italia',
+    precio: 900,
     sector: 'Platea Belgrano',
-    status: 'reserved'
+    estado: 'pendiente'
   },
   {
-    id: 4,
-    match: 'Spain vs Netherlands',
-    price: 1100,
+    id: '4',
+    partidoId: 'España vs Países Bajos',
+    precio: 1100,
     sector: 'Sívori Alta',
-    status: 'available'
+    estado: 'vendido'
   }
 ];
