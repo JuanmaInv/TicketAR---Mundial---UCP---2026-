@@ -1,25 +1,18 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
+import { TicketsService } from './tickets.service';
+import { CreateTicketDto } from './dto/create-ticket.dto';
 
 @Controller('tickets')
 export class TicketsController {
-  // Uso de GET, definición de rutas y devolución de JSON
-  @Get()
-  getAllTickets() {
-    // Devuelve un JSON (NestJS lo hace automáticamente con objetos/arreglos)
-    return [
-      { id: 1, sector: 'PLATEA', passport: 'AB123456', status: 'confirmed' },
-      { id: 2, sector: 'POPULAR', passport: 'XY987654', status: 'reserved' },
-    ];
+  constructor(private readonly ticketsService: TicketsService) {}
+
+  @Post()
+  create(@Body() createTicketDto: CreateTicketDto) {
+    return this.ticketsService.create(createTicketDto);
   }
 
-  // Uso de POST, recepción de parámetros (Body) y devolución de JSON
-  @Post()
-  createTicketReservation(@Body() ticketData: any) {
-    
-    return {
-      message: 'Reserva recibida exitosamente',
-      receivedData: ticketData,
-      expiresIn: '15 minutos',
-    };
+  @Get()
+  findAll() {
+    return this.ticketsService.findAll();
   }
 }
