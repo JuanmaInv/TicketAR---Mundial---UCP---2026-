@@ -1,17 +1,11 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-import { SectorType } from '../../common/enums/sector-type.enum';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateTicketDto {
-  // Aquí usamos los decoradores de class-validator para asegurar que el Frontend nos envíe datos correctos
+  @IsString({ message: 'El ID del usuario debe ser válido' })
+  @IsNotEmpty({ message: 'El ID de usuario es obligatorio para la reserva' })
+  userId: string;
 
-  @IsNotEmpty({ message: 'El ID del partido es obligatorio' })
-  @IsString()
-  matchId: string;
-
-  @IsEnum(SectorType, { message: 'El sector debe ser PLATEA, PALCO, POPULAR o PRENSA' })
-  @IsNotEmpty()
-  sector: SectorType;
-
-  // NOTA: No le pedimos el 'userId' al frontend aquí por seguridad.
-  // Ese ID lo sacaremos luego del Token de Sesión (Pasaporte).
+  @IsString({ message: 'El ID del sector debe ser válido' })
+  @IsNotEmpty({ message: 'Debe especificar un sector para reservar' })
+  sectorId: string;
 }
