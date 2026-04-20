@@ -10,11 +10,15 @@ export class UsersService {
   create(createUserDto: CreateUserDto) {
     // Validar regla de negocio: el pasaporte o email no pueden estar duplicados
     const exists = this.mockDatabase.find(
-      user => user.passportNumber === createUserDto.passportNumber || user.email === createUserDto.email
+      (user) =>
+        user.passportNumber === createUserDto.passportNumber ||
+        user.email === createUserDto.email,
     );
 
     if (exists) {
-      throw new ConflictException('Ya existe un usuario con este correo o pasaporte.');
+      throw new ConflictException(
+        'Ya existe un usuario con este correo o pasaporte.',
+      );
     }
 
     const newUser: UserEntity = {

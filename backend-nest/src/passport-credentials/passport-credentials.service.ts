@@ -9,11 +9,15 @@ export class PassportCredentialsService {
   validate(validatePassportDto: ValidatePassportDto) {
     // 🚨 Lógica Crítica: Un usuario no puede registrar dos veces el mismo pasaporte
     const exists = this.mockDatabase.find(
-      cred => cred.documentNumber === validatePassportDto.documentNumber && cred.countryCode === validatePassportDto.countryCode
+      (cred) =>
+        cred.documentNumber === validatePassportDto.documentNumber &&
+        cred.countryCode === validatePassportDto.countryCode,
     );
 
     if (exists) {
-      throw new BadRequestException('El documento de pasaporte ya se encuentra registrado y validado en el sistema.');
+      throw new BadRequestException(
+        'El documento de pasaporte ya se encuentra registrado y validado en el sistema.',
+      );
     }
 
     const newCredential: PassportCredentialEntity = {

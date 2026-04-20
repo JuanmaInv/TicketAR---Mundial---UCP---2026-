@@ -4,7 +4,9 @@ import { ValidatePassportDto } from './dto/validate-passport.dto';
 
 @Controller('passport-credentials')
 export class PassportCredentialsController {
-  constructor(private readonly passportCredentialsService: PassportCredentialsService) {}
+  constructor(
+    private readonly passportCredentialsService: PassportCredentialsService,
+  ) {}
 
   @Post('validate')
   validate(@Body() validatePassportDto: ValidatePassportDto) {

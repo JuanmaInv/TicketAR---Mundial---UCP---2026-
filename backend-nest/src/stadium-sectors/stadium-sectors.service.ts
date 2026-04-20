@@ -22,7 +22,7 @@ export class StadiumSectorsService {
       price: 150,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    },
   ];
 
   findAll() {
@@ -30,7 +30,7 @@ export class StadiumSectorsService {
   }
 
   findOne(id: string) {
-    const sector = this.mockDatabase.find(s => s.id === id);
+    const sector = this.mockDatabase.find((s) => s.id === id);
     if (!sector) {
       throw new NotFoundException('Sector de estadio no encontrado');
     }

@@ -12,12 +12,16 @@ export class TicketsService {
     // 🚨 Regla Crítica: Máximo 1 entrada por sesión por usuario
     // Validamos si el usuario ya tiene un ticket activo (RESERVED o PAID)
     const activeTicket = this.mockDatabase.find(
-      ticket => ticket.userId === createTicketDto.userId && 
-                (ticket.status === TicketStatus.RESERVED || ticket.status === TicketStatus.PAID)
+      (ticket) =>
+        ticket.userId === createTicketDto.userId &&
+        (ticket.status === TicketStatus.RESERVED ||
+          ticket.status === TicketStatus.PAID),
     );
 
     if (activeTicket) {
-      throw new ConflictException('El usuario ya tiene una entrada activa o en reserva.');
+      throw new ConflictException(
+        'El usuario ya tiene una entrada activa o en reserva.',
+      );
     }
 
     // 🚨 Reserva: El servidor bloquea el lugar por 15 min
@@ -42,7 +46,7 @@ export class TicketsService {
   }
 
   findOne(id: string) {
-    return this.mockDatabase.find(ticket => ticket.id === id);
+    return this.mockDatabase.find((ticket) => ticket.id === id);
   }
 
   markAsPaid(id: string) {

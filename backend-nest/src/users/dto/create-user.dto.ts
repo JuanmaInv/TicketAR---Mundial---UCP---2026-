@@ -14,6 +14,8 @@ export class CreateUserDto {
   lastName: string;
 
   @IsString({ message: 'El pasaporte debe ser un texto' })
-  @IsNotEmpty({ message: 'El pasaporte es obligatorio para validar la entrada' })
+  @IsNotEmpty({
+    message: 'El pasaporte es obligatorio para validar la entrada',
+  })
   passportNumber: string;
 }
