@@ -186,14 +186,28 @@ Validación de identidad del comprador.
 
 ### 🚦 Endpoints de la API (Rutas Base)
 
-El backend expone los siguientes prefijos de ruta. Todas las peticiones deben incluir el header `Content-Type: application/json`.
+El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones deben incluir el header `Content-Type: application/json`.
 
-- `GET /matches`: Lista todos los partidos programados.
-- `GET /matches/:id`: Detalle de un partido y sus sectores disponibles.
-- `POST /tickets`: Inicia una reserva (Estado `RESERVED`).
-- `GET /tickets/:id`: Consulta estado de una entrada y tiempo restante de reserva.
-- `POST /payments`: Procesa el pago de una entrada reservada.
-- `GET /users/me`: Perfil del usuario autenticado (requiere Token).
+#### Partidos
+- `GET /partidos` — Lista todos los partidos.
+- `GET /partidos/:id` — Detalle de un partido específico.
+- `POST /partidos` — Crea un nuevo partido (requiere `CrearPartidoDto`).
+
+#### Sectores del Estadio
+- `GET /sectores` — Lista todos los sectores disponibles.
+- `GET /sectores/:id` — Detalle de un sector.
+- `POST /sectores` — Crea un sector (requiere `CrearSectorDto`).
+
+#### Entradas
+- `GET /entradas` — Lista todas las entradas.
+- `POST /entradas` — Inicia una reserva de 15 min (requiere `CrearEntradaDto`).
+
+#### Usuarios
+- `GET /usuarios` — Lista todos los usuarios.
+- `POST /usuarios` — Registra un nuevo usuario (requiere `CrearUsuarioDto`).
+
+#### Credenciales de Pasaporte
+- `POST /credenciales-pasaporte` — Valida el pasaporte de un usuario (requiere `ValidarPasaporteDto`).
 
 ### 🛡️ Autenticación y Seguridad
 
