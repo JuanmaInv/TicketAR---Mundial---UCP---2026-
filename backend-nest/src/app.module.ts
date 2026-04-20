@@ -5,11 +5,12 @@ import { PassportCredentialsModule } from './passport-credentials/passport-crede
 import { ReservationsModule } from './reservations/reservations.module';
 import { StadiumSectorsModule } from './stadium-sectors/stadium-sectors.module';
 import { MatchesModule } from './matches/matches.module';
+import { UsersModule } from './users/users.module';
 
 
 //MODULO RAIZ QUE CONECTA A TODOS LOS MODULOS ANTERIORES
 @Module({
-  imports: [TicketsModule, PaymentsModule, PassportCredentialsModule, ReservationsModule, StadiumSectorsModule, MatchesModule],
+  imports: [TicketsModule, PaymentsModule, PassportCredentialsModule, ReservationsModule, StadiumSectorsModule, MatchesModule, UsersModule],
   controllers: [],
   providers: [],
 })
