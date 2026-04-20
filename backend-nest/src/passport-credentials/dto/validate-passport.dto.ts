@@ -10,6 +10,8 @@ export class ValidarPasaporteDto {
   numerodocumento: string;
 
   @IsString({ message: 'El código de país debe ser texto' })
-  @Length(2, 3, { message: 'El código de país debe tener 2 o 3 caracteres (ej: AR, USA)' })
+  @Length(2, 3, {
+    message: 'El código de país debe tener 2 o 3 caracteres (ej: AR, USA)',
+  })
   codigoPais: string;
 }

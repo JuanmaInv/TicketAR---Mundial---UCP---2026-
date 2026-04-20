@@ -38,4 +38,3 @@ export class CredencialesService {
     return this.baseDeDatosSimulada;
   }
 }
-

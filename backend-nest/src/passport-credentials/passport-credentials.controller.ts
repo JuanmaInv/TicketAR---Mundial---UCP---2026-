@@ -4,9 +4,7 @@ import { ValidarPasaporteDto } from './dto/validate-passport.dto';
 
 @Controller('credenciales-pasaporte')
 export class CredencialesController {
-  constructor(
-    private readonly credencialesService: CredencialesService,
-  ) {}
+  constructor(private readonly credencialesService: CredencialesService) {}
 
   @Post('validar')
   validar(@Body() validarPasaporteDto: ValidarPasaporteDto) {

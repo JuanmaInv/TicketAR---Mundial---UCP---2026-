@@ -1,20 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TicketsController } from './tickets.controller';
+import { EntradasController } from './tickets.controller';
 
-//SPEC: Specification, se crean automaticamente con el comando npx nest g y sirven para escribir test unitarios
+// SPEC: Specification - se crean automáticamente con el comando npx nest g y sirven para escribir tests unitarios
 
-describe('TicketsController', () => {
-  let controller: TicketsController;
+describe('EntradasController', () => {
+  let controller: EntradasController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [TicketsController],
+      controllers: [EntradasController],
     }).compile();
 
-    controller = module.get<TicketsController>(TicketsController);
+    controller = module.get(EntradasController);
   });
 
-  it('should be defined', () => {
+  it('debería estar definido', () => {
     expect(controller).toBeDefined();
   });
 });
