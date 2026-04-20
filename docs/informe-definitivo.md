@@ -66,15 +66,29 @@ Las entidades representan cómo se ven las tablas de nuestra base de datos (Supa
 5. El **Servicio** se comunica con la **Base de Datos** para crear el registro en estado `reserved`.
 6. El **Servicio** devuelve el éxito al **Controlador**, y este responde al **Frontend** con los datos tipados.
 
-### ✅ Checklist: Pasos para Crear un Nuevo Módulo (La Receta)
-Cada vez que se aborde una nueva funcionalidad importante (ej. `payments`, `users`, `stadium-sectors`), se debe repetir este ciclo exacto:
-1. **Generar la estructura básica:** Usar el Nest CLI para crear el módulo, controlador y servicio (`nest g module nombre`, `nest g controller nombre`, `nest g service nombre`). *Asegúrate de estar en la carpeta correcta (`/backend-nest`).*
-2. **Crear la carpeta DTO:** Dentro de la nueva carpeta del módulo, crea un directorio `dto/` (ej. `src/tickets/dto/`).
-3. **Definir el contrato (DTO):** Crea un archivo (ej. `create-nombre.dto.ts`). Define la clase usando decoradores de `class-validator` (`@IsString()`, `@IsUUID()`, `@IsEnum()`) para establecer qué datos obligatorios debe enviar el frontend.
-4. **Acoplar el DTO al Controlador:** Ve al `.controller.ts`, importa el DTO que creaste y úsalo en el método correspondiente (`@Body() data: CreateNombreDto`). *¡Regla estricta: prohibido usar `any`!*
-5. **Inyectar el Servicio:** Asegúrate de que el controlador tenga acceso a su servicio inyectándolo en el constructor (`constructor(private readonly miService: MiService) {}`).
-6. **Delegar (El mesero pasa el pedido):** En el método del controlador, invoca la función del servicio y pásale la información ya validada (`return this.miService.crear(data);`).
-7. **Escribir la Lógica (El Chef cocina):** Por último, ve al `.service.ts` y escribe todas las reglas críticas de negocio e interacciones con la base de datos de Supabase.
+### ✅ Flujo de Trabajo Backend: De Cero a Producción (La Receta)
+Para mantener una arquitectura limpia y predecible, cada nueva funcionalidad (ej. `payments`, `users`, `stadium-sectors`) debe seguir **estrictamente** este ciclo de desarrollo mental y técnico: `Modularización -> Entidades -> DTOs -> CRUD -> Build`.
+
+**1. Modularización (El Esqueleto)**
+   - Usar el Nest CLI para generar la tríada básica: Módulo, Controlador y Servicio (`nest g module nombre`, `nest g controller nombre`, `nest g service nombre`).
+   - *Objetivo:* Dejar preparadas las columnas del código antes de escribir la lógica.
+
+**2. Entidades (La Base de Datos)**
+   - Definir cómo se estructuran los datos en la base de datos (Supabase) mediante Types, Interfaces o el esquema del ORM.
+   - *Objetivo:* Saber qué columnas e información va a persistir nuestro sistema antes de decidir qué le vamos a pedir al usuario.
+
+**3. DTOs (El Escudo Protector)**
+   - Crear el directorio `dto/` y definir el archivo (ej. `create-nombre.dto.ts`). Usar `class-validator` (`@IsString()`, `@IsEnum()`).
+   - Acoplar el DTO en el Controlador (`@Body() data: CreateNombreDto`).
+   - *Objetivo:* Garantizar que ninguna petición con datos basura alcance nuestra lógica de negocio. Regla estricta: ¡Prohibido usar `any`!
+
+**4. CRUD y Delegación (El Cerebro de la App)**
+   - **Delegar:** Inyectar el Servicio en el Controlador y pasarle el DTO validado (`return this.miService.create(data);`).
+   - **Hacer el CRUD:** Ir al `.service.ts` y escribir los métodos para Crear, Leer, Actualizar o Borrar (Create, Read, Update, Delete) comunicándose directamente con la base de datos de Supabase e implementando la lógica de negocio.
+
+**5. Build (La Prueba de Fuego)**
+   - Ejecutar el comando de compilación (`pnpm run build` o `npm run build`) en la consola local antes de hacer un commit/push.
+   - *Objetivo:* Verificar que todo el TypeScript compila correctamente y que no existan errores de tipos cruzados entre Controladores, DTOs y Servicios. Si el build pasa, el código es seguro para el entorno de Integración Continua (CI).
 
 
 ## 🤖 Protocolo Erwin (IA Tutor)
