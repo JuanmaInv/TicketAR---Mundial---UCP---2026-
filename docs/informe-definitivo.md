@@ -1,263 +1,547 @@
 # Informe Definitivo: TicketAR - Mundial 2026
 
+> **Propósito de este documento:** Guía completa para que cualquier desarrollador nuevo pueda incorporarse al proyecto backend, entender su arquitectura, y extenderlo sin romper nada.
+
+---
+
 ## 🎯 Visión y Lógica de Negocio
+
 Desarrollar una plataforma de venta de entradas enfocada en la seguridad y eliminación de la reventa ilegal.
+
 - **Validación:** Entrada obligatoria con Pasaporte.
 - **Regla Crítica:** Máximo 1 entrada por sesión por usuario.
-- **Reserva:** El servidor bloquea el lugar por tiempo limitado (ej. 15 min) hasta confirmar pago.
+- **Reserva:** El servidor bloquea el lugar por tiempo limitado (15 min) hasta confirmar pago.
 - **Sectores:** Control de capacidad estricto por PLATEA, PALCO, POPULAR y PRENSA.
 - **Entregable:** Generación de código QR enviado por correo tras confirmar el pago.
 - **Reventa:** Sistema oficial integrado en la plataforma con comisión.
 
-## 🛠️ Stack Tecnológico (Monorepo)
-- **Backend:** NestJS (Modular) en `/backend-nest`.
-- **Frontend:** Next.js + Tailwind en `/frontend-client`.
-- **Database/Auth:** Supabase (No usar Clerk).
-- **Pagos:** Stripe (Int) / Mercado Pago (Local). No almacenar datos de tarjetas.
-- **Testing:** Playwright (E2E y estrés).
-- **Métricas:** Graphana para medir el compromiso del equipo.
+---
 
-## 📂 Gestión de Dependencias y Entorno (Estricto)
-- **Instalación:** Ejecutar `npm install` solo en la carpeta del rol correspondiente.
-- **Seguridad:** `.env` está en `.gitignore`. NUNCA subir llaves privadas.
+## 🛠️ Stack Tecnológico (Monorepo)
+
+| Rol | Tecnología | Carpeta |
+|-----|-----------|---------|
+| Backend | NestJS (Modular) | `/backend-nest` |
+| Frontend | Next.js + Tailwind | `/frontend-client` |
+| Base de Datos / Auth | Supabase | — |
+| Pagos | Stripe (Int) / Mercado Pago (Local) | — |
+| Testing E2E | Playwright | — |
+| Métricas | Grafana | — |
+
+> ⚠️ **Regla de oro:** No almacenar datos de tarjetas. No usar Clerk para autenticación.
+
+---
+
+## 🚀 Inicio Rápido (Para el Desarrollador Nuevo)
+
+Si acabas de clonar el repositorio, seguí estos pasos en orden:
+
+### 1. Instalar dependencias del backend
+
+```bash
+cd backend-nest
+pnpm install
+```
+
+### 2. Configurar variables de entorno
+
+```bash
+cp .env.example .env
+# Editar .env con tus credenciales de Supabase y Stripe/MercadoPago
+```
+
+### 3. Levantar el servidor en modo desarrollo
+
+```bash
+pnpm run start:dev
+```
+
+El backend corre en `http://localhost:3000`. El servidor se recarga automáticamente al guardar cambios (hot reload).
+
+### 4. Verificar que funciona
+
+Abrir en el browser o con cualquier cliente HTTP:
+
+```
+GET http://localhost:3000/partidos
+GET http://localhost:3000/sectores
+```
+
+Deben devolver un array JSON con los datos de semilla cargados.
+
+### 5. Correr los tests
+
+```bash
+pnpm run test
+```
+
+Resultado esperado: **6 passed, 0 failed**.
+
+### 6. Verificar que compila sin errores
+
+```bash
+pnpm run build
+```
+
+Si dice `Found 0 errors` o termina sin output de error, el TypeScript está limpio.
+
+---
+
+## 📂 Gestión de Dependencias y Entorno
+
+- **Instalación:** Ejecutar `pnpm install` **solo dentro de la carpeta del rol** (`/backend-nest` o `/frontend-client`). No instalar desde la raíz del monorepo.
+- **Seguridad:** `.env` está en `.gitignore`. **NUNCA subir llaves privadas al repositorio.**
 - **Plantilla:** Usar `.env.example` para que el equipo sepa qué variables configurar.
+- **Variables necesarias:** Ver `.env.example` para la lista actualizada.
+
+---
 
 ## ⚙️ CI/CD y Workflows de Integración
-- **Integración Continua:** Automatización mediante GitHub Actions. Existe `backend-ci.yml` para validar NestJS y se añadirá próximamente `frontend-ci.yml` para React/Next.js.
-- **Triggers:** Se utiliza el wildcard `feat/**` para que las pruebas corran automáticamente en todas las ramas de nuevas funcionalidades tras cada Push o PR.
 
-## 🌿 Flujo de Git y Colaboración (Branch-per-Feature)
-1. **Adopción > Funcionalidad:** Usar herramientas simples que el equipo use a diario.
-2. **Branching:** Ramas dedicadas por funcionalidad (ej. `feat/ticket-reservation`, `feat/auth-passport`, `fix/`, `chore/`). El frontend debe seguir el mismo patrón.
-3. **Protección:** Gatear `main` mediante Pull Requests (PR) y revisión de código. Prohibido hacer merge directo a main.
-4. **Issues:** Una tarea = Una Issue en GitHub. Evitar subtareas confusas; usar "Relationships".
-5. **Sync:** Sincronizar (Rebase/Sync) con `main` diariamente para evitar conflictos.
-6. **Commits Semánticos:** Seguir el estándar definido en el proyecto.
-7. **Documentación:** Preferir metodologías *Docs-as-Code* (guardar en `/docs`) para que las reglas de negocio viajen con la versión de código correspondiente.
+- **Integración Continua:** GitHub Actions. El archivo `backend-ci.yml` corre automáticamente en cada Push o PR hacia ramas `feat/**`.
+- **Qué valida:** Instala dependencias, corre `pnpm run build` y `pnpm run test`.
+- **Regla:** Un PR no puede mergearse si la CI falla.
 
-## 🏗️ Arquitectura y Flujo de Desarrollo Backend (NestJS)
-El backend de TicketAR utiliza una **Arquitectura por Capas** estructurada en módulos. Esto garantiza que el código sea escalable, fácil de probar y de mantener. El desarrollo de cada nueva funcionalidad sigue estrictamente el siguiente flujo:
+---
 
-### 1. Modularización (Modules)
-Cada funcionalidad importante (Auth, Tickets, Usuarios) tiene su propio módulo (`.module.ts`). Es el "organizador" que agrupa los Controladores y Servicios relacionados, manteniendo el código desacoplado.
+## 🌿 Flujo de Git y Colaboración
 
-### 2. DTOs (Data Transfer Objects)
-Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript que validan los datos que entran a la API (usando `class-validator`). 
-- *Misión:* Actúan como un "escudo" de seguridad. Si el frontend envía datos incorrectos, el DTO rechaza la petición con un error 400 antes de que llegue a nuestra lógica.
-- *Beneficio:* Permiten que el equipo de Frontend sepa exactamente qué formato de JSON deben enviar.
+1. **Branching:** Ramas por tarea: `feat/nombre-feature`, `fix/nombre-bug`, `chore/nombre-tarea`.
+2. **Protección:** `main` está protegida. Todo cambio entra por Pull Request con al menos 1 revisión.
+3. **Issues:** Una tarea = Una Issue en GitHub. Usar "Relationships" para vincular issues relacionadas.
+4. **Sync:** Sincronizar con `main` diariamente (`git pull --rebase origin main`).
+5. **Commits semánticos:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
+6. **Docs-as-Code:** Las reglas de negocio viajan en `/docs` junto al código.
 
-### 3. Controladores (Controllers)
-Los controladores (`.controller.ts`) reciben las peticiones HTTP (GET, POST, PUT, DELETE) desde internet.
-- *Regla de Oro:* **No tienen lógica de negocio**. Solo reciben la petición (ya validada por el DTO), llaman al Servicio correspondiente, y devuelven la respuesta HTTP.
+---
 
-### 4. Servicios (Services)
-Los servicios (`.service.ts`) son el "cerebro" puro de la aplicación.
-- *Misión:* Aquí vive toda la regla de negocio (ej. verificar si el usuario ya tiene una entrada, calcular el tiempo de reserva temporal de 15 minutos, aplicar comisiones de reventa).
+## 🏗️ Arquitectura del Backend (NestJS por Capas)
 
-### 5. Entidades y Acceso a Datos (Entities/CRUD)
-Las entidades representan cómo se ven las tablas de nuestra base de datos (Supabase) dentro del código.
-- *Misión:* El Servicio interactúa con la base de datos a través de repositorios/ORMs para hacer el CRUD (Create, Read, Update, Delete) de los registros.
+El backend usa una **Arquitectura por Capas** organizada en módulos independientes. Cada capa tiene una responsabilidad única y no puede saltarse.
 
-### 🔄 Resumen del Flujo de una Petición (Ej. Reserva de Entrada)
-1. El **Frontend (React)** hace una petición HTTP POST a `/tickets/reserve`.
-2. El **DTO** intercepta y valida que los datos sean correctos (ej. ID de usuario válido).
-3. El **Controlador** recibe los datos validados y los pasa al **Servicio**.
-4. El **Servicio** aplica la lógica de negocio (bloqueo temporal de 15 min).
-5. El **Servicio** se comunica con la **Base de Datos** para crear el registro en estado `reserved`.
-6. El **Servicio** devuelve el éxito al **Controlador**, y este responde al **Frontend** con los datos tipados.
+```
+HTTP Request
+     ↓
+[ DTO ]          ← Valida los datos de entrada (escudo protector)
+     ↓
+[ Controller ]   ← Enruta la petición al servicio correcto (solo delega)
+     ↓
+[ Service ]      ← Aplica la lógica de negocio (el cerebro)
+     ↓
+[ Database ]     ← Persiste los datos (Supabase)
+```
 
-### ✅ Flujo de Trabajo Backend: De Cero a Producción (La Receta)
-Para mantener una arquitectura limpia y predecible, cada nueva funcionalidad (ej. `payments`, `users`, `stadium-sectors`) debe seguir **estrictamente** este ciclo de desarrollo mental y técnico en el siguiente orden:
-`Módulo -> Entidad -> DTO -> Controlador -> Servicio (CRUD) -> Base de Datos -> Build`.
+### Roles de cada capa
 
-**1. Módulo (El Esqueleto)**
-   - **Acción:** Usar el Nest CLI para generar la tríada básica del módulo (`nest g module nombre`, `nest g controller nombre`, `nest g service nombre`).
-   - **Detalle:** En NestJS, el Módulo agrupa las funcionalidades lógicamente. Aquí se declaran los controladores y se proveen los servicios. Es el punto de entrada que luego se conecta al `AppModule`.
-   - **Objetivo:** Dejar preparadas las carpetas, archivos base y las conexiones (imports/providers) antes de escribir la lógica, asegurando que el nuevo bloque esté integrado y aislado del resto de la aplicación.
+| Archivo | Rol | Regla |
+|---------|-----|-------|
+| `.dto.ts` | Valida el JSON de entrada | Nunca tiene lógica de negocio |
+| `.controller.ts` | Recibe HTTP y delega al servicio | Nunca accede a la DB directamente |
+| `.service.ts` | Toda la lógica de negocio | Única capa que toca la DB |
+| `.entity.ts` | Define la forma de los datos en DB | Refleja exactamente las columnas de Supabase |
+| `.module.ts` | Agrupa y conecta las piezas | Se registra en `AppModule` |
 
-**2. Entidad (El Plano de la Base de Datos)**
-   - **Acción:** Crear un archivo `.entity.ts` definiendo las propiedades (columnas) y tipos de datos.
-   - **Detalle:** Representa cómo se guardará la información en la base de datos (Supabase). Establece el modelo de dominio central para la funcionalidad (ej. qué campos exactos tiene un Usuario o un Sector).
-   - **Objetivo:** Tener un "plano" claro de qué información va a persistir nuestro sistema. Sin saber qué vamos a guardar, es imposible saber qué información exigirle al usuario en el siguiente paso.
+---
 
-**3. DTO (Data Transfer Object - El Escudo Protector)**
-   - **Acción:** Crear clases con decoradores de `class-validator` (ej. `@IsString()`, `@IsNotEmpty()`, `@IsEnum()`).
-   - **Detalle:** Define el contrato estricto de entrada y salida de nuestra API. Verifica automáticamente que los datos enviados por el frontend (React) tengan el formato exacto antes de que toquen nuestro código.
-   - **Objetivo:** Garantizar que ninguna petición con datos basura o malintencionados cruce nuestra frontera. Actúa como la primera línea de defensa para proteger la integridad del backend.
+## ✅ Flujo de Trabajo Backend: La Receta para Agregar un Módulo Nuevo
 
-**4. Controlador (El Mesero)**
-   - **Acción:** Configurar rutas (ej. `@Get()`, `@Post()`), importar el DTO (`@Body() data: MiDto`) e inyectar el Servicio en el constructor.
-   - **Detalle:** Su única responsabilidad es escuchar las peticiones HTTP, recibir los datos ya validados por el DTO y delegar el trabajo pesado al Servicio. No debe tener lógica de negocio (nada de validaciones complejas o "ifs" de negocio).
-   - **Objetivo:** Actuar como enrutador eficiente. Recibe el pedido limpio, se lo pasa al "Chef" (el Servicio) y, cuando este termina, le devuelve la respuesta formateada al cliente.
+Seguir **estrictamente** este orden al crear cualquier funcionalidad nueva:
 
-**5. Servicio y CRUD (El Chef)**
-   - **Acción:** Implementar los métodos de negocio (Create, Read, Update, Delete).
-   - **Detalle:** Aquí residen las reglas de negocio, los cálculos lógicos y la interacción con los datos. Es el cerebro de la aplicación.
-   - **Objetivo:** Procesar los datos. Inicialmente (usando *Mock-Driven Development*), guardamos en un array en memoria temporal para avanzar rápidamente en la lógica del negocio sin depender de servicios externos caídos o configuraciones complejas.
+```
+1. Módulo → 2. Entidad → 3. DTO → 4. Controlador → 5. Servicio → 6. Tests → 7. Base de Datos → 8. Build
+```
 
-**6. Base de Datos (La Bóveda)**
-   - **Acción:** Reemplazar las operaciones del array temporal en el Servicio por consultas reales (queries) a Supabase.
-   - **Detalle:** Este es el paso final de desarrollo donde conectamos nuestra aplicación a la persistencia real. Manejamos promesas, errores de base de datos y transacciones.
-   - **Objetivo:** Guardar los datos de forma permanente.
-   - **💡 Ventaja Arquitectónica Clave:** Al dejar esto para el final y aislar la lógica de DB exclusivamente dentro del Servicio, logramos que la base de datos sea un "detalle de implementación". Si el día de mañana migramos de Supabase a PostgreSQL clásico o MongoDB, **ni los Controladores, ni los DTOs, ni los Módulos se ven afectados**.
+---
 
-**7. Build (La Prueba de Fuego)**
-   - **Acción:** Ejecutar el comando de compilación estricta (`pnpm run build` o equivalente).
-   - **Detalle:** El compilador revisa todo el código en busca de inconsistencias de tipos de TypeScript o errores de sintaxis que pasaron desapercibidos durante el desarrollo.
-   - **Objetivo:** Verificar que las interfaces, DTOs y Entidades se comuniquen perfectamente entre capas. Un "build" exitoso es nuestro sello de garantía de que el código es robusto y está listo para ser mergeado a la rama principal.
+### Paso 1 — Módulo (El Esqueleto)
 
+**Comando:**
+```bash
+cd backend-nest
+npx nest g module nombre-modulo
+npx nest g controller nombre-modulo
+npx nest g service nombre-modulo
+```
 
-## 🧩 Módulos Implementados y Diccionario de Datos (Frontend Contract)
+**Qué hace:** Genera la carpeta `src/nombre-modulo/` con 3 archivos base y los conecta automáticamente al `AppModule`.
 
-Para que el equipo de Frontend pueda trabajar en paralelo, a continuación se detallan los objetos (Entidades) y los contratos de entrada (DTOs) de cada módulo.
+**Verificar:** Abrir `src/app.module.ts` y confirmar que el nuevo módulo aparece en `imports: []`.
 
-### 1. Módulo de Usuarios (`usuarios`)
-Gestiona el perfil del hincha y su vinculación con el pasaporte.
-- **Entidad `UsuarioEntidad`** *(archivo: `usuario.entity.ts`)*:
+---
+
+### Paso 2 — Entidad (El Plano de la DB)
+
+**Crear:** `src/nombre-modulo/entities/nombre.entity.ts`
+
+**Qué es:** Una clase TypeScript plana que define los campos que tendrá la tabla en Supabase.
+
+```typescript
+// Ejemplo: partido.entity.ts
+export class PartidoEntidad {
+  id: string;           // UUID de Supabase
+  equipoLocal: string;
+  equipoVisitante: string;
+  fechaPartido: Date;
+  estado: 'PROGRAMADO' | 'EN_CURSO' | 'FINALIZADO' | 'CANCELADO';
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
+}
+```
+
+**Por qué primero:** Sin saber qué guardar, no se puede diseñar el DTO del siguiente paso.
+
+---
+
+### Paso 3 — DTO (El Escudo Protector)
+
+**Crear:** `src/nombre-modulo/dto/crear-nombre.dto.ts`
+
+**Qué es:** Una clase con decoradores de `class-validator` que valida automáticamente los datos que llegan del frontend.
+
+```typescript
+// Ejemplo: crear-partido.dto.ts
+import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
+
+export class CrearPartidoDto {
+  @IsString({ message: 'El equipo local debe ser texto' })
+  @IsNotEmpty({ message: 'El equipo local es obligatorio' })
+  equipoLocal: string;
+
+  @IsDateString({}, { message: 'La fecha debe ser una fecha válida (ISO)' })
+  @IsNotEmpty()
+  fechaPartido: Date;
+}
+```
+
+**Resultado:** Si el frontend envía datos incorrectos, el DTO rechaza automáticamente con un `400 Bad Request` antes de que llegue al servicio.
+
+> ⚠️ **IMPORTANTE:** Para que el DTO valide, el `main.ts` debe tener habilitado el `ValidationPipe`:
+> ```typescript
+> app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+> ```
+
+---
+
+### Paso 4 — Controlador (El Mesero)
+
+**Editar:** `src/nombre-modulo/nombre-modulo.controller.ts`
+
+**Regla de oro:** El controlador **no tiene lógica de negocio**. Solo recibe, delega y responde.
+
+```typescript
+@Controller('partidos')          // ← Define la ruta base: /partidos
+export class PartidosController {
+  constructor(private readonly partidosService: PartidosService) {}
+
+  @Get()                         // GET /partidos
+  obtenerTodos() {
+    return this.partidosService.obtenerTodos();
+  }
+
+  @Post()                        // POST /partidos
+  crear(@Body() dto: CrearPartidoDto) {
+    return this.partidosService.crear(dto);   // ← Delega al servicio
+  }
+}
+```
+
+> 💡 **Nota sobre idiomas:** Las rutas del `@Controller()` están en **español** para consistencia con el proyecto (`'partidos'`, `'sectores'`, `'entradas'`, etc.).
+
+---
+
+### Paso 5 — Servicio y CRUD (El Chef)
+
+**Editar:** `src/nombre-modulo/nombre-modulo.service.ts`
+
+**Fase 1 — Mock-Driven Development:** Usar un array en memoria para desarrollar sin depender de Supabase.
+
+```typescript
+@Injectable()
+export class PartidosService {
+  // Datos de semilla para desarrollo (se reemplaza con Supabase en el Paso 7)
+  private baseDeDatosSimulada: PartidoEntidad[] = [
+    {
+      id: 'uuid-ejemplo-001',
+      equipoLocal: 'Argentina',
+      equipoVisitante: 'Brasil',
+      fechaPartido: new Date('2026-06-15T18:00:00Z'),
+      nombreEstadio: 'MetLife Stadium',
+      estado: 'PROGRAMADO',
+      fechaCreacion: new Date(),
+      fechaActualizacion: new Date(),
+    },
+  ];
+
+  obtenerTodos(): PartidoEntidad[] {
+    return this.baseDeDatosSimulada;
+  }
+
+  crear(dto: CrearPartidoDto): PartidoEntidad {
+    const nuevo: PartidoEntidad = {
+      id: crypto.randomUUID(),
+      ...dto,
+      estado: 'PROGRAMADO',
+      fechaCreacion: new Date(),
+      fechaActualizacion: new Date(),
+    };
+    this.baseDeDatosSimulada.push(nuevo);
+    return nuevo;
+  }
+}
+```
+
+> ⚠️ **Limitación del mock:** Los datos se pierden cada vez que el servidor reinicia. Esto es intencional en esta fase.
+
+---
+
+### Paso 6 — Tests (Los Specs)
+
+Nest CLI genera automáticamente archivos `.spec.ts` al crear módulos. Hay que **completarlos** correctamente.
+
+#### Error frecuente: dependencias faltantes en el módulo de testing
+
+```typescript
+// ❌ INCORRECTO — NestJS no puede inyectar el servicio al controlador
+const module = await Test.createTestingModule({
+  controllers: [PartidosController],
+}).compile();
+
+// ✅ CORRECTO — El servicio se provee para que NestJS pueda inyectarlo
+const module = await Test.createTestingModule({
+  controllers: [PartidosController],
+  providers: [PartidosService],    // ← SIEMPRE incluir los providers del controlador
+}).compile();
+```
+
+**Regla:** Si el controlador tiene `constructor(private service: AlgunServicio)`, ese servicio **debe estar en `providers`** del módulo de testing.
+
+#### Correr los tests
+
+```bash
+pnpm run test           # Corre todos los specs una vez
+pnpm run test:watch     # Modo watch (re-corre al guardar)
+pnpm run test:cov       # Con reporte de cobertura
+```
+
+**Resultado esperado:** Todos los suites en `PASS`. Si hay `FAIL`, revisar el error antes de avanzar al siguiente paso.
+
+---
+
+### Paso 7 — Base de Datos (La Bóveda — Supabase)
+
+**Estado actual del proyecto:** ⏳ Pendiente de integración.
+
+**Acción:** Reemplazar las operaciones del array temporal en el Servicio por consultas reales al cliente de Supabase.
+
+```typescript
+// Antes (mock):
+return this.baseDeDatosSimulada;
+
+// Después (Supabase):
+const { data, error } = await this.supabase.from('partidos').select('*');
+if (error) throw new InternalServerErrorException(error.message);
+return data;
+```
+
+**Variables de entorno necesarias:**
+```
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=eyJhbGci...
+```
+
+> 💡 **Ventaja arquitectónica:** Solo el Servicio cambia. Los Controladores, DTOs y Módulos no se tocan.
+
+---
+
+### Paso 8 — Build (La Prueba de Fuego)
+
+**Antes de todo PR, ejecutar:**
+
+```bash
+pnpm run build
+```
+
+- Sin output de error → ✅ TypeScript limpio, listo para mergear.
+- Con errores `TS2345`, `TS2322`, etc. → ❌ Corregir antes de hacer push.
+
+**Por qué es obligatorio:** El compilador detecta errores de tipos que el editor puede ignorar. Si el build no pasa, la CI lo rechazará.
+
+---
+
+## 🧩 Módulos Implementados — Estado Actual
+
+| Módulo | Carpeta | Ruta HTTP | Estado |
+|--------|---------|-----------|--------|
+| Usuarios | `src/usuarios/` | `/usuarios` | ✅ Mock |
+| Partidos | `src/matches/` | `/partidos` | ✅ Mock |
+| Sectores | `src/stadium-sectors/` | `/sectores` | ✅ Mock |
+| Entradas | `src/tickets/` | `/entradas` | ✅ Mock |
+| Pagos | `src/payments/` | `/pagos` | 🔲 Esqueleto |
+| Credenciales Pasaporte | `src/passport-credentials/` | `/credenciales-pasaporte` | ✅ Mock |
+
+---
+
+## 📋 Diccionario de Datos (Contrato con el Frontend)
+
+### Módulo Usuarios (`/usuarios`)
+- **Entidad `UsuarioEntidad`** (`usuario.entity.ts`):
   - `id`: string (UUID de Supabase)
   - `email`: string
   - `nombre`: string
   - `apellido`: string
   - `numeroPasaporte`: string
-  - `rol`: enum (`'USUARIO'` \| `'ADMIN'` \| `'PRENSA'`)
-- **DTO `CrearUsuarioDto`** *(archivo: `crear-usuario.dto.ts`)*: Requeridos `email`, `nombre`, `apellido` y `numeroPasaporte`.
+  - `rol`: `'USUARIO'` | `'ADMIN'` | `'PRENSA'`
+- **DTO `CrearUsuarioDto`** (`crear-usuario.dto.ts`): Requeridos `email`, `nombre`, `apellido`, `numeroPasaporte`.
 
-### 2. Módulo de Partidos (`matches`)
-Catálogo de eventos deportivos.
-- **Entidad `PartidoEntidad`** *(archivo: `match.entity.ts`)*:
+### Módulo Partidos (`/partidos`)
+- **Entidad `PartidoEntidad`** (`match.entity.ts`):
   - `id`: string (UUID de Supabase)
   - `equipoLocal`: string
   - `equipoVisitante`: string
   - `fechaPartido`: Date (ISO string)
   - `nombreEstadio`: string
-  - `estado`: enum (`'PROGRAMADO'` \| `'EN_CURSO'` \| `'FINALIZADO'` \| `'CANCELADO'`)
+  - `estado`: `'PROGRAMADO'` | `'EN_CURSO'` | `'FINALIZADO'` | `'CANCELADO'`
   - `fechaCreacion`: Date
   - `fechaActualizacion`: Date
-- **DTO `CrearPartidoDto`** *(archivo: `create-match.dto.ts`)*: Requeridos `equipoLocal`, `equipoVisitante`, `fechaPartido` y `nombreEstadio`.
+- **DTO `CrearPartidoDto`** (`create-match.dto.ts`): Requeridos `equipoLocal`, `equipoVisitante`, `fechaPartido`, `nombreEstadio`.
 
-### 3. Módulo de Sectores (`stadium-sectors`)
-Control de inventario y precios por zona.
-- **Entidad `StadiumSectorEntity`** *(archivo: `stadium-sector.entity.ts`)*:
+### Módulo Sectores (`/sectores`)
+- **Entidad `StadiumSectorEntity`** (`stadium-sector.entity.ts`):
   - `id`: string
-  - `name`: string (valores: `'PLATEA'`, `'PALCO'`, `'POPULAR'`, `'PRENSA'`)
+  - `name`: string (`'PLATEA'` | `'PALCO'` | `'POPULAR'` | `'PRENSA'`)
   - `capacity`: number
   - `availableSeats`: number
-  - `price`: number (Precio en ARS - Pesos Argentinos)
+  - `price`: number (en ARS)
   - `createdAt`: Date
   - `updatedAt`: Date
-- **DTO `CrearSectorDto`** *(archivo: `create-stadium-sector.dto.ts`)*: Requeridos `nombre`, `capacidad` y `precio`.
+- **DTO `CrearSectorDto`** (`create-stadium-sector.dto.ts`): Requeridos `nombre`, `capacidad`, `precio`.
 
-### 4. Módulo de Entradas (`tickets`)
-Lógica central de reserva y venta.
-- **Entidad `TicketEntity`** *(archivo: `ticket.entity.ts`)*:
+### Módulo Entradas (`/entradas`)
+- **Entidad `TicketEntity`** (`ticket.entity.ts`):
   - `id`: string (UUID de Supabase)
-  - `userId`: string (Relación con el Usuario — campo en inglés por compatibilidad Supabase)
-  - `sectorId`: string (Relación con StadiumSector)
-  - `status`: `TicketStatus` → enum (`'RESERVADO'` \| `'PAGADO'` \| `'CANCELADO'`)
-  - `reservationExpiresAt?`: Date (Regla de negocio: bloqueo temporal de 15 min)
-  - `qrCode?`: string (Generado únicamente cuando el estado pasa a `PAGADO`)
+  - `userId`: string (relación con Usuario)
+  - `sectorId`: string (relación con Sector)
+  - `status`: `TicketStatus` → `'RESERVADO'` | `'PAGADO'` | `'CANCELADO'`
+  - `reservationExpiresAt?`: Date (bloqueo 15 min)
+  - `qrCode?`: string (solo cuando status = `'PAGADO'`)
   - `createdAt`: Date
   - `updatedAt`: Date
-- **DTO `CrearEntradaDto`** *(archivo: `create-ticket.dto.ts`)*: Requeridos `idUsuario` e `idSector`.
+- **DTO `CrearEntradaDto`** (`create-ticket.dto.ts`): Requeridos `idUsuario`, `idSector`.
 
-### 5. Módulo de Pagos (`pagos`)
-Interfaz con pasarelas externas.
-- **Clase de módulo `PagosModule`** *(archivo: `payments.module.ts`)*: Módulo declarado y listo para integración con Mercado Pago / Stripe.
-- **Entidad `PagoEntidad`** *(pendiente de implementación)* — campos esperados:
-  - `id`: string
-  - `idEntrada`: string
-  - `monto`: number
-  - `moneda`: string (por defecto: `'ARS'`)
-  - `estado`: enum (`'PENDIENTE'` \| `'COMPLETADO'` \| `'FALLIDO'`)
-  - `pasarela`: enum (`'MERCADOPAGO'` \| `'STRIPE'`)
-- **DTO `ProcesarPagoDto`** *(pendiente)*: Requerirá `idEntrada` y el `payment_id` generado por el SDK de Mercado Pago.
+### Módulo Pagos (`/pagos`) — ⏳ Pendiente
+- **Módulo `PagosModule`** declarado y listo.
+- Entidad y DTO pendientes de implementación.
+- Campos esperados: `idEntrada`, `monto`, `moneda` (`'ARS'`), `estado` (`'PENDIENTE'`|`'COMPLETADO'`|`'FALLIDO'`), `pasarela` (`'MERCADOPAGO'`|`'STRIPE'`).
 
-### 6. Módulo de Credenciales de Pasaporte (`passport-credentials`)
-Validación de identidad del comprador.
-- **Entidad `CredencialPasaporteEntidad`** *(archivo: `passport-credential.entity.ts`)*:
+### Módulo Credenciales de Pasaporte (`/credenciales-pasaporte`)
+- **Entidad `CredencialPasaporteEntidad`** (`passport-credential.entity.ts`):
   - `id`: string (UUID de Supabase)
-  - `idUsuario`: string (Relación con el Usuario)
-  - `numerodocumento`: string (Número de pasaporte — requisito crítico)
-  - `codigoPais`: string (Ej: `AR`, `USA`, `BRA`)
-  - `estaValidado`: boolean (Debe ser `true` para emitir entradas)
+  - `idUsuario`: string
+  - `numerodocumento`: string (requisito crítico)
+  - `codigoPais`: string (`'AR'`, `'USA'`, `'BRA'`, etc.)
+  - `estaValidado`: boolean (debe ser `true` para emitir entradas)
   - `fechaCreacion`: Date
   - `fechaActualizacion`: Date
-- **DTO `ValidarPasaporteDto`** *(archivo: `validate-passport.dto.ts`)*: Requeridos `idUsuario`, `numerodocumento` y `codigoPais` (2-3 caracteres).
+- **DTO `ValidarPasaporteDto`** (`validate-passport.dto.ts`): Requeridos `idUsuario`, `numerodocumento`, `codigoPais` (2-3 caracteres).
 
-### 🚦 Endpoints de la API (Rutas Base)
+---
 
-El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones deben incluir el header `Content-Type: application/json`.
+## 🚦 Endpoints de la API
+
+El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones deben incluir `Content-Type: application/json`.
 
 #### Partidos
-- `GET /partidos` — Lista todos los partidos.
-- `GET /partidos/:id` — Detalle de un partido específico.
-- `POST /partidos` — Crea un nuevo partido (requiere `CrearPartidoDto`).
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/partidos` | Lista todos los partidos |
+| GET | `/partidos/:id` | Detalle de un partido |
+| POST | `/partidos` | Crea un partido (body: `CrearPartidoDto`) |
 
-#### Sectores del Estadio
-- `GET /sectores` — Lista todos los sectores disponibles.
-- `GET /sectores/:id` — Detalle de un sector.
-- `POST /sectores` — Crea un sector (requiere `CrearSectorDto`).
+#### Sectores
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/sectores` | Lista todos los sectores |
+| GET | `/sectores/:id` | Detalle de un sector |
+| POST | `/sectores` | Crea un sector (body: `CrearSectorDto`) |
 
 #### Entradas
-- `GET /entradas` — Lista todas las entradas.
-- `POST /entradas` — Inicia una reserva de 15 min (requiere `CrearEntradaDto`).
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/entradas` | Lista todas las entradas |
+| POST | `/entradas` | Reserva una entrada, bloquea 15 min (body: `CrearEntradaDto`) |
 
 #### Usuarios
-- `GET /usuarios` — Lista todos los usuarios.
-- `POST /usuarios` — Registra un nuevo usuario (requiere `CrearUsuarioDto`).
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/usuarios` | Lista todos los usuarios |
+| POST | `/usuarios` | Registra un usuario (body: `CrearUsuarioDto`) |
 
 #### Credenciales de Pasaporte
-- `POST /credenciales-pasaporte` — Valida el pasaporte de un usuario (requiere `ValidarPasaporteDto`).
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/credenciales-pasaporte` | Valida pasaporte (body: `ValidarPasaporteDto`) |
 
-### 🛡️ Autenticación y Seguridad
+---
 
-Utilizamos **Supabase Auth**. El flujo para el frontend es:
-1. El usuario se loguea en el frontend mediante Supabase Client.
+## 🛡️ Autenticación y Seguridad
+
+Utilizamos **Supabase Auth**. Flujo para el frontend:
+
+1. El usuario se loguea mediante el Supabase Client en el frontend.
 2. El frontend obtiene el `access_token` (JWT).
-3. **Obligatorio:** Cada petición al backend (excepto `GET /matches`) debe incluir el header:
-   `Authorization: Bearer <JWT_TOKEN>`
+3. **Obligatorio:** Cada petición al backend (excepto `GET /partidos`) debe incluir:
+   ```
+   Authorization: Bearer <JWT_TOKEN>
+   ```
 
-### ⚠️ Manejo de Errores (Error Contract)
+---
 
-El backend siempre responderá con una estructura estándar en caso de fallo, permitiendo al frontend mostrar mensajes amigables:
+## ⚠️ Manejo de Errores (Error Contract)
+
+El backend responde con esta estructura estándar en caso de fallo:
 
 ```json
 {
   "statusCode": 400,
-  "message": ["passportNumber must be a valid passport", "fullName is required"],
+  "message": ["El nombre es obligatorio", "El correo no es válido"],
   "error": "Bad Request",
   "timestamp": "2026-04-20T12:00:00Z",
-  "path": "/users"
+  "path": "/usuarios"
 }
 ```
 
-### 🧠 Reglas de Negocio Críticas (Reminder)
+---
 
-1. **La Regla de los 15 Minutos:** Al crear un Ticket, el backend guarda la fecha de expiración. El frontend debe mostrar una cuenta regresiva. Pasado ese tiempo, el ticket se marca como `CANCELLED` y el lugar se libera automáticamente.
-2. **Validación de Pasaporte:** No se permite emitir un ticket si el número de pasaporte no ha sido validado contra el servicio de migraciones (simulado en el módulo `passport-credentials`).
-3. **Un Ticket por Usuario:** El sistema bloqueará cualquier intento de compra si el usuario ya posee un ticket activo para el mismo partido.
+## 🧠 Reglas de Negocio Críticas
+
+1. **La Regla de los 15 Minutos:** Al crear una entrada, el backend guarda `reservationExpiresAt = now + 15min`. El frontend debe mostrar una cuenta regresiva. Pasado ese tiempo, la entrada pasa a `CANCELADO` y el lugar se libera.
+2. **Validación de Pasaporte:** No se emite ninguna entrada si el `estaValidado` de la credencial del usuario es `false`.
+3. **Un Ticket por Partido:** El servicio verifica que el usuario no tenga ya una entrada activa (`RESERVADO` o `PAGADO`) para el mismo partido antes de crear una nueva.
 
 ---
 
-### 🛠️ Enums Compartidos (Single Source of Truth)
+## 🛠️ Enums Compartidos (Single Source of Truth)
 
-Para asegurar la integridad de los datos entre el backend y el frontend, se han definido enums globales en `backend-nest/src/common/enums/`. El frontend **debe** utilizar estos valores exactos al realizar peticiones:
+Ubicación: `backend-nest/src/common/enums/`
 
-- **`TipoSector`** *(archivo: `sector-type.enum.ts`)*:
-  - `POPULAR`: Acceso general.
-  - `PLATEA`: Asientos numerados.
-  - `PALCO`: Zona preferencial.
-  - `PRENSA`: Acceso exclusivo para periodistas acreditados.
+El frontend **debe** usar estos valores exactos:
 
-- **`TicketStatus`** *(archivo: `ticket-status.enum.ts`)* — ⚠️ *Valores en español en el código:*
-  - `RESERVADO`: El lugar está bloqueado por el servidor (15 min).
-  - `PAGADO`: Pago confirmado, QR generado.
-  - `CANCELADO`: Reserva expirada o pago rechazado.
+- **`TipoSector`** (`sector-type.enum.ts`):
+  - `POPULAR` — Acceso general.
+  - `PLATEA` — Asientos numerados.
+  - `PALCO` — Zona preferencial.
+  - `PRENSA` — Periodistas acreditados.
+
+- **`TicketStatus`** (`ticket-status.enum.ts`):
+  - `RESERVADO` — Bloqueado por el servidor (15 min).
+  - `PAGADO` — Pago confirmado, QR generado.
+  - `CANCELADO` — Reserva expirada o pago rechazado.
 
 ---
 
 ## 🤖 Protocolo Erwin (IA Tutor)
+
 - **Método Socrático:** No dar código completo. Proporcionar pistas, teoría y fragmentos educativos.
-- **Foco Backend:** Erwin es Backend Engineer. Priorizar lógica de servicios, DTOs y seguridad en NestJS.
+- **Foco Backend:** Priorizar lógica de servicios, DTOs y seguridad en NestJS.
 - **Contexto:** Si falta información, preguntar antes de asumir.
-- **Visión Fullstack y API:** Erwin debe explicar siempre cómo los controladores y endpoints de NestJS serán consumidos posteriormente desde el Frontend (React/Next.js con TypeScript) mediante DTOs e interfaces, asegurando que el backend exponga datos limpios y tipados.
+- **Visión Fullstack:** Explicar siempre cómo los endpoints serán consumidos desde el Frontend (Next.js/TypeScript) mediante DTOs e interfaces tipadas.
