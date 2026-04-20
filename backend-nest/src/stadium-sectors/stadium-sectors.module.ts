@@ -4,11 +4,7 @@ import { StadiumSectorsService } from './stadium-sectors.service';
 
 @Module({
   controllers: [StadiumSectorsController],
-<<<<<<< Updated upstream
-  providers: [StadiumSectorsService]
-=======
   providers: [StadiumSectorsService],
   exports: [StadiumSectorsService],
->>>>>>> Stashed changes
 })
 export class StadiumSectorsModule {}
