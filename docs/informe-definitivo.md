@@ -111,61 +111,78 @@ Para mantener una arquitectura limpia y predecible, cada nueva funcionalidad (ej
 
 Para que el equipo de Frontend pueda trabajar en paralelo, a continuación se detallan los objetos (Entidades) y los contratos de entrada (DTOs) de cada módulo.
 
-### 1. Módulo de Usuarios (`Users`)
+### 1. Módulo de Usuarios (`usuarios`)
 Gestiona el perfil del hincha y su vinculación con el pasaporte.
-- **Entidad `User`:**
-  - `id`: string (UUID)
+- **Entidad `UsuarioEntidad`** *(archivo: `usuario.entity.ts`)*:
+  - `id`: string (UUID de Supabase)
   - `email`: string
-  - `fullName`: string
-  - `passportNumber`: string
-  - `nationality`: string
-  - `role`: enum ('USER', 'ADMIN', 'PRESS')
-- **DTO `CreateUserDto`:** Requeridos todos los campos de la entidad para el registro inicial.
+  - `nombre`: string
+  - `apellido`: string
+  - `numeroPasaporte`: string
+  - `rol`: enum (`'USUARIO'` \| `'ADMIN'` \| `'PRENSA'`)
+- **DTO `CrearUsuarioDto`** *(archivo: `crear-usuario.dto.ts`)*: Requeridos `email`, `nombre`, `apellido` y `numeroPasaporte`.
 
-### 2. Módulo de Partidos (`Matches`)
+### 2. Módulo de Partidos (`matches`)
 Catálogo de eventos deportivos.
-- **Entidad `Match`:**
-  - `id`: string (UUID)
-  - `teamA`: string
-  - `teamB`: string
-  - `matchDate`: Date (ISO string)
-  - `stadiumName`: string
-  - `status`: enum ('SCHEDULED', 'ONGOING', 'FINISHED', 'CANCELLED')
-- **DTO `CreateMatchDto`:** Requeridos `teamA`, `teamB`, `matchDate` y `stadiumName`.
+- **Entidad `PartidoEntidad`** *(archivo: `match.entity.ts`)*:
+  - `id`: string (UUID de Supabase)
+  - `equipoLocal`: string
+  - `equipoVisitante`: string
+  - `fechaPartido`: Date (ISO string)
+  - `nombreEstadio`: string
+  - `estado`: enum (`'PROGRAMADO'` \| `'EN_CURSO'` \| `'FINALIZADO'` \| `'CANCELADO'`)
+  - `fechaCreacion`: Date
+  - `fechaActualizacion`: Date
+- **DTO `CrearPartidoDto`** *(archivo: `create-match.dto.ts`)*: Requeridos `equipoLocal`, `equipoVisitante`, `fechaPartido` y `nombreEstadio`.
 
-### 3. Módulo de Sectores (`StadiumSectors`)
+### 3. Módulo de Sectores (`stadium-sectors`)
 Control de inventario y precios por zona.
-- **Entidad `StadiumSector`:**
+- **Entidad `StadiumSectorEntity`** *(archivo: `stadium-sector.entity.ts`)*:
   - `id`: string
-  - `name`: enum ('POPULAR', 'PLATEA', 'PALCO', 'PRENSA')
+  - `name`: string (valores: `'PLATEA'`, `'PALCO'`, `'POPULAR'`, `'PRENSA'`)
   - `capacity`: number
   - `availableSeats`: number
-  - `price`: number (Precio base en ARS - Pesos Argentinos)
-- **DTO `CreateStadiumSectorDto`:** Requeridos `name`, `capacity` y `price`.
+  - `price`: number (Precio en ARS - Pesos Argentinos)
+  - `createdAt`: Date
+  - `updatedAt`: Date
+- **DTO `CrearSectorDto`** *(archivo: `create-stadium-sector.dto.ts`)*: Requeridos `nombre`, `capacidad` y `precio`.
 
-### 4. Módulo de Entradas (`Tickets`)
+### 4. Módulo de Entradas (`tickets`)
 Lógica central de reserva y venta.
-- **Entidad `Ticket`:**
-  - `id`: string (UUID)
-  - `userId`: string (Relación con User)
-  - `matchId`: string (Relación con Match)
-  - `sectorId`: string (Relación con Sector)
-  - `status`: enum ('RESERVED', 'PAID', 'CANCELLED')
-  - `reservedAt`: Date
-  - `expiresAt`: Date (reservedAt + 15 min)
-  - `qrCode`: string (URL o base64 generado tras el pago)
-- **DTO `CreateTicketDto`:** Requeridos `userId`, `matchId` y `sectorId`.
+- **Entidad `TicketEntity`** *(archivo: `ticket.entity.ts`)*:
+  - `id`: string (UUID de Supabase)
+  - `userId`: string (Relación con el Usuario — campo en inglés por compatibilidad Supabase)
+  - `sectorId`: string (Relación con StadiumSector)
+  - `status`: `TicketStatus` → enum (`'RESERVADO'` \| `'PAGADO'` \| `'CANCELADO'`)
+  - `reservationExpiresAt?`: Date (Regla de negocio: bloqueo temporal de 15 min)
+  - `qrCode?`: string (Generado únicamente cuando el estado pasa a `PAGADO`)
+  - `createdAt`: Date
+  - `updatedAt`: Date
+- **DTO `CrearEntradaDto`** *(archivo: `create-ticket.dto.ts`)*: Requeridos `idUsuario` e `idSector`.
 
-### 5. Módulo de Pagos (`Payments`)
+### 5. Módulo de Pagos (`pagos`)
 Interfaz con pasarelas externas.
-- **Entidad `Payment`:**
+- **Clase de módulo `PagosModule`** *(archivo: `payments.module.ts`)*: Módulo declarado y listo para integración con Mercado Pago / Stripe.
+- **Entidad `PagoEntidad`** *(pendiente de implementación)* — campos esperados:
   - `id`: string
-  - `ticketId`: string
-  - `amount`: number
-  - `currency`: string (Default: 'ARS')
-  - `status`: enum ('PENDING', 'COMPLETED', 'FAILED')
-  - `gateway`: enum ('MERCADOPAGO', 'STRIPE')
-- **DTO `ProcessPaymentDto`:** Requeridos `ticketId` y el `payment_id` generado por el SDK de Mercado Pago.
+  - `idEntrada`: string
+  - `monto`: number
+  - `moneda`: string (por defecto: `'ARS'`)
+  - `estado`: enum (`'PENDIENTE'` \| `'COMPLETADO'` \| `'FALLIDO'`)
+  - `pasarela`: enum (`'MERCADOPAGO'` \| `'STRIPE'`)
+- **DTO `ProcesarPagoDto`** *(pendiente)*: Requerirá `idEntrada` y el `payment_id` generado por el SDK de Mercado Pago.
+
+### 6. Módulo de Credenciales de Pasaporte (`passport-credentials`)
+Validación de identidad del comprador.
+- **Entidad `CredencialPasaporteEntidad`** *(archivo: `passport-credential.entity.ts`)*:
+  - `id`: string (UUID de Supabase)
+  - `idUsuario`: string (Relación con el Usuario)
+  - `numerodocumento`: string (Número de pasaporte — requisito crítico)
+  - `codigoPais`: string (Ej: `AR`, `USA`, `BRA`)
+  - `estaValidado`: boolean (Debe ser `true` para emitir entradas)
+  - `fechaCreacion`: Date
+  - `fechaActualizacion`: Date
+- **DTO `ValidarPasaporteDto`** *(archivo: `validate-passport.dto.ts`)*: Requeridos `idUsuario`, `numerodocumento` y `codigoPais` (2-3 caracteres).
 
 ### 🚦 Endpoints de la API (Rutas Base)
 
@@ -210,18 +227,18 @@ El backend siempre responderá con una estructura estándar en caso de fallo, pe
 
 ### 🛠️ Enums Compartidos (Single Source of Truth)
 
-Para asegurar la integridad de los datos entre el backend y el frontend, se han definido enums globales. El frontend **debe** utilizar estos valores exactos al realizar peticiones:
+Para asegurar la integridad de los datos entre el backend y el frontend, se han definido enums globales en `backend-nest/src/common/enums/`. El frontend **debe** utilizar estos valores exactos al realizar peticiones:
 
-- **`SectorType` (`common/enums/sector-type.enum.ts`):**
+- **`TipoSector`** *(archivo: `sector-type.enum.ts`)*:
   - `POPULAR`: Acceso general.
   - `PLATEA`: Asientos numerados.
   - `PALCO`: Zona preferencial.
   - `PRENSA`: Acceso exclusivo para periodistas acreditados.
 
-- **`TicketStatus` (`common/enums/ticket-status.enum.ts`):**
-  - `RESERVED`: El lugar está bloqueado por el servidor (15 min).
-  - `PAID`: Pago confirmado, QR generado.
-  - `CANCELLED`: Reserva expirada o pago rechazado.
+- **`TicketStatus`** *(archivo: `ticket-status.enum.ts`)* — ⚠️ *Valores en español en el código:*
+  - `RESERVADO`: El lugar está bloqueado por el servidor (15 min).
+  - `PAGADO`: Pago confirmado, QR generado.
+  - `CANCELADO`: Reserva expirada o pago rechazado.
 
 ---
 
