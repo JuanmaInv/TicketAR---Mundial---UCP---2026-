@@ -85,6 +85,7 @@ Para mantener una arquitectura limpia y predecible, cada nueva funcionalidad (ej
 **4. CRUD y Delegación (El Cerebro de la App)**
    - **Delegar:** Inyectar el Servicio en el Controlador y pasarle el DTO validado (`return this.miService.create(data);`).
    - **Hacer el CRUD:** Ir al `.service.ts` y escribir los métodos para Crear, Leer, Actualizar o Borrar (Create, Read, Update, Delete) comunicándose directamente con la base de datos de Supabase e implementando la lógica de negocio.
+   - *💡 Ventaja Arquitectónica (Aislamiento de la Base de Datos):* Al delegar el CRUD exclusivamente al Servicio, logramos que ni el Controlador, ni el DTO, ni el Frontend sepan qué base de datos usamos. Si el día de mañana migramos de Supabase a MongoDB o Firebase, **solo se modifica el código interno del Servicio**. El resto de la aplicación permanece intacto. [PUNTO DE INSERCIÓN FUTURO: Integración real con Supabase SDK].
 
 **5. Build (La Prueba de Fuego)**
    - Ejecutar el comando de compilación (`pnpm run build` o `npm run build`) en la consola local antes de hacer un commit/push.
