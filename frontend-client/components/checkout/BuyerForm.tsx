@@ -160,8 +160,7 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
             />
             {/* ACA VA LA CANTIDAD DE ENTRADAS QUE SE PUEDEN COMPRAR(MAX 6). */}
-            {errores.cantidad && <p className="text-red-500 text-xs mt-1">{errores.cantidad}</p>}
-          </div>
+            {errores.cantidad && <p className="text-red-500 text-xs mt-1">{errores.cantidad}</p>}          </div>
         </div>
 
         {/* BOTÓN DE ENVÍO */}
