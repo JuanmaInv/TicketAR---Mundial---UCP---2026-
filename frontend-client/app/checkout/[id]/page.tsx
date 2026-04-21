@@ -24,8 +24,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         <p className="text-zinc-400 mb-6 border-b border-white/10 pb-4">
           Estás reservando el ticket ID: <strong className="text-white">{partidoId}</strong>.
         </p>
-        
-        {/* Usamos el nuevo componente para mantener el código corto y limpio */}
+
+        {/* Usamos el nuevo componente*/}
         <BuyerForm partidoId={partidoId} />
       </div>
     </div>
