@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
+import BuyerForm from '@/components/checkout/BuyerForm';
 
 export default function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -20,11 +21,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         <h1 className="text-3xl font-bold text-white mb-6">
           Ingreso de datos del comprador (Paso 2)
         </h1>
-        <p className="text-zinc-400 mb-6">
+        <p className="text-zinc-400 mb-6 border-b border-white/10 pb-4">
           Estás reservando el ticket ID: <strong className="text-white">{partidoId}</strong>.
-          <br/>
-          Próximamente aquí estará el formulario de compra.
         </p>
+        
+        {/* Usamos el nuevo componente para mantener el código corto y limpio */}
+        <BuyerForm partidoId={partidoId} />
       </div>
     </div>
   );
