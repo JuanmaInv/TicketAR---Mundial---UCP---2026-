@@ -29,36 +29,77 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
   ];
 
   // =========================================================================
-  // LOGICA DE ACTUALIZACION DEL ESTADO
+  // LOGICA DE VALIDACION Y ACTUALIZACION DEL ESTADO
   // =========================================================================
-  // Esta funcion se llamara cada vez que el usuario escriba algo en cualquier campo.
-  // Toma el atributo 'name' del input y actualiza la propiedad correspondiente en datosCompra.
-  const manejarCambioInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setDatosCompra(previo => ({
-      ...previo,
-      // Validacion: si el campo es 'cantidad', lo forzamos a ser un número.
-      [name]: name === 'cantidad' ? parseInt(value) || 1 : value
-    }));
-    // Limpiamos el error del campo si el usuario empieza a escribir
-    if (errores[name]) {
-      setErrores(previo => ({ ...previo, [name]: '' }));
+
+  // Función para validar un solo campo y retornar su mensaje de error (si lo tiene)
+  const validarCampo = (nombreCampo: string, valor: string | number) => {
+    let error = '';
+    const valorStr = valor.toString().trim();
+
+    // Validacion comun para campos vacios
+    if (!valorStr && nombreCampo !== 'cantidad') {
+      return '* Este campo es obligatorio.';
     }
+
+    if (nombreCampo === 'cantidad') {
+      const cant = typeof valor === 'number' ? valor : parseInt(valor as string) || 0;
+      if (cant < 1 || cant > 6) {
+        error = '* La cantidad debe ser entre 1 y 6 entradas.';
+      }
+    } else if (nombreCampo === 'email') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valorStr)) {
+        error = '* Por favor ingresa un email válido.';
+      }
+    } else if (nombreCampo === 'nombre' || nombreCampo === 'apellido') {
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(valorStr)) {
+        error = '* Solo se permiten letras y espacios.';
+      } else if (valorStr.length < 2) {
+        error = '* Debe tener al menos 2 caracteres.';
+      }
+    } else if (nombreCampo === 'documento') {
+      if (!/^\d{7,8}$/.test(valorStr)) {
+        error = '* El DNI debe tener 7 u 8 números (sin puntos).';
+      }
+    } else if (nombreCampo === 'telefono') {
+      if (!/^\d{8,15}$/.test(valorStr)) {
+        error = '* Debe contener solo números (mínimo 8 dígitos).';
+      }
+    }
+
+    return error;
   };
 
-  // =========================================================================
-  // LOGICA DE VALIDACION Y ENVIO
-  // =========================================================================
+  // Esta funcion se llamara cada vez que el usuario escriba algo en cualquier campo.
+  const manejarCambioInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+
+    // Si borramos la cantidad, guardamos un 0 temporalmente para que no de error de tipado y se vea lo que escribe
+    const nuevoValor = name === 'cantidad' ? (value === '' ? 0 : parseInt(value)) : value;
+
+    setDatosCompra(previo => ({
+      ...previo,
+      [name]: nuevoValor
+    }));
+
+    // Validación en tiempo real: actualiza el error mientras el usuario escribe
+    const errorDelCampo = validarCampo(name, nuevoValor);
+    setErrores(previo => ({
+      ...previo,
+      [name]: errorDelCampo
+    }));
+  };
+
   const validarFormulario = () => {
     const nuevosErrores: Record<string, string> = {};
-    if (!datosCompra.nombre.trim()) nuevosErrores.nombre = 'Obligatorio.';
-    if (!datosCompra.apellido.trim()) nuevosErrores.apellido = 'Obligatorio.';
-    if (!datosCompra.documento.trim()) nuevosErrores.documento = 'Obligatorio.';
-    if (!datosCompra.email.trim()) nuevosErrores.email = 'Obligatorio.';
-    if (!datosCompra.telefono.trim()) nuevosErrores.telefono = 'Obligatorio.';
-    if (!datosCompra.provincia) nuevosErrores.provincia = 'Obligatorio.';
-    if (!datosCompra.localidad.trim()) nuevosErrores.localidad = 'Obligatorio.';
-    if (datosCompra.cantidad < 1 || datosCompra.cantidad > 6) nuevosErrores.cantidad = 'De 1 a 6.';
+
+    // Validamos todos los campos de golpe antes de enviar
+    Object.keys(datosCompra).forEach(key => {
+      if (key !== 'partidoId') { // No validamos el ID del partido porque viene por props
+        const error = validarCampo(key, datosCompra[key as keyof DatosCompra]);
+        if (error) nuevosErrores[key] = error;
+      }
+    });
 
     setErrores(nuevosErrores);
     // Retorna true si no hay errores
@@ -71,6 +112,14 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
       // Avanzamos al Paso 3 enviando los datos del formulario
       onValidacionExitosa(datosCompra);
     }
+  };
+
+  // Función auxiliar para tener bordes rojos cuando hay error
+  const getInputClass = (nombreCampo: string) => {
+    return `w-full border rounded-lg px-4 py-2 focus:ring-2 outline-none transition-all text-zinc-900 ${errores[nombreCampo]
+      ? 'border-red-500 focus:ring-red-500 bg-red-50'
+      : 'border-zinc-300 focus:ring-blue-500 bg-white'
+      }`;
   };
 
   return ( //aca debe ir todo el codigo del form donde usaremos los .map para generar los inputs y el select.
@@ -91,41 +140,41 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
             <label className="block text-sm font-medium text-zinc-700 mb-1">Nombre</label>
             <input
               type="text" name="nombre" value={datosCompra.nombre} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={getInputClass('nombre')}
             />
-            {errores.nombre && <p className="text-red-500 text-xs mt-1">{errores.nombre}</p>}
+            {errores.nombre && <p className="text-red-500 text-xs mt-1 font-medium">{errores.nombre}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Apellido</label>
             <input
               type="text" name="apellido" value={datosCompra.apellido} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={getInputClass('apellido')}
             />
-            {errores.apellido && <p className="text-red-500 text-xs mt-1">{errores.apellido}</p>}
+            {errores.apellido && <p className="text-red-500 text-xs mt-1 font-medium">{errores.apellido}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Documento (DNI)</label>
             <input
               type="text" name="documento" value={datosCompra.documento} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={getInputClass('documento')}
             />
-            {errores.documento && <p className="text-red-500 text-xs mt-1">{errores.documento}</p>}
+            {errores.documento && <p className="text-red-500 text-xs mt-1 font-medium">{errores.documento}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Email</label>
             <input
               type="email" name="email" value={datosCompra.email} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={getInputClass('email')}
             />
-            {errores.email && <p className="text-red-500 text-xs mt-1">{errores.email}</p>}
+            {errores.email && <p className="text-red-500 text-xs mt-1 font-medium">{errores.email}</p>}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-zinc-700 mb-1">Teléfono</label>
             <input
               type="tel" name="telefono" value={datosCompra.telefono} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={getInputClass('telefono')}
             />
-            {errores.telefono && <p className="text-red-500 text-xs mt-1">{errores.telefono}</p>}
+            {errores.telefono && <p className="text-red-500 text-xs mt-1 font-medium">{errores.telefono}</p>}
           </div>
         </div>
 
@@ -135,32 +184,36 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
             <label className="block text-sm font-medium text-zinc-700 mb-1">Provincia</label>
             <select
               name="provincia" value={datosCompra.provincia} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+              className={getInputClass('provincia')}
             >
               <option value="">Selecciona tu provincia</option>
               {provincias.map(provincia => ( //aca esta el listado de provincias
                 <option key={provincia} value={provincia}>{provincia}</option>
               ))}
             </select>
-            {errores.provincia && <p className="text-red-500 text-xs mt-1">{errores.provincia}</p>}
+            {errores.provincia && <p className="text-red-500 text-xs mt-1 font-medium">{errores.provincia}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Localidad</label>
             <input
               type="text" name="localidad" value={datosCompra.localidad} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={getInputClass('localidad')}
             />
             {/* aca va la seleccion de localidades que saldran al seleccionar una provincia. */}
-            {errores.localidad && <p className="text-red-500 text-xs mt-1">{errores.localidad}</p>}
+            {errores.localidad && <p className="text-red-500 text-xs mt-1 font-medium">{errores.localidad}</p>}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-zinc-700 mb-1">Cantidad de entradas (Máx. 6)</label>
             <input
-              type="number" name="cantidad" min="1" max="6" value={datosCompra.cantidad} onChange={manejarCambioInput}
-              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              type="number" name="cantidad" min="1" max="6"
+              onChange={manejarCambioInput}
+              onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('El valor debe ser mayor o igual a 1')}
+              onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+              className={getInputClass('cantidad')}
             />
             {/* ACA VA LA CANTIDAD DE ENTRADAS QUE SE PUEDEN COMPRAR(MAX 6). */}
-            {errores.cantidad && <p className="text-red-500 text-xs mt-1">{errores.cantidad}</p>}          </div>
+            {errores.cantidad && <p className="text-red-500 text-xs mt-1 font-medium">{errores.cantidad}</p>}
+          </div>
         </div>
 
         {/* BOTÓN DE ENVÍO */}

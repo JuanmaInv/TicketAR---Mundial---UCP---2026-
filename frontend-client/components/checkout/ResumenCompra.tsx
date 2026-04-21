@@ -17,7 +17,7 @@ export default function ResumenCompra({ partidoId, datos, onVolver, onConfirmar 
   return (
     <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-zinc-200">
       <h2 className="text-2xl font-bold text-zinc-800 mb-6 border-b pb-2">Resumen de tu Compra</h2>
-      
+
       <div className="space-y-4 mb-8">
         {/* Sección 1: Qué está comprando */}
         <div className="bg-zinc-50 p-4 rounded-lg border border-zinc-100">
@@ -32,6 +32,7 @@ export default function ResumenCompra({ partidoId, datos, onVolver, onConfirmar 
             <li><strong>Nombre completo:</strong> {datos.nombre} {datos.apellido}</li>
             <li><strong>DNI:</strong> {datos.documento}</li>
             <li><strong>Email:</strong> {datos.email}</li>
+            <li><strong>Teléfono:</strong> {datos.telefono}</li>
             <li><strong>Ubicación:</strong> {datos.localidad}, {datos.provincia}</li>
           </ul>
         </div>
@@ -48,14 +49,14 @@ export default function ResumenCompra({ partidoId, datos, onVolver, onConfirmar 
 
       {/* Botonera de Acción */}
       <div className="flex gap-4">
-        <button 
-          onClick={onVolver}
+        <button
+          onClick={onVolver} //para volver al paso anterior y permitir modificar los datos
           className="w-1/3 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold py-4 rounded-xl transition-all"
         >
           Modificar Datos
         </button>
-        <button 
-          onClick={onConfirmar}
+        <button
+          onClick={onConfirmar} //para confirmar y pagar
           className="w-2/3 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-[0_0_20px_rgba(22,163,74,0.5)]"
         >
           Confirmar y Pagar
