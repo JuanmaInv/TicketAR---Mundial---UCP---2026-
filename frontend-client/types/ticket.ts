@@ -14,10 +14,13 @@ export interface Partido {
 // Incluye las validaciones obligatorias
 export interface DatosCompra {
   partidoId: string;
-  nombreComprador: string;
-  dni: string;
-  localidad: string;
+  nombre: string;
+  apellido: string;
+  documento: string;
+  email: string;
+  telefono: string;
   provincia: string;
+  localidad: string;
   // Regla: solo se permiten entre 1 y 6 entradas
   cantidad: 1 | 2 | 3 | 4 | 5 | 6;
 }
