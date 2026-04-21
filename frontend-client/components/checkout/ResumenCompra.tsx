@@ -35,6 +35,15 @@ export default function ResumenCompra({ partidoId, datos, onVolver, onConfirmar 
             <li><strong>Ubicación:</strong> {datos.localidad}, {datos.provincia}</li>
           </ul>
         </div>
+
+        {/* Sección 3: Cuánto va a pagar */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+          <h3 className="font-semibold text-blue-800 mb-2">Detalle del Pago</h3>
+          <div className="flex justify-between items-center text-blue-900">
+            <span>{datos.cantidad} x Entradas (${PRECIO_UNITARIO.toLocaleString('es-AR')} c/u)</span>
+            <span className="text-xl font-bold">${total.toLocaleString('es-AR')}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
