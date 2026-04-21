@@ -91,8 +91,38 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
           </div>
         </div>
 
-        {/* Aquí agregaremos cantidad, provincia y localidad */}
-        <p className="text-sm text-blue-500 italic mt-4 text-center">...la cantidad y ubicación se insertarán en el próximo paso...</p>
+        {/* CAMPOS DE UBICACION Y CANTIDAD (Parte 2 del Formulario) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-zinc-200">
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Provincia</label>
+            <select
+              name="provincia" value={formData.provincia} onChange={handleInputChange}
+              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            >
+              <option value="">Selecciona tu provincia</option>
+              {provincias.map(p => ( //aca esta el listado de provincias
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Localidad</label>
+            <input
+              type="text" name="localidad" value={formData.localidad} onChange={handleInputChange}
+              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            /> //aca va la seleccion de localidades que saldran al seleccionar una provincia.
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Cantidad de entradas (Máx. 6)</label>
+            <input
+              type="number" name="cantidad" min="1" max="6" value={formData.cantidad} onChange={handleInputChange}
+              className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            /> //ACA VA LA CANTIDAD DE ENTRADAS QUE SE PUEDEN COMPRAR(MAX 6).
+          </div>
+        </div>
+
+        {/* El boton de envio y la logica de validacion se haran en el proximo paso */}
+        <p className="text-sm text-blue-500 italic mt-4 text-center">...la validacion y boton de continuar se insertaran en el proximo paso...</p>
       </form>
     </div>
   );
