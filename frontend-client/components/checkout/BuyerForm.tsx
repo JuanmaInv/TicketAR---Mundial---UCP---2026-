@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { DatosCompra } from '@/types/ticket';
 
-export default function BuyerForm({ partidoId }: { partidoId: string }) {
+export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoId: string, onValidacionExitosa: (datos: DatosCompra) => void }) {
   // DEFINICIÓN DE CAMPOS DEL FORMULARIO DE COMPRAS (ESTADO)
   // Cumple con la interfaz DatosCompra definida en types/ticket.ts
   const [datosCompra, setDatosCompra] = useState<DatosCompra>({ //definimos el estado inicial del formulario con valores por defecto
@@ -19,8 +19,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
   });
 
   const [errores, setErrores] = useState<Record<string, string>>({}); //estado de errores, string en blanco si no hay error, texto rojo si hay error.
-  const [cargando, setCargando] = useState(false); //estado de carga. si es true, se muestra un spinner y se deshabilita el boton.
-  const [mensaje, setMensaje] = useState(''); //estado de mensajes, string en blanco si no hay mensaje, texto rojo si hay mensaje.
 
   // LISTADO DE PROVINCIAS(Requerimiento Paso 2)
   const provincias = [
@@ -36,15 +34,15 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
   // Esta funcion se llamara cada vez que el usuario escriba algo en cualquier campo.
   // Toma el atributo 'name' del input y actualiza la propiedad correspondiente en datosCompra.
   const manejarCambioInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target; // name y value son palabras reservadas del objeto e.target de React
-    setDatosCompra(estadoPrevio => ({
-      ...estadoPrevio,
+    const { name, value } = e.target;
+    setDatosCompra(previo => ({
+      ...previo,
       // Validacion: si el campo es 'cantidad', lo forzamos a ser un número.
       [name]: name === 'cantidad' ? parseInt(value) || 1 : value
     }));
     // Limpiamos el error del campo si el usuario empieza a escribir
     if (errores[name]) {
-      setErrores(estadoPrevio => ({ ...estadoPrevio, [name]: '' }));
+      setErrores(previo => ({ ...previo, [name]: '' }));
     }
   };
 
@@ -67,19 +65,11 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
     return Object.keys(nuevosErrores).length === 0;
   };
 
-  const manejarEnvio = async (e: React.FormEvent) => {
-    e.preventDefault(); // prevenimos la recarga de la pagina (comportamiento por defecto del form)
+  const manejarEnvio = (e: React.FormEvent) => {
+    e.preventDefault();
     if (validarFormulario()) {
-      setCargando(true);
-      setMensaje('');
-      
-      // NOTA: Aquí el front se conectará a la API real del backend (NestJS) 
-      // que a su vez hará la integración real con la plataforma de pagos.
-      alert('Validacion exitosa. Listo para conectar con el Backend (Paso 3).');
-      
-      setCargando(false);
-    } else {
-      setMensaje('Por favor, corrija los errores antes de continuar.');
+      // Avanzamos al Paso 3 enviando los datos del formulario
+      onValidacionExitosa(datosCompra);
     }
   };
 
@@ -89,9 +79,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
     >
       <h2 className="text-2xl font-bold text-zinc-800 mb-2">Datos del Comprador</h2>
       <p className="text-zinc-500 mb-6">Informacion de contacto del comprador.</p>
-
-      {/* Mostrar mensaje general si existe */}
-      {mensaje && <p className="text-red-600 font-medium mb-4 text-center">{mensaje}</p>}
 
       {/*  
         Los inputs reales seran agregados en el siguiente commit,
@@ -105,7 +92,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <input
               type="text" name="nombre" value={datosCompra.nombre} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              disabled={cargando}
             />
             {errores.nombre && <p className="text-red-500 text-xs mt-1">{errores.nombre}</p>}
           </div>
@@ -114,7 +100,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <input
               type="text" name="apellido" value={datosCompra.apellido} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              disabled={cargando}
             />
             {errores.apellido && <p className="text-red-500 text-xs mt-1">{errores.apellido}</p>}
           </div>
@@ -123,7 +108,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <input
               type="text" name="documento" value={datosCompra.documento} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              disabled={cargando}
             />
             {errores.documento && <p className="text-red-500 text-xs mt-1">{errores.documento}</p>}
           </div>
@@ -132,7 +116,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <input
               type="email" name="email" value={datosCompra.email} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              disabled={cargando}
             />
             {errores.email && <p className="text-red-500 text-xs mt-1">{errores.email}</p>}
           </div>
@@ -141,7 +124,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <input
               type="tel" name="telefono" value={datosCompra.telefono} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              disabled={cargando}
             />
             {errores.telefono && <p className="text-red-500 text-xs mt-1">{errores.telefono}</p>}
           </div>
@@ -154,7 +136,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <select
               name="provincia" value={datosCompra.provincia} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-              disabled={cargando}
             >
               <option value="">Selecciona tu provincia</option>
               {provincias.map(provincia => ( //aca esta el listado de provincias
@@ -168,7 +149,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <input
               type="text" name="localidad" value={datosCompra.localidad} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              disabled={cargando}
             />
             {/* aca va la seleccion de localidades que saldran al seleccionar una provincia. */}
             {errores.localidad && <p className="text-red-500 text-xs mt-1">{errores.localidad}</p>}
@@ -178,7 +158,6 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
             <input
               type="number" name="cantidad" min="1" max="6" value={datosCompra.cantidad} onChange={manejarCambioInput}
               className="w-full border border-zinc-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              disabled={cargando}
             />
             {/* ACA VA LA CANTIDAD DE ENTRADAS QUE SE PUEDEN COMPRAR(MAX 6). */}
             {errores.cantidad && <p className="text-red-500 text-xs mt-1">{errores.cantidad}</p>}
@@ -186,13 +165,8 @@ export default function BuyerForm({ partidoId }: { partidoId: string }) {
         </div>
 
         {/* BOTÓN DE ENVÍO */}
-        <button 
-          type="submit" 
-          disabled={cargando}
-          className={`w-full text-white font-bold py-4 rounded-xl mt-8 transition-all shadow-lg 
-            ${cargando ? 'bg-zinc-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]'}`}
-        >
-          {cargando ? 'Conectando con Backend...' : 'Validar Datos y Continuar'}
+        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl mt-8 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]">
+          Validar Datos y Continuar
         </button>
       </form>
     </div>
