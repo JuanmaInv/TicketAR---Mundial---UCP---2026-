@@ -4,8 +4,8 @@ export default function AboutPage() {
     { name: "Julián", role: "Analista del Frontend", accent: "hover:shadow-[0_0_50px_rgba(168,85,247,0.7)] hover:border-purple-500" },
     { name: "Adolfo", role: "Desarrollador Frontend", accent: "hover:shadow-[0_0_50px_rgba(59,130,246,0.7)] hover:border-blue-500" },
     { name: "Damian", role: "Frontend Tester", accent: "hover:shadow-[0_0_50px_rgba(6,182,212,0.7)] hover:border-cyan-500" },
-    { name: "Santiago", role: "Backend - Motor de Cola", accent: "hover:shadow-[0_0_50px_rgba(239,68,68,0.7)] hover:border-red-500" },
-    { name: "Erwin", role: "Backend - Base de Datos", accent: "hover:shadow-[0_0_50px_rgba(249,115,22,0.7)] hover:border-orange-500" },
+    { name: "Santiago", role: "Backend - Base De Datos", accent: "hover:shadow-[0_0_50px_rgba(239,68,68,0.7)] hover:border-red-500" },
+    { name: "Erwin", role: "Desarrollador del Backend", accent: "hover:shadow-[0_0_50px_rgba(249,115,22,0.7)] hover:border-orange-500" },
     { name: "Sosa", role: "Analista del Backend", accent: "hover:shadow-[0_0_50px_rgba(234,179,8,0.7)] hover:border-yellow-500" },
     { name: "Valentino", role: "Backend Tester ", accent: "hover:shadow-[0_0_50px_rgba(236,72,153,0.7)] hover:border-pink-500" }
   ];
