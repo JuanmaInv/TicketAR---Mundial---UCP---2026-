@@ -18,7 +18,7 @@ export default function Navbar() {
           <Link href="/matches" className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">
             Partidos
           </Link>
-          <Link href="/my-tickets" className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">
+          <Link href="/about" className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">
           Sobre Nosotros
          </Link>
           <Link href="/my-tickets" className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">
