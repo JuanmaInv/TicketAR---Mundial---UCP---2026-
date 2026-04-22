@@ -6,7 +6,7 @@ export const MOCK_TICKETS: Ticket[] = [
     partidoId: 'Argentina vs Argelia',
     precio: 2000,
     sector: 'VIP - Arrowhead Stadium (Kansas City)',
-    estado: 'disponible'
+    estado: 'disponible',
   },
   {
     id: '2',
