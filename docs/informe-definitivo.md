@@ -329,27 +329,95 @@ pnpm run test:cov       # Con reporte de cobertura
 
 ### Paso 7 — Base de Datos (La Bóveda — Supabase)
 
-**Estado actual del proyecto:** ⏳ Pendiente de integración.
+**Estado actual del proyecto:** ✅ Infraestructura lista — pendiente conectar cada servicio.
 
-**Acción:** Reemplazar las operaciones del array temporal en el Servicio por consultas reales al cliente de Supabase.
+#### Arquitectura de la integración
+
+Se implementó un patrón de **Singleton centralizado** para el cliente de Supabase. En vez de crear el cliente en cada servicio, existe un módulo compartido en `/common` que lo provee a toda la aplicación:
+
+```
+src/common/
+├── enums/
+│   └── sector-type.enum.ts     ← Única fuente de verdad de sectores
+└── supabase/
+    ├── supabase.service.ts      ← Crea y expone el cliente de Supabase
+    └── supabase.module.ts       ← Distribuye el servicio globalmente
+```
+
+#### `supabase.service.ts` — El cliente único
 
 ```typescript
-// Antes (mock):
-return this.baseDeDatosSimulada;
+@Injectable()
+export class SupabaseService {
+  private readonly client: SupabaseClient;
 
-// Después (Supabase):
-const { data, error } = await this.supabase.from('partidos').select('*');
-if (error) throw new InternalServerErrorException(error.message);
-return data;
+  constructor(private readonly configService: ConfigService) {
+    // getOrThrow lanza excepción si la variable no existe en .env
+    const url = this.configService.getOrThrow<string>('SUPABASE_URL');
+    const key = this.configService.getOrThrow<string>('SUPABASE_KEY');
+    this.client = createClient(url, key);
+  }
+
+  getClient(): SupabaseClient {
+    return this.client;
+  }
+}
 ```
 
-**Variables de entorno necesarias:**
+> **¿Por qué `private readonly configService`?** El modificador `private` limita el acceso a la clase. El `readonly` garantiza que la referencia no se reasigne después del constructor. El shorthand de TypeScript declara y asigna la propiedad en una sola línea.
+
+#### `supabase.module.ts` — Distribución global
+
+```typescript
+@Global()   // ← Hace que SupabaseService esté disponible sin importar este módulo
+@Module({
+  providers: [SupabaseService],
+  exports: [SupabaseService],   // ← Otros módulos pueden inyectarlo
+})
+export class SupabaseModule {}
+```
+
+#### `app.module.ts` — Registro en el root
+
+```typescript
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),  // Carga el .env
+    SupabaseModule,                            // Distribuye el cliente
+    UsuariosModule,
+    // ... resto de módulos
+  ],
+})
+export class AppModule {}
+```
+
+#### Cómo usar el cliente en cualquier servicio (próximo paso)
+
+```typescript
+// En cualquier servicio, inyectar SupabaseService:
+@Injectable()
+export class PartidosService {
+  constructor(private readonly supabase: SupabaseService) {}
+
+  async obtenerTodos() {
+    const { data, error } = await this.supabase.getClient()
+      .from('partidos')   // ← nombre exacto de la tabla en Supabase
+      .select('*');
+    if (error) throw new InternalServerErrorException(error.message);
+    return data;
+  }
+}
+```
+
+**Variables de entorno requeridas** (ver `.env.example`):
 ```
 SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_ANON_KEY=eyJhbGci...
+SUPABASE_KEY=eyJhbGci...   # service_role key (NUNCA en el frontend)
 ```
 
-> 💡 **Ventaja arquitectónica:** Solo el Servicio cambia. Los Controladores, DTOs y Módulos no se tocan.
+> ⚠️ **Seguridad crítica:** En el backend se usa la `service_role` key porque el servidor nunca es visible al usuario. La `anon` key es para el cliente de Next.js en el frontend.
+
+> 💡 **Ventaja arquitectónica:** Solo el Servicio cambia al conectar la DB. Los Controladores, DTOs y Módulos no se tocan.
 
 ---
 
@@ -378,6 +446,15 @@ pnpm run build
 | Entradas | `src/tickets/` | `/entradas` | ✅ Mock |
 | Pagos | `src/payments/` | `/pagos` | 🔲 Esqueleto |
 | Credenciales Pasaporte | `src/passport-credentials/` | `/credenciales-pasaporte` | ✅ Mock |
+
+**Infraestructura compartida (`/common`):**
+
+| Recurso | Archivo | Estado |
+|---------|---------|--------|
+| Enum de sectores | `common/enums/sector-type.enum.ts` | ✅ |
+| Cliente de Supabase | `common/supabase/supabase.service.ts` | ✅ |
+| Módulo global DB | `common/supabase/supabase.module.ts` | ✅ |
+| Carga de variables de entorno | `ConfigModule` en `app.module.ts` | ✅ |
 
 ---
 
