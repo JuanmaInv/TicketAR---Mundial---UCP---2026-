@@ -5,7 +5,10 @@ import Bandera from "@/components/Bandera";
 import WorldCupLoader from "@/components/WorldCupLoader";
 import SkeletonMatchCard from "@/components/SkeletonMatchCard";
 
-// 1. LAS 48 SELECCIONES SEGÚN EL CRONOGRAMA DE LA IMAGEN
+import { getPartidos } from "@/lib/api";
+import { Partido } from "@/types/ticket";
+
+// 1. LAS 48 SELECCIONES (Para el filtro lateral)
 const SELECCIONES_2026 = [
   "Alemania", "Arabia Saudí", "Argelia", "Argentina", "Australia",
   "Austria", "Bosnia y Herzegovina", "Brasil", "Bélgica", "Cabo Verde",
@@ -18,28 +21,41 @@ const SELECCIONES_2026 = [
   "Turquía", "Túnez", "Uruguay", "Uzbekistán"
 ];
 
-// 2. MOCK DE PARTIDOS (VACÍO PARA INTEGRACIÓN)
-const ALL_MATCHES: any[] = [];
+// 2. MOCK DE PARTIDOS (ELIMINADO - AHORA USAMOS LA API)
 
 export default function MatchesPage() {
+  // --- ESTADOS PARA LA INTEGRACIÓN CON EL BACKEND ---
+  const [partidos, setPartidos] = useState<Partido[]>([]); // Almacena los partidos reales
+  const [error, setError] = useState<string | null>(null); // Manejo de errores de conexión
+  
   const [selectedTeam, setSelectedTeam] = useState("Todos");
   const [selectedPhase, setSelectedPhase] = useState("Todas");
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Simulamos carga al entrar y al cambiar filtros
+  // --- CARGA DE DATOS REALES DESDE EL BACKEND (PUERTO 3000) ---
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setIsInitialLoad(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [selectedTeam, selectedPhase]);
+    async function fetchPartidos() {
+      try {
+        setIsLoading(true);
+        const data = await getPartidos(); // Llamada a la API estandarizada
+        setPartidos(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching matches:", err);
+        setError("No se pudieron cargar los partidos. Verifica que el backend esté corriendo.");
+      } finally {
+        setIsLoading(false);
+        setIsInitialLoad(false);
+      }
+    }
+    fetchPartidos();
+  }, []);
 
-  const filteredMatches = ALL_MATCHES.filter((match) => {
-    const matchTeam = selectedTeam === "Todos" || match.teamA === selectedTeam || match.teamB === selectedTeam;
-    const matchPhase = selectedPhase === "Todas" || match.phase === selectedPhase;
+  // FILTRADO DINÁMICO (Usando los campos en español y snake_case)
+  const filteredMatches = partidos.filter((match) => {
+    const matchTeam = selectedTeam === "Todos" || match.equipo_local === selectedTeam || match.equipo_visitante === selectedTeam;
+    const matchPhase = selectedPhase === "Todas" || match.fase === selectedPhase;
     return matchTeam && matchPhase;
   });
 
