@@ -5,28 +5,29 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 /**
  * Servicio centralizado de Supabase (Principio DRY + Singleton).
  *
- * NOTA TÉCNICA: Usamos `any` como genérico del cliente intencionalmente.
- * La librería `supabase-js` v2 requiere un schema muy específico generado
- * con `supabase gen types` para funcionar sin errores de compilación.
- * En esta etapa de desarrollo, `any` nos permite operar sin bloqueos.
- * En producción, reemplazar por los tipos generados automáticamente.
+ * Usamos `SupabaseClient<any>` para que el cliente acepte cualquier tabla
+ * sin restricciones de tipo, permitiendo operaciones como .insert(), .select()
+ * sobre tablas definidas en la base de datos real.
+ *
+ * El cast `as unknown as SupabaseClient<any>` es necesario para evitar el
+ * conflicto entre los tipos internos de Supabase y las reglas del linter.
  */
 @Injectable()
 export class SupabaseService {
-  // Cliente tipado como `any` para evitar conflictos internos de Supabase generics
   private readonly client: SupabaseClient<any>;
 
   constructor(private readonly configService: ConfigService) {
     const url = this.configService.getOrThrow<string>('SUPABASE_URL');
     const key = this.configService.getOrThrow<string>('SUPABASE_KEY');
 
-    // Sin genérico explícito para máxima compatibilidad en desarrollo
-    this.client = createClient(url, key);
+    // `as unknown as SupabaseClient<any>` resuelve el conflicto de tipos del linter
+    // sin perder la funcionalidad real del cliente de Supabase.
+    this.client = createClient(url, key) as unknown as SupabaseClient<any>;
   }
 
   /**
    * Expone el cliente de Supabase para que los servicios realicen queries.
-   * Uso en cualquier servicio inyectando SupabaseService:
+   * Ejemplo:
    *   const { data } = await this.supabaseService.getClient()
    *     .from('partidos')
    *     .select('*');

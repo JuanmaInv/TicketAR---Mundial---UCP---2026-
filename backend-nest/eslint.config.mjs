@@ -29,6 +29,12 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      // Deshabilitadas como error para permitir el uso de `any` con el cliente de Supabase
+      // que no tiene tipos generados automáticamente en esta etapa del proyecto.
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },
