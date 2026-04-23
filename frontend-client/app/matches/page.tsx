@@ -60,19 +60,19 @@ export default function MatchesPage() {
   });
 
   return (
-    <main className="min-h-screen bg-background text-foreground py-10 px-4 md:px-8 transition-colors duration-500">
+    <main className="min-h-screen py-10 px-4 md:px-8 bg-slate-100 dark:bg-background text-slate-900 dark:text-white">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
         
         {/* BARRA LATERAL DE FILTROS */}
         <aside className="w-full md:w-72 space-y-8">
-         <div className="glass-panel p-6 rounded-3xl border border-foreground/10 sticky top-24 bg-card/40">
+          <div className="glass-panel p-6 rounded-3xl border border-slate-200/70 dark:border-white/10 sticky top-24 bg-white/70 dark:bg-zinc-900/40">
             <h2 className="text-xl font-bold mb-6 text-blue-500 italic uppercase tracking-tighter">Filtros Avanzados</h2>
 
             <div className="mb-8">
               <label className="block text-[10px] font-black text-zinc-500 uppercase mb-3 tracking-widest">Selección</label>
               <select 
                 onChange={(e) => setSelectedTeam(e.target.value)}
-               className="w-full bg-background border border-foreground/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-600 outline-none transition-all appearance-none"
+                className="w-full bg-white/90 dark:bg-black border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 outline-none transition-all appearance-none"
               >
                 <option value="Todos">Todas las naciones</option>
                 {SELECCIONES_2026.map(team => (
@@ -89,7 +89,7 @@ export default function MatchesPage() {
                     key={phase}
                     onClick={() => setSelectedPhase(phase)}
                     className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                      selectedPhase === phase ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" : "text-zinc-400 hover:bg-white/5"
+                      selectedPhase === phase ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100/70 dark:hover:bg-white/5"
                     }`}
                   >
                     {phase}
@@ -104,7 +104,7 @@ export default function MatchesPage() {
         <section className="flex-1">
           <div className="mb-10">
             <h1 className="text-4xl font-black italic mb-2 tracking-tighter uppercase">Cronograma <span className="text-blue-500">Oficial</span> FIFA</h1>
-            <p className="text-zinc-500 font-medium italic">Sorteo final confirmado para el Mundial 2026.</p>
+            <p className="text-slate-600 dark:text-zinc-500 font-medium italic">Sorteo final confirmado para el Mundial 2026.</p>
           </div>
 
           {error && (
@@ -126,7 +126,7 @@ export default function MatchesPage() {
                 </>
               )
             ) : filteredMatches.map((match) => (
-              <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-foreground/5 hover:border-blue-600/40 transition-all duration-500 bg-card/10">
+              <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-slate-200/70 dark:border-white/5 hover:border-blue-600/40 transition-all duration-500 bg-white/60 dark:bg-zinc-900/10">
                 
                 {/* ANIMATED HOVER BACKGROUND FLAGS */}
                 <div className="absolute inset-0 z-0 flex opacity-0 group-hover:opacity-60 transition-all duration-700 pointer-events-none scale-110 group-hover:scale-100">
@@ -143,10 +143,10 @@ export default function MatchesPage() {
 
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
-                    <span className="px-3 py-1 bg-zinc-800 text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/5">
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-slate-300/60 dark:border-white/5">
                       {match.fase}
                     </span>
-                    <span className="text-zinc-500 text-xs font-bold">{new Date(match.fecha_partido).toLocaleDateString()}</span>
+                    <span className="text-slate-500 dark:text-zinc-500 text-xs font-bold">{new Date(match.fecha_partido).toLocaleDateString()}</span>
                   </div>
 
                   <div className="flex flex-col gap-1 mb-8">
@@ -163,13 +163,13 @@ export default function MatchesPage() {
                     </div>
                     
                     <div className="mt-2">
-                      <p className="text-zinc-400 text-xs font-semibold">📍 {match.nombre_estadio}</p>
+                      <p className="text-slate-600 dark:text-zinc-400 text-xs font-semibold">📍 {match.nombre_estadio}</p>
                       <p className="text-blue-500/80 text-[10px] font-black uppercase tracking-widest mt-1">Estado: {match.estado}</p>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center pt-6 border-t border-white/5">
-                    <p className="text-3xl font-black text-white">${match.precio_base} <span className="text-xs text-zinc-500">USD</span></p>
+                  <div className="flex justify-between items-center pt-6 border-t border-slate-200 dark:border-white/5">
+                    <p className="text-3xl font-black text-slate-900 dark:text-white">${match.precio_base} <span className="text-xs text-slate-500 dark:text-zinc-500">USD</span></p>
                     <button className="bg-white text-black px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform group-hover:scale-105 shadow-xl">
                       Comprar
                     </button>
