@@ -123,19 +123,17 @@ export default function MatchesPage() {
               <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-white/5 hover:border-blue-600/40 transition-all duration-500 bg-zinc-900/10">
                 
                 {/* ANIMATED HOVER BACKGROUND FLAGS */}
-                {match.defined && (
-                  <div className="absolute inset-0 z-0 flex opacity-0 group-hover:opacity-60 transition-all duration-700 pointer-events-none scale-110 group-hover:scale-100">
-                    <div className="w-1/2 h-full">
-                      <Bandera pais={match.teamA} fill />
-                    </div>
-                    <div className="w-1/2 h-full">
-                      <Bandera pais={match.teamB} fill />
-                    </div>
-                    {/* Gradient overlays to smooth the flags and keep text readable */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                    <div className="absolute inset-0 bg-black/10" />
+                <div className="absolute inset-0 z-0 flex opacity-0 group-hover:opacity-60 transition-all duration-700 pointer-events-none scale-110 group-hover:scale-100">
+                  <div className="w-1/2 h-full">
+                    <Bandera pais={match.equipo_local} fill />
                   </div>
-                )}
+                  <div className="w-1/2 h-full">
+                    <Bandera pais={match.equipo_visitante} fill />
+                  </div>
+                  {/* Gradient overlays to smooth the flags and keep text readable */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                  <div className="absolute inset-0 bg-black/10" />
+                </div>
 
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
