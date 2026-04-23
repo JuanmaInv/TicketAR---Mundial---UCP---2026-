@@ -1,25 +1,25 @@
 @import "tailwindcss";
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark));
 
 :root {
-  /* Modo Claro - Mundial 2026 */
-  --background: #f8fafc;
-  /* Slate 50 */
+  /* Modo Claro - Mezcla de Banderas (USA, México, Canadá) */
+  --background:
+    radial-gradient(circle at 0% 0%, rgba(0, 43, 127, 0.12) 0%, transparent 35%),
+    /* USA Blue */
+    radial-gradient(circle at 100% 0%, rgba(225, 0, 26, 0.12) 0%, transparent 35%),
+    /* Canada Red */
+    radial-gradient(circle at 50% 100%, rgba(0, 104, 71, 0.12) 0%, transparent 35%),
+    /* Mexico Green */
+    #f8fafc;
+  /* Color de fondo base */
+
   --foreground: #0f172a;
-  /* Slate 900 */
   --card: #ffffff;
   --primary: #002B7F;
-  /* USA Blue */
   --accent: #E1001A;
-  /* Canada Red */
   --success: #006847;
-  /* Mexico Green */
-
-  --canada-red: #E1001A;
-  --usa-blue: #002B7F;
-  --mexico-green: #006847;
-  --gold: #ca8a04;
 }
+
 
 .dark {
   /* Modo Oscuro - Diseño Original */
