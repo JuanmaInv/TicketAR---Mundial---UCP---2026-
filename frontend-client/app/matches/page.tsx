@@ -60,24 +60,8 @@ export default function MatchesPage() {
   });
 
   return (
-    <main className="relative min-h-screen py-10 px-4 md:px-8 bg-background text-slate-900 dark:text-white overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none dark:hidden">
-        <div className="absolute inset-0 bg-[#f8fafc]" />
-
-        {/* Mexico (left): vertical green-white-red */}
-        <div className="absolute -left-20 top-20 h-[72%] w-[30%] rounded-[999px] blur-3xl opacity-45 saturate-125 bg-[linear-gradient(90deg,#0d8a5a_0%,#0d8a5a_33%,#ffffff_33%,#ffffff_66%,#d64a5e_66%,#d64a5e_100%)]" />
-
-        {/* USA (center): horizontal red/white stripes + blue canton */}
-        <div className="absolute left-1/2 top-14 h-[74%] w-[30%] -translate-x-1/2 rounded-[999px] blur-3xl opacity-40 saturate-120 bg-[repeating-linear-gradient(180deg,#c64559_0%,#c64559_10%,#ffffff_10%,#ffffff_20%)]" />
-        <div className="absolute left-[42.7%] top-[17%] h-[22%] w-[9%] rounded-[1.5rem] blur-2xl opacity-45 saturate-125 bg-[#4b4a86]" />
-
-        {/* Canada (right): vertical red-white-red */}
-        <div className="absolute -right-20 top-20 h-[72%] w-[30%] rounded-[999px] blur-3xl opacity-45 saturate-125 bg-[linear-gradient(90deg,#d83b52_0%,#d83b52_30%,#ffffff_30%,#ffffff_70%,#d83b52_70%,#d83b52_100%)]" />
-
-        {/* Small neutral veil so content remains readable */}
-        <div className="absolute inset-0 bg-white/44" />
-      </div>
-      <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
+    <main className="min-h-screen py-10 px-4 md:px-8 bg-slate-100 dark:bg-background text-slate-900 dark:text-white">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
         
         {/* BARRA LATERAL DE FILTROS */}
         <aside className="w-full md:w-72 space-y-8">

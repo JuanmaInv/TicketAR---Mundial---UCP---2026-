@@ -3,8 +3,9 @@ import { ThemeToggle } from './ThemeToggle';
 
 export default function Navbar() {
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md shadow-sm">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <nav className="relative sticky top-0 z-50 w-full border-b border-gray-200/80 dark:border-slate-800 bg-[linear-gradient(90deg,#006847_0%,#006847_14%,#f8fafc_14%,#f8fafc_28%,#ce1126_28%,#ce1126_42%,#3c3b6e_42%,#3c3b6e_56%,#f8fafc_56%,#f8fafc_70%,#b22234_70%,#b22234_84%,#ffffff_84%,#ffffff_92%,#d80621_92%,#d80621_100%)] dark:bg-slate-950/90 backdrop-blur-md shadow-sm">
+      <div className="absolute inset-0 pointer-events-none bg-white/72 dark:bg-transparent" />
+      <div className="relative z-10 container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <span className="text-2xl font-bold tracking-tighter text-slate-900">
             Ticket<span className="text-[var(--usa-blue)]">AR</span>
