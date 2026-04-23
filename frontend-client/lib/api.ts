@@ -9,6 +9,11 @@ export async function getPartidos(): Promise<Partido[]> {
   return res.json();
 }
 
+export async function getTickets(): Promise<Ticket[]> {
+  // Función temporal para que el Home compile mientras migramos
+  return [];
+}
+
 export async function createTicket(ticket: Omit<Ticket, 'id'>): Promise<Ticket> {
   const res = await fetch(`${API_URL}/entradas`, {
     method: 'POST',

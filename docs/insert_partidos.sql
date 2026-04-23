@@ -1,0 +1,33 @@
+-- Script completo para sincronizar la base de datos con los partidos del frontend mock
+
+INSERT INTO partidos (equipo_local, equipo_visitante, fecha_partido, nombre_estadio, precio_base, fase, estado)
+VALUES
+('Argentina', 'Argelia', '2026-06-11', 'Mercedes-Benz Stadium (Atlanta)', 450, 'Grupos', 'disponible'),
+('Argentina', 'Austria', '2026-06-21', 'MetLife Stadium (New Jersey)', 1250, 'Grupos', 'disponible'),
+('Argentina', 'Jordania', '2026-06-26', 'Arrowhead Stadium (Kansas City)', 280, 'Grupos', 'disponible'),
+('México', 'Sudáfrica', '2026-06-11', 'Estadio Azteca (CDMX)', 550, 'Grupos', 'disponible'),
+('Canadá', 'Qatar', '2026-06-12', 'BMO Field (Toronto)', 350, 'Grupos', 'disponible'),
+('Estados Unidos', 'Paraguay', '2026-06-12', 'SoFi Stadium (Los Ángeles)', 650, 'Grupos', 'disponible'),
+('Brasil', 'Marruecos', '2026-06-15', 'Hard Rock Stadium (Miami)', 900, 'Grupos', 'disponible'),
+('Alemania', 'Ecuador', '2026-06-15', 'Gillette Stadium (Boston)', 380, 'Grupos', 'disponible'),
+('Países Bajos', 'Japón', '2026-06-16', 'Levi''s Stadium', 420, 'Grupos', 'disponible'),
+('Bélgica', 'Nueva Zelanda', '2026-06-17', 'NRG Stadium (Houston)', 250, 'Grupos', 'disponible'),
+('España', 'Uruguay', '2026-06-16', 'Lincoln Financial Field', 480, 'Grupos', 'disponible'),
+('Francia', 'Senegal', '2026-06-18', 'Lumen Field', 500, 'Grupos', 'disponible'),
+('Portugal', 'Colombia', '2026-06-20', 'AT&T Stadium (Dallas)', 600, 'Grupos', 'disponible'),
+('Inglaterra', 'Croacia', '2026-06-21', 'MetLife Stadium', 700, 'Grupos', 'disponible'),
+('Corea del Sur', 'UEFA Playoff D', '2026-06-13', 'BC Place', 150, 'Grupos', 'disponible'),
+('Suiza', 'UEFA Playoff A', '2026-06-14', 'Arrowhead Stadium', 180, 'Grupos', 'disponible'),
+('Haití', 'Escocia', '2026-06-16', 'Hard Rock Stadium', 120, 'Grupos', 'disponible'),
+('Australia', 'UEFA Playoff C', '2026-06-17', 'SoFi Stadium', 200, 'Grupos', 'disponible'),
+('Curazao', 'Costa de Marfil', '2026-06-19', 'NRG Stadium', 140, 'Grupos', 'disponible'),
+('UEFA Playoff B', 'Túnez', '2026-06-20', 'BMO Field', 130, 'Grupos', 'disponible'),
+('Egipto', 'Irán', '2026-06-22', 'Gillette Stadium', 210, 'Grupos', 'disponible'),
+('Cabo Verde', 'Arabia Saudí', '2026-06-23', 'Levi''s Stadium', 110, 'Grupos', 'disponible'),
+('Intercontinental 2', 'Noruega', '2026-06-24', 'Lumen Field', 190, 'Grupos', 'disponible'),
+('Intercontinental 1', 'Uzbekistán', '2026-06-25', 'AT&T Stadium', 160, 'Grupos', 'disponible'),
+('Ghana', 'Panamá', '2026-06-26', 'Rice-Eccles Stadium', 140, 'Grupos', 'disponible'),
+('1° Grupo J', '2° Grupo I', '2026-06-30', 'SoFi Stadium (L.A.)', 850, 'Octavos', 'por_definir'),
+('Ganador R32-1', 'Ganador R32-2', '2026-07-09', 'Gillette Stadium (Boston)', 1600, 'Cuartos', 'por_definir'),
+('Ganador Q1', 'Ganador Q2', '2026-07-14', 'AT&T Stadium (Dallas)', 3800, 'Semifinal', 'por_definir'),
+('Ganador Semi 1', 'Ganador Semi 2', '2026-07-19', 'MetLife Stadium (NY/NJ)', 6500, 'Final', 'por_definir');
