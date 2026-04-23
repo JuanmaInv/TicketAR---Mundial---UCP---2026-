@@ -4,7 +4,44 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 type Database = {
   public: {
-    Tables: Record<string, never>;
+    Tables: {
+      partidos: {
+        Row: {
+          id: string;
+          equipo_local: string;
+          equipo_visitante: string;
+          fecha_partido: string;
+          nombre_estadio: string;
+          fase: string;
+          estado: string;
+          precio_base: number;
+          fecha_creacion: string;
+          fecha_actualizacion: string;
+        };
+        Insert: {
+          id?: string;
+          equipo_local: string;
+          equipo_visitante: string;
+          fecha_partido: string | Date;
+          nombre_estadio: string;
+          fase?: string;
+          estado?: string;
+          precio_base?: number;
+          fecha_creacion?: string;
+          fecha_actualizacion?: string;
+        };
+        Update: {
+          equipo_local?: string;
+          equipo_visitante?: string;
+          fecha_partido?: string | Date;
+          nombre_estadio?: string;
+          fase?: string;
+          estado?: string;
+          precio_base?: number;
+          fecha_actualizacion?: string;
+        };
+      };
+    };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
