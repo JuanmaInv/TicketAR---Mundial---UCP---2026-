@@ -27,7 +27,7 @@ export default function MatchesPage() {
   // --- ESTADOS PARA LA INTEGRACIÓN CON EL BACKEND ---
   const [partidos, setPartidos] = useState<Partido[]>([]); // Almacena los partidos reales
   const [error, setError] = useState<string | null>(null); // Manejo de errores de conexión
-  
+
   const [selectedTeam, setSelectedTeam] = useState("Todos");
   const [selectedPhase, setSelectedPhase] = useState("Todas");
   const [isLoading, setIsLoading] = useState(true);
@@ -62,15 +62,16 @@ export default function MatchesPage() {
   return (
     <main className="min-h-screen py-10 px-4 md:px-8 bg-slate-100 dark:bg-background text-slate-900 dark:text-white">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
-        
+
         {/* BARRA LATERAL DE FILTROS */}
         <aside className="w-full md:w-72 space-y-8">
           <div className="glass-panel p-6 rounded-3xl border border-slate-200/70 dark:border-white/10 sticky top-24 bg-white/70 dark:bg-zinc-900/40">
             <h2 className="text-xl font-bold mb-6 text-blue-500 italic uppercase tracking-tighter">Filtros Avanzados</h2>
 
             <div className="mb-8">
-              <label className="block text-[10px] font-black text-zinc-500 uppercase mb-3 tracking-widest">Selección</label>
-              <select 
+              <label htmlFor="filtro-seleccion" className="block text-[10px] font-black text-zinc-500 uppercase mb-3 tracking-widest">Selección</label>
+              <select
+                id="filtro-seleccion"
                 onChange={(e) => setSelectedTeam(e.target.value)}
                 className="w-full bg-white/90 dark:bg-black border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 outline-none transition-all appearance-none"
               >
@@ -127,7 +128,7 @@ export default function MatchesPage() {
               )
             ) : filteredMatches.map((match) => (
               <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-slate-200/70 dark:border-white/5 hover:border-blue-600/40 transition-all duration-500 bg-white/60 dark:bg-zinc-900/10">
-                
+
                 {/* ANIMATED HOVER BACKGROUND FLAGS */}
                 <div className="absolute inset-0 z-0 flex opacity-0 group-hover:opacity-60 transition-all duration-700 pointer-events-none scale-110 group-hover:scale-100">
                   <div className="w-1/2 h-full">
@@ -161,7 +162,7 @@ export default function MatchesPage() {
                         <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.equipo_visitante}</h3>
                       </div>
                     </div>
-                    
+
                     <div className="mt-2">
                       <p className="text-slate-600 dark:text-zinc-400 text-xs font-semibold">📍 {match.nombre_estadio}</p>
                       <p className="text-blue-500/80 text-[10px] font-black uppercase tracking-widest mt-1">Estado: {match.estado}</p>
