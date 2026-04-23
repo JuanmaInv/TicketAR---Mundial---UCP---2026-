@@ -3,12 +3,17 @@
 
 :root {
   /* Modo Claro - Mundial 2026 */
-  --background: #f8fafc; /* Slate 50 */
-  --foreground: #0f172a; /* Slate 900 */
+  --background: #f8fafc;
+  /* Slate 50 */
+  --foreground: #0f172a;
+  /* Slate 900 */
   --card: #ffffff;
-  --primary: #002B7F; /* USA Blue */
-  --accent: #E1001A; /* Canada Red */
-  --success: #006847; /* Mexico Green */
+  --primary: #002B7F;
+  /* USA Blue */
+  --accent: #E1001A;
+  /* Canada Red */
+  --success: #006847;
+  /* Mexico Green */
 
   --canada-red: #E1001A;
   --usa-blue: #002B7F;
@@ -18,9 +23,12 @@
 
 .dark {
   /* Modo Oscuro - Diseño Original */
-  --background: #0f172a; /* Slate 900 */
-  --foreground: #f8fafc; /* Slate 50 */
-  --card: #1e293b; /* Slate 800 */
+  --background: #0f172a;
+  /* Slate 900 */
+  --foreground: #f8fafc;
+  /* Slate 50 */
+  --card: #1e293b;
+  /* Slate 800 */
 }
 
 @theme inline {
