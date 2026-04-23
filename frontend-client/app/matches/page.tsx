@@ -107,6 +107,12 @@ export default function MatchesPage() {
             <p className="text-zinc-500 font-medium italic">Sorteo final confirmado para el Mundial 2026.</p>
           </div>
 
+          {error && (
+            <div className="p-6 border border-red-500/50 bg-red-500/10 rounded-3xl text-red-400 text-sm font-bold italic mb-6">
+              ⚠️ {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {isLoading ? (
               isInitialLoad ? (
