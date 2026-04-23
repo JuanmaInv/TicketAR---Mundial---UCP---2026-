@@ -50,7 +50,7 @@ export default function Home() {
                         {ticket.partidoId.split(' vs ')[0].slice(0, 3).toUpperCase()}
                       </span>
                     </div>
-                    
+
                     <span className="text-xs text-yellow-400 font-black italic tracking-widest px-3 py-1.5 rounded-full bg-black/60 border border-yellow-500/30 backdrop-blur-md shadow-2xl">
                       VS
                     </span>

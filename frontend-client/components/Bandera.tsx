@@ -9,20 +9,6 @@ export default function Bandera({ pais }: BanderaProps) {
   // Agregué los países que vi en tu mock-tickets.ts
   const codigos: Record<string, string> = {
     "Argentina": "ar",
-    "Brasil": "br",
-    "Uruguay": "uy",
-    "Colombia": "co",
-    "Chile": "cl",
-    "Ecuador": "ec",
-    "Francia": "fr",
-    "España": "es",
-    "Inglaterra": "gb-eng",
-    "Alemania": "de",
-    "Italia": "it",
-    "Portugal": "pt",
-    "Estados Unidos": "us",
-    "Mexico": "mx",
-    "Canada": "ca",
     "Argelia": "dz",
     "Austria": "at",
     "Jordania": "jo"
