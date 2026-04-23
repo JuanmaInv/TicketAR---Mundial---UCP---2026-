@@ -1,22 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Bandera from "@/components/Bandera";
 
 // 1. LAS 48 SELECCIONES SEGÚN EL CRONOGRAMA DE LA IMAGEN
 const SELECCIONES_2026 = [
-  "Argentina", "Argelia", "Austria", "Jordania", // Grupo J
-  "México", "Sudáfrica", "Corea del Sur", "Republica Checa", // Grupo A
-  "Canadá", "Bosnia", "Qatar", "Suiza", // Grupo B
-  "Brasil", "Marruecos", "Haití", "Escocia", // Grupo C
-  "EE.UU.", "Paraguay", "Australia", "Turquia", // Grupo D
-  "Alemania", "Curazao", "Costa de Marfil", "Ecuador", // Grupo E
-  "Holanda", "Japón", "Suecia", "Túnez", // Grupo F
-  "Bélgica", "Egipto", "Irán", "Nueva Zelanda", // Grupo G
-  "España", "Cabo Verde", "Arabia Saudita", "Uruguay", // Grupo H
-  "Francia", "Senegal", "Irak", "Noruega", // Grupo I
-  "Portugal", "RD del congo", "Uzbekistán", "Colombia", // Grupo K
-  "Inglaterra", "Croacia", "Ghana", "Panamá" // Grupo Lg
-].sort();
+  "Alemania", "Arabia Saudí", "Argelia", "Argentina", "Australia",
+  "Austria", "Bosnia y Herzegovina", "Brasil", "Bélgica", "Cabo Verde",
+  "Canadá", "Colombia", "Corea del Sur", "Costa de Marfil", "Croacia",
+  "Curazao", "Ecuador", "Egipto", "Escocia", "España", "Estados Unidos",
+  "Francia", "Ghana", "Haití", "Inglaterra", "Irak", "Irán", "Japón",
+  "Jordania", "Marruecos", "México", "Noruega", "Nueva Zelanda",
+  "Panamá", "Paraguay", "Países Bajos", "Portugal", "Qatar", "RD Congo",
+  "República Checa", "Senegal", "Sudáfrica", "Suecia", "Suiza",
+  "Turquía", "Túnez", "Uruguay", "Uzbekistán"
+];
 
 // 2. MOCK DE PARTIDOS SEGÚN EL CRONOGRAMA DE LA IMAGEN
 const ALL_MATCHES = [
@@ -28,10 +26,10 @@ const ALL_MATCHES = [
   // --- PARTIDOS DE ANFITRIONES Y OTROS GRUPOS (SEGÚN IMAGEN) ---
   { id: 4, teamA: "México", teamB: "Sudáfrica", phase: "Grupos", date: "2026-06-11", stadium: "Estadio Azteca (CDMX)", sector: "Palco Club Premier", price: 550, defined: true },
   { id: 5, teamA: "Canadá", teamB: "Qatar", phase: "Grupos", date: "2026-06-12", stadium: "BMO Field (Toronto)", sector: "Platea Baja West", price: 350, defined: true },
-  { id: 6, teamA: "EE.UU.", teamB: "Paraguay", phase: "Grupos", date: "2026-06-12", stadium: "SoFi Stadium (Los Ángeles)", sector: "Main Level Corner", price: 650, defined: true },
+  { id: 6, teamA: "Estados Unidos", teamB: "Paraguay", phase: "Grupos", date: "2026-06-12", stadium: "SoFi Stadium (Los Ángeles)", sector: "Main Level Corner", price: 650, defined: true },
   { id: 7, teamA: "Brasil", teamB: "Marruecos", phase: "Grupos", date: "2026-06-15", stadium: "Hard Rock Stadium (Miami)", sector: "Lower Bowl Level 1", price: 900, defined: true },
   { id: 8, teamA: "Alemania", teamB: "Ecuador", phase: "Grupos", date: "2026-06-15", stadium: "Gillette Stadium (Boston)", sector: "Platea Media", price: 380, defined: true },
-  { id: 9, teamA: "Holanda", teamB: "Japón", phase: "Grupos", date: "2026-06-16", stadium: "Levi's Stadium", sector: "Categoría 1", price: 420, defined: true },
+  { id: 9, teamA: "Países Bajos", teamB: "Japón", phase: "Grupos", date: "2026-06-16", stadium: "Levi's Stadium", sector: "Categoría 1", price: 420, defined: true },
   { id: 10, teamA: "Bélgica", teamB: "Nueva Zelanda", phase: "Grupos", date: "2026-06-17", stadium: "NRG Stadium (Houston)", sector: "General Norte", price: 250, defined: true },
   { id: 11, teamA: "España", teamB: "Uruguay", phase: "Grupos", date: "2026-06-16", stadium: "Lincoln Financial Field", sector: "Codo Preferencial", price: 480, defined: true },
   { id: 12, teamA: "Francia", teamB: "Senegal", phase: "Grupos", date: "2026-06-18", stadium: "Lumen Field", sector: "Platea Alta East", price: 500, defined: true },
@@ -46,7 +44,7 @@ const ALL_MATCHES = [
   { id: 19, teamA: "Curazao", teamB: "Costa de Marfil", phase: "Grupos", date: "2026-06-19", stadium: "NRG Stadium", sector: "Platea Alta", price: 140, defined: true },
   { id: 20, teamA: "UEFA Playoff B", teamB: "Túnez", phase: "Grupos", date: "2026-06-20", stadium: "BMO Field", sector: "General", price: 130, defined: true },
   { id: 21, teamA: "Egipto", teamB: "Irán", phase: "Grupos", date: "2026-06-22", stadium: "Gillette Stadium", sector: "Codo", price: 210, defined: true },
-  { id: 22, teamA: "Cabo Verde", teamB: "Arabia Saudita", phase: "Grupos", date: "2026-06-23", stadium: "Levi's Stadium", sector: "General", price: 110, defined: true },
+  { id: 22, teamA: "Cabo Verde", teamB: "Arabia Saudí", phase: "Grupos", date: "2026-06-23", stadium: "Levi's Stadium", sector: "General", price: 110, defined: true },
   { id: 23, teamA: "Intercontinental 2", teamB: "Noruega", phase: "Grupos", date: "2026-06-24", stadium: "Lumen Field", sector: "Categoría 3", price: 190, defined: true },
   { id: 24, teamA: "Intercontinental 1", teamB: "Uzbekistán", phase: "Grupos", date: "2026-06-25", stadium: "AT&T Stadium", sector: "Platea Media", price: 160, defined: true },
   { id: 25, teamA: "Ghana", teamB: "Panamá", phase: "Grupos", date: "2026-06-26", stadium: "Rice-Eccles Stadium", sector: "Popular", price: 140, defined: true },
@@ -118,8 +116,25 @@ export default function MatchesPage() {
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {filteredMatches.map((match) => (
-              <div key={match.id} className="group glass-panel p-8 rounded-[2.5rem] border border-white/5 hover:border-blue-600/40 transition-all duration-500 bg-zinc-900/10">
-                <div className="flex justify-between items-center mb-6">
+              <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-white/5 hover:border-blue-600/40 transition-all duration-500 bg-zinc-900/10">
+                
+                {/* ANIMATED HOVER BACKGROUND FLAGS */}
+                {match.defined && (
+                  <div className="absolute inset-0 z-0 flex opacity-0 group-hover:opacity-60 transition-all duration-700 pointer-events-none scale-110 group-hover:scale-100">
+                    <div className="w-1/2 h-full">
+                      <Bandera pais={match.teamA} fill />
+                    </div>
+                    <div className="w-1/2 h-full">
+                      <Bandera pais={match.teamB} fill />
+                    </div>
+                    {/* Gradient overlays to smooth the flags and keep text readable */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                    <div className="absolute inset-0 bg-black/10" />
+                  </div>
+                )}
+
+                <div className="relative z-10">
+                  <div className="flex justify-between items-center mb-6">
                   <span className="px-3 py-1 bg-zinc-800 text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/5">
                     {match.phase}
                   </span>
@@ -128,13 +143,23 @@ export default function MatchesPage() {
 
                 <div className="flex flex-col gap-1 mb-8">
                   {match.defined ? (
-                    <h3 className="text-2xl font-black tracking-tighter uppercase">
-                      {match.teamA} <span className="text-blue-600 mx-1 text-xl">VS</span> {match.teamB}
-                    </h3>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                      <div className="flex items-center gap-3">
+                        <Bandera pais={match.teamA} />
+                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.teamA}</h3>
+                      </div>
+                      <span className="text-blue-600 text-lg lg:text-xl font-black italic leading-none">VS</span>
+                      <div className="flex items-center gap-3">
+                        <Bandera pais={match.teamB} />
+                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.teamB}</h3>
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-1">
                       <h3 className="text-2xl font-black tracking-tighter text-zinc-600 italic uppercase">Por definir</h3>
-                      <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">{match.teamA} vs {match.teamB}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">{match.teamA} vs {match.teamB}</p>
+                      </div>
                     </div>
                   )}
                   <div className="mt-2">
@@ -148,6 +173,7 @@ export default function MatchesPage() {
                   <button className="bg-white text-black px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform group-hover:scale-105 shadow-xl">
                     Comprar
                   </button>
+                </div>
                 </div>
               </div>
             ))}
