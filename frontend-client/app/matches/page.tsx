@@ -81,19 +81,19 @@ export default function MatchesPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-slate-900 py-10 px-4 md:px-8">
+    <main className="min-h-screen bg-[var(--background)] text-slate-900 dark:text-slate-100 py-10 px-4 md:px-8">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
 
         {/* BARRA LATERAL DE FILTROS */}
         <aside className="w-full md:w-72 space-y-8">
-          <div className="glass-panel p-6 rounded-3xl border border-gray-200 sticky top-24 bg-white/60">
+          <div className="glass-panel p-6 rounded-3xl border border-gray-200 dark:border-slate-800 sticky top-24 bg-white/60 dark:bg-slate-900/60">
             <h2 className="text-xl font-bold mb-6 text-[var(--usa-blue)] italic uppercase tracking-tighter">Filtros Avanzados</h2>
 
             <div className="mb-8">
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-3 tracking-widest">Selección</label>
+              <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase mb-3 tracking-widest">Selección</label>
               <select
                 onChange={(e) => setSelectedTeam(e.target.value)}
-                className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[var(--canada-red)] outline-none transition-all appearance-none text-slate-900"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[var(--canada-red)] outline-none transition-all appearance-none text-slate-900 dark:text-white"
               >
                 <option value="Todos">Todas las naciones</option>
                 {SELECCIONES_2026.map(team => (
@@ -103,13 +103,13 @@ export default function MatchesPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-3 tracking-widest">Fase del Torneo</label>
+              <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase mb-3 tracking-widest">Fase del Torneo</label>
               <div className="grid grid-cols-1 gap-2">
                 {["Todas", "Grupos", "Octavos", "Cuartos", "Semifinal", "Final"].map((phase) => (
                   <button
                     key={phase}
                     onClick={() => setSelectedPhase(phase)}
-                    className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedPhase === phase ? "bg-[var(--usa-blue)] text-white shadow-[0_0_15px_rgba(0,43,127,0.3)]" : "text-slate-500 hover:bg-slate-100"
+                    className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedPhase === phase ? "bg-[var(--usa-blue)] text-white shadow-[0_0_15px_rgba(0,43,127,0.3)]" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                   >
                     {phase}
@@ -123,8 +123,8 @@ export default function MatchesPage() {
         {/* LISTADO DE PARTIDOS */}
         <section className="flex-1">
           <div className="mb-10">
-            <h1 className="text-4xl font-black italic mb-2 tracking-tighter uppercase text-slate-900">Cronograma <span className="text-[var(--usa-blue)]">Oficial</span> FIFA</h1>
-            <p className="text-slate-600 font-medium italic">Sorteo final confirmado para el Mundial 2026.</p>
+            <h1 className="text-4xl font-black italic mb-2 tracking-tighter uppercase text-slate-900 dark:text-white">Cronograma <span className="text-[var(--usa-blue)]">Oficial</span> FIFA</h1>
+            <p className="text-slate-600 dark:text-slate-300 font-medium italic">Sorteo final confirmado para el Mundial 2026.</p>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -140,7 +140,7 @@ export default function MatchesPage() {
                 </>
               )
             ) : filteredMatches.map((match) => (
-              <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-gray-100 hover:border-[var(--canada-red)] transition-all duration-500 bg-white">
+              <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 hover:border-[var(--canada-red)] dark:hover:border-[var(--canada-red)] transition-all duration-500 bg-white dark:bg-slate-900">
 
                 {/* ANIMATED HOVER BACKGROUND FLAGS */}
                 {match.defined && (
@@ -153,16 +153,16 @@ export default function MatchesPage() {
                     </div>
                     {/* Gradient overlays to smooth the flags and keep text readable */}
                     {/* El gradiente oscuro para asegurar que el texto sea legible cuando aparecen las banderas */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-white/80 to-white/90" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-white/80 dark:via-slate-900/80 to-white/90 dark:to-slate-900/90" />
                   </div>
                 )}
 
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
-                    <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-gray-200">
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-gray-200 dark:border-slate-700">
                       {match.phase}
                     </span>
-                    <span className="text-slate-500 text-xs font-bold">{match.date}</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-xs font-bold">{match.date}</span>
                   </div>
 
                   <div className="flex flex-col gap-1 mb-8">
@@ -170,30 +170,30 @@ export default function MatchesPage() {
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                         <div className="flex items-center gap-3">
                           <Bandera pais={match.teamA} />
-                          <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none text-slate-900 group-hover:drop-shadow-md">{match.teamA}</h3>
+                          <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none text-slate-900 dark:text-white group-hover:drop-shadow-md">{match.teamA}</h3>
                         </div>
                         <span className="text-[var(--gold)] text-lg lg:text-xl font-black italic leading-none">VS</span>
                         <div className="flex items-center gap-3">
                           <Bandera pais={match.teamB} />
-                          <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none text-slate-900 group-hover:drop-shadow-md">{match.teamB}</h3>
+                          <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none text-slate-900 dark:text-white group-hover:drop-shadow-md">{match.teamB}</h3>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-1">
-                        <h3 className="text-2xl font-black tracking-tighter text-slate-400 italic uppercase">Por definir</h3>
+                        <h3 className="text-2xl font-black tracking-tighter text-slate-400 dark:text-slate-500 italic uppercase">Por definir</h3>
                         <div className="flex items-center gap-2">
                           <p className="text-[10px] text-[var(--usa-blue)] font-black uppercase tracking-widest">{match.teamA} vs {match.teamB}</p>
                         </div>
                       </div>
                     )}
                     <div className="mt-2">
-                      <p className="text-slate-600 text-xs font-semibold">📍 {match.stadium}</p>
+                      <p className="text-slate-600 dark:text-slate-400 text-xs font-semibold">📍 {match.stadium}</p>
                       <p className="text-[var(--mexico-green)] text-[10px] font-black uppercase tracking-widest mt-1">Sector: {match.sector}</p>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center pt-6 border-t border-gray-100">
-                    <p className="text-3xl font-black text-slate-900">${match.price} <span className="text-xs text-slate-500">USD</span></p>
+                  <div className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-slate-800">
+                    <p className="text-3xl font-black text-slate-900 dark:text-white">${match.price} <span className="text-xs text-slate-500 dark:text-slate-400">USD</span></p>
                     <button className="bg-[var(--usa-blue)] text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-800 transition-all transform group-hover:scale-105 shadow-lg shadow-blue-900/20">
                       Comprar
                     </button>

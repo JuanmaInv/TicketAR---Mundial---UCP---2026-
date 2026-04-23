@@ -22,10 +22,10 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="mb-12 text-center">
-        <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-6xl text-slate-900 drop-shadow-sm">
+        <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-6xl text-slate-900 dark:text-white drop-shadow-sm">
           Próximos <span className="text-[var(--usa-blue)]">Partidos</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-lg text-slate-600 font-medium">
+        <p className="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-300 font-medium">
           Reserva tus entradas para la Copa del Mundo 2026. Selección de asientos en tiempo real y confirmación inmediata.
         </p>
       </div>
@@ -37,10 +37,10 @@ export default function Home() {
           {tickets.map((ticket) => (
             <div
               key={ticket.id}
-              className="group glass flex flex-col overflow-hidden rounded-2xl p-6 transition-all hover:translate-y-[-4px] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-gray-100"
+              className="group glass flex flex-col overflow-hidden rounded-2xl p-6 transition-all hover:translate-y-[-4px] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] border border-gray-100 dark:border-slate-800"
             >
               {/* Imagen/Representación visual del partido (con las banderas de fondo) */}
-              <div className="h-40 mb-4 rounded-xl flex items-center justify-center shadow-inner relative overflow-hidden border border-gray-200 bg-slate-100 group-hover:border-[var(--canada-red)] transition-colors">
+              <div className="h-40 mb-4 rounded-xl flex items-center justify-center shadow-inner relative overflow-hidden border border-gray-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 group-hover:border-[var(--canada-red)] transition-colors">
                 {ticket.partidoId.includes(' vs ') ? (
                   <>
                     <div className="absolute inset-0 flex w-full h-full">
@@ -80,23 +80,23 @@ export default function Home() {
                 <span className="rounded-full bg-[var(--mexico-green)]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[var(--mexico-green)]">
                   En Venta
                 </span>
-                <span className="text-2xl font-bold text-slate-900">
+                <span className="text-2xl font-bold text-slate-900 dark:text-white">
                   ${ticket.precio}
                 </span>
               </div>
 
-              <h3 className="mb-2 text-xl font-bold text-slate-900 group-hover:text-[var(--usa-blue)] transition-colors">
+              <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white group-hover:text-[var(--usa-blue)] transition-colors">
                 {ticket.partidoId}
               </h3>
 
-              <p className="text-sm text-slate-600 mb-6 flex-grow">
-                Ticket oficial para la Copa Mundial 2026. Sector exclusivo: <strong className="text-slate-900">{ticket.sector}</strong>. No te pierdas este encuentro histórico.
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-grow">
+                Ticket oficial para la Copa Mundial 2026. Sector exclusivo: <strong className="text-slate-900 dark:text-white">{ticket.sector}</strong>. No te pierdas este encuentro histórico.
               </p>
 
               {/* Botón de acción */}
               <Link
                 href={`/checkout/${ticket.id}`}
-                className="mt-auto w-full text-center block rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-[var(--usa-blue)] hover:text-white border border-gray-200 hover:border-transparent"
+                className="mt-auto w-full text-center block rounded-xl bg-slate-100 dark:bg-slate-800 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-[var(--usa-blue)] dark:hover:bg-[var(--usa-blue)] hover:text-white border border-gray-200 dark:border-slate-700 hover:border-transparent dark:hover:border-transparent"
               >
                 Seleccionar y Comprar
               </Link>
