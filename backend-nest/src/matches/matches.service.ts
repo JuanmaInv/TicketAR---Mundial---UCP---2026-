@@ -8,7 +8,7 @@ import { SupabaseService } from '../common/supabase/supabase.service';
  */
 @Injectable()
 export class PartidosService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private readonly supabaseService: SupabaseService) { }
   /**
    * Crea un nuevo registro de partido.
    * Mapea de camelCase (Frontend/DTO) a snake_case (Base de Datos).

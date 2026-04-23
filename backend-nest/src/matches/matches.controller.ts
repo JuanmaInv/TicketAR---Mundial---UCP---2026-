@@ -4,7 +4,7 @@ import { CrearPartidoDto } from './dto/create-match.dto';
 
 @Controller('partidos')
 export class PartidosController {
-  constructor(private readonly partidosService: PartidosService) {}
+  constructor(private readonly partidosService: PartidosService) { }
 
   /**
    * Endpoint POST /partidos
