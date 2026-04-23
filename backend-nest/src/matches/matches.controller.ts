@@ -6,13 +6,21 @@ import { CrearPartidoDto } from './dto/create-match.dto';
 export class PartidosController {
   constructor(private readonly partidosService: PartidosService) {}
 
+  /**
+   * Endpoint POST /partidos
+   * Crea un partido recibiendo los datos en el Body.
+   */
   @Post()
-  crear(@Body() crearPartidoDto: CrearPartidoDto) {
-    return this.partidosService.crear(crearPartidoDto);
+  async crear(@Body() crearPartidoDto: CrearPartidoDto) {
+    return await this.partidosService.crear(crearPartidoDto);
   }
 
+  /**
+   * Endpoint GET /partidos
+   * Retorna la lista de todos los partidos registrados.
+   */
   @Get()
-  obtenerTodos() {
-    return this.partidosService.obtenerTodos();
+  async obtenerTodos() {
+    return await this.partidosService.obtenerTodos();
   }
 }
