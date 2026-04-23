@@ -14,7 +14,8 @@ export class PartidosService {
    * Mapea de camelCase (Frontend/DTO) a snake_case (Base de Datos).
    */
   async crear(crearPartidoDto: CrearPartidoDto) {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('partidos')
       .insert([
         {
@@ -39,8 +40,9 @@ export class PartidosService {
    */
   async obtenerTodos() {
     console.log('--- Intentando obtener partidos de Supabase ---');
-    
-    const { data, error } = await this.supabaseService.getClient()
+
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('partidos')
       .select('*')
       .order('fecha_partido', { ascending: true });
@@ -49,7 +51,7 @@ export class PartidosService {
       console.error('Error de Supabase:', error.message);
       return [];
     }
-    
+
     console.log(`Éxito: Se encontraron ${data?.length || 0} partidos.`);
     return data;
   }
