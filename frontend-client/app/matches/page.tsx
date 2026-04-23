@@ -15,7 +15,7 @@ const SELECCIONES_2026 = [
   "España", "Cabo Verde", "Arabia Saudita", "Uruguay", // Grupo H
   "Francia", "Senegal", "Irak", "Noruega", // Grupo I
   "Portugal", "RD del congo", "Uzbekistán", "Colombia", // Grupo K
-  "Inglaterra", "Croacia", "Ghana", "Panamá" // Grupo L
+  "Inglaterra", "Croacia", "Ghana", "Panamá" // Grupo Lg
 ].sort();
 
 // 2. MOCK DE PARTIDOS SEGÚN EL CRONOGRAMA DE LA IMAGEN
