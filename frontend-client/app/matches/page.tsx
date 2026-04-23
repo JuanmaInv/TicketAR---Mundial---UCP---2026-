@@ -139,45 +139,37 @@ export default function MatchesPage() {
 
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-6">
-                  <span className="px-3 py-1 bg-zinc-800 text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/5">
-                    {match.phase}
-                  </span>
-                  <span className="text-zinc-500 text-xs font-bold">{match.date}</span>
-                </div>
+                    <span className="px-3 py-1 bg-zinc-800 text-zinc-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/5">
+                      {match.fase}
+                    </span>
+                    <span className="text-zinc-500 text-xs font-bold">{new Date(match.fecha_partido).toLocaleDateString()}</span>
+                  </div>
 
-                <div className="flex flex-col gap-1 mb-8">
-                  {match.defined ? (
+                  <div className="flex flex-col gap-1 mb-8">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                       <div className="flex items-center gap-3">
-                        <Bandera pais={match.teamA} />
-                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.teamA}</h3>
+                        <Bandera pais={match.equipo_local} />
+                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.equipo_local}</h3>
                       </div>
                       <span className="text-blue-600 text-lg lg:text-xl font-black italic leading-none">VS</span>
                       <div className="flex items-center gap-3">
-                        <Bandera pais={match.teamB} />
-                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.teamB}</h3>
+                        <Bandera pais={match.equipo_visitante} />
+                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.equipo_visitante}</h3>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <h3 className="text-2xl font-black tracking-tighter text-zinc-600 italic uppercase">Por definir</h3>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">{match.teamA} vs {match.teamB}</p>
-                      </div>
+                    
+                    <div className="mt-2">
+                      <p className="text-zinc-400 text-xs font-semibold">📍 {match.nombre_estadio}</p>
+                      <p className="text-blue-500/80 text-[10px] font-black uppercase tracking-widest mt-1">Estado: {match.estado}</p>
                     </div>
-                  )}
-                  <div className="mt-2">
-                    <p className="text-zinc-400 text-xs font-semibold">📍 {match.stadium}</p>
-                    <p className="text-blue-500/80 text-[10px] font-black uppercase tracking-widest mt-1">Sector: {match.sector}</p>
                   </div>
-                </div>
 
-                <div className="flex justify-between items-center pt-6 border-t border-white/5">
-                  <p className="text-3xl font-black text-white">${match.price} <span className="text-xs text-zinc-500">USD</span></p>
-                  <button className="bg-white text-black px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform group-hover:scale-105 shadow-xl">
-                    Comprar
-                  </button>
-                </div>
+                  <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                    <p className="text-3xl font-black text-white">${match.precio_base} <span className="text-xs text-zinc-500">USD</span></p>
+                    <button className="bg-white text-black px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform group-hover:scale-105 shadow-xl">
+                      Comprar
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
