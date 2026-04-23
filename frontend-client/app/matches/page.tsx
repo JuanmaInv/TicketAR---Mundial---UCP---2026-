@@ -65,17 +65,17 @@ export default function MatchesPage() {
         <div className="absolute inset-0 bg-[#f8fafc]" />
 
         {/* Mexico (left): vertical green-white-red */}
-        <div className="absolute -left-14 top-8 h-[86%] w-[39%] rounded-[999px] blur-2xl opacity-80 saturate-150 bg-[linear-gradient(90deg,#006847_0%,#006847_33%,#ffffff_33%,#ffffff_66%,#ce1126_66%,#ce1126_100%)]" />
+        <div className="absolute -left-20 top-20 h-[72%] w-[30%] rounded-[999px] blur-3xl opacity-45 saturate-125 bg-[linear-gradient(90deg,#0d8a5a_0%,#0d8a5a_33%,#ffffff_33%,#ffffff_66%,#d64a5e_66%,#d64a5e_100%)]" />
 
         {/* USA (center): horizontal red/white stripes + blue canton */}
-        <div className="absolute left-1/2 top-4 h-[88%] w-[34%] -translate-x-1/2 rounded-[999px] blur-2xl opacity-75 saturate-150 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_8%,#ffffff_8%,#ffffff_16%)]" />
-        <div className="absolute left-[40.5%] top-[11%] h-[28%] w-[12%] rounded-[1.5rem] blur-xl opacity-75 saturate-150 bg-[#3c3b6e]" />
+        <div className="absolute left-1/2 top-14 h-[74%] w-[30%] -translate-x-1/2 rounded-[999px] blur-3xl opacity-40 saturate-120 bg-[repeating-linear-gradient(180deg,#c64559_0%,#c64559_10%,#ffffff_10%,#ffffff_20%)]" />
+        <div className="absolute left-[42.7%] top-[17%] h-[22%] w-[9%] rounded-[1.5rem] blur-2xl opacity-45 saturate-125 bg-[#4b4a86]" />
 
         {/* Canada (right): vertical red-white-red */}
-        <div className="absolute -right-14 top-8 h-[86%] w-[39%] rounded-[999px] blur-2xl opacity-80 saturate-150 bg-[linear-gradient(90deg,#d80621_0%,#d80621_30%,#ffffff_30%,#ffffff_70%,#d80621_70%,#d80621_100%)]" />
+        <div className="absolute -right-20 top-20 h-[72%] w-[30%] rounded-[999px] blur-3xl opacity-45 saturate-125 bg-[linear-gradient(90deg,#d83b52_0%,#d83b52_30%,#ffffff_30%,#ffffff_70%,#d83b52_70%,#d83b52_100%)]" />
 
         {/* Small neutral veil so content remains readable */}
-        <div className="absolute inset-0 bg-white/18" />
+        <div className="absolute inset-0 bg-white/44" />
       </div>
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
         
