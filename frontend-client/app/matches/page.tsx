@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Bandera from "@/components/Bandera";
+import WorldCupLoader from "@/components/WorldCupLoader";
 
 // 1. LAS 48 SELECCIONES SEGÚN EL CRONOGRAMA DE LA IMAGEN
 const SELECCIONES_2026 = [
@@ -59,6 +60,14 @@ const ALL_MATCHES = [
 export default function MatchesPage() {
   const [selectedTeam, setSelectedTeam] = useState("Todos");
   const [selectedPhase, setSelectedPhase] = useState("Todas");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulamos carga al entrar y al cambiar filtros para mostrar el efecto Skeleton
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, [selectedTeam, selectedPhase]);
 
   const filteredMatches = ALL_MATCHES.filter((match) => {
     const matchTeam = selectedTeam === "Todos" || match.teamA === selectedTeam || match.teamB === selectedTeam;
@@ -115,7 +124,9 @@ export default function MatchesPage() {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {filteredMatches.map((match) => (
+            {isLoading ? (
+              <WorldCupLoader />
+            ) : filteredMatches.map((match) => (
               <div key={match.id} className="group relative overflow-hidden glass-panel p-8 rounded-[2.5rem] border border-white/5 hover:border-blue-600/40 transition-all duration-500 bg-zinc-900/10">
                 
                 {/* ANIMATED HOVER BACKGROUND FLAGS */}
