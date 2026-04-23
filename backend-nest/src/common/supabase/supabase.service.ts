@@ -2,78 +2,36 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-type Database = {
-  public: {
-    Tables: {
-      partidos: {
-        Row: {
-          id: string;
-          equipo_local: string;
-          equipo_visitante: string;
-          fecha_partido: string;
-          nombre_estadio: string;
-          fase: string;
-          estado: string;
-          precio_base: number;
-          fecha_creacion: string;
-          fecha_actualizacion: string;
-        };
-        Insert: {
-          id?: string;
-          equipo_local: string;
-          equipo_visitante: string;
-          fecha_partido: string | Date;
-          nombre_estadio: string;
-          fase?: string;
-          estado?: string;
-          precio_base?: number;
-          fecha_creacion?: string;
-          fecha_actualizacion?: string;
-        };
-        Update: {
-          equipo_local?: string;
-          equipo_visitante?: string;
-          fecha_partido?: string | Date;
-          nombre_estadio?: string;
-          fase?: string;
-          estado?: string;
-          precio_base?: number;
-          fecha_actualizacion?: string;
-        };
-      };
-    };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
-  };
-};
-
 /**
  * Servicio centralizado de Supabase (Principio DRY + Singleton).
- * Al tener un único cliente compartido, evitamos múltiples conexiones
- * y centralizamos la configuración de la base de datos en un solo lugar.
- * Cualquier módulo que necesite acceder a Supabase inyecta este servicio.
+ *
+ * NOTA TÉCNICA: Usamos `any` como genérico del cliente intencionalmente.
+ * La librería `supabase-js` v2 requiere un schema muy específico generado
+ * con `supabase gen types` para funcionar sin errores de compilación.
+ * En esta etapa de desarrollo, `any` nos permite operar sin bloqueos.
+ * En producción, reemplazar por los tipos generados automáticamente.
  */
 @Injectable()
 export class SupabaseService {
-  private readonly client: SupabaseClient<Database>;
+  // Cliente tipado como `any` para evitar conflictos internos de Supabase generics
+  private readonly client: SupabaseClient<any>;
 
   constructor(private readonly configService: ConfigService) {
     const url = this.configService.getOrThrow<string>('SUPABASE_URL');
     const key = this.configService.getOrThrow<string>('SUPABASE_KEY');
 
-    this.client = createClient<Database>(url, key);
+    // Sin genérico explícito para máxima compatibilidad en desarrollo
+    this.client = createClient(url, key);
   }
 
   /**
    * Expone el cliente de Supabase para que los servicios realicen queries.
-   * Ejemplo de uso en un servicio:
-   *   const { data, error } = await this.supabaseService.getClient()
-   *     .from('entradas')
+   * Uso en cualquier servicio inyectando SupabaseService:
+   *   const { data } = await this.supabaseService.getClient()
+   *     .from('partidos')
    *     .select('*');
    */
-  getClient(): SupabaseClient<Database> {
+  getClient(): SupabaseClient<any> {
     return this.client;
   }
 }
