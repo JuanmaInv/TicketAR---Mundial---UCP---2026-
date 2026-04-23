@@ -8,7 +8,7 @@ import { SupabaseService } from '../common/supabase/supabase.service';
  */
 @Injectable()
 export class PartidosService {
-  constructor(private readonly supabaseService: SupabaseService) { }
+  constructor(private readonly supabaseService: SupabaseService) {}
   /**
    * Crea un nuevo registro de partido.
    * Mapea de camelCase (Frontend/DTO) a snake_case (Base de Datos).
@@ -31,6 +31,7 @@ export class PartidosService {
       .single();
 
     if (error) throw error;
+
     return data;
   }
 
@@ -53,6 +54,7 @@ export class PartidosService {
     }
 
     console.log(`Éxito: Se encontraron ${data?.length || 0} partidos.`);
+
     return data;
   }
 }
