@@ -60,8 +60,9 @@ export default function MatchesPage() {
   });
 
   return (
-    <main className="min-h-screen py-10 px-4 md:px-8 text-slate-900 dark:text-white bg-[radial-gradient(circle_at_12%_18%,rgba(0,43,127,0.22)_0%,rgba(0,43,127,0)_34%),radial-gradient(circle_at_88%_20%,rgba(225,0,26,0.2)_0%,rgba(225,0,26,0)_30%),radial-gradient(circle_at_50%_84%,rgba(0,104,71,0.22)_0%,rgba(0,104,71,0)_36%),linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#f5fff8_100%)] dark:bg-black">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
+    <main className="relative min-h-screen py-10 px-4 md:px-8 bg-background text-slate-900 dark:text-white overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none dark:hidden bg-[radial-gradient(circle_at_12%_18%,rgba(0,43,127,0.22)_0%,rgba(0,43,127,0)_34%),radial-gradient(circle_at_88%_20%,rgba(225,0,26,0.2)_0%,rgba(225,0,26,0)_30%),radial-gradient(circle_at_50%_84%,rgba(0,104,71,0.22)_0%,rgba(0,104,71,0)_36%),linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#f5fff8_100%)]" />
+      <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
         
         {/* BARRA LATERAL DE FILTROS */}
         <aside className="w-full md:w-72 space-y-8">
