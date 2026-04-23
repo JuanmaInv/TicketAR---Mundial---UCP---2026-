@@ -61,7 +61,22 @@ export default function MatchesPage() {
 
   return (
     <main className="relative min-h-screen py-10 px-4 md:px-8 bg-background text-slate-900 dark:text-white overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none dark:hidden bg-[radial-gradient(circle_at_12%_18%,rgba(0,43,127,0.22)_0%,rgba(0,43,127,0)_34%),radial-gradient(circle_at_88%_20%,rgba(225,0,26,0.2)_0%,rgba(225,0,26,0)_30%),radial-gradient(circle_at_50%_84%,rgba(0,104,71,0.22)_0%,rgba(0,104,71,0)_36%),linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#f5fff8_100%)]" />
+      <div className="absolute inset-0 pointer-events-none dark:hidden">
+        <div className="absolute inset-0 bg-[#f8fafc]" />
+
+        {/* Mexico (left): vertical green-white-red */}
+        <div className="absolute -left-14 top-8 h-[86%] w-[39%] rounded-[999px] blur-2xl opacity-80 saturate-150 bg-[linear-gradient(90deg,#006847_0%,#006847_33%,#ffffff_33%,#ffffff_66%,#ce1126_66%,#ce1126_100%)]" />
+
+        {/* USA (center): horizontal red/white stripes + blue canton */}
+        <div className="absolute left-1/2 top-4 h-[88%] w-[34%] -translate-x-1/2 rounded-[999px] blur-2xl opacity-75 saturate-150 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_8%,#ffffff_8%,#ffffff_16%)]" />
+        <div className="absolute left-[40.5%] top-[11%] h-[28%] w-[12%] rounded-[1.5rem] blur-xl opacity-75 saturate-150 bg-[#3c3b6e]" />
+
+        {/* Canada (right): vertical red-white-red */}
+        <div className="absolute -right-14 top-8 h-[86%] w-[39%] rounded-[999px] blur-2xl opacity-80 saturate-150 bg-[linear-gradient(90deg,#d80621_0%,#d80621_30%,#ffffff_30%,#ffffff_70%,#d80621_70%,#d80621_100%)]" />
+
+        {/* Small neutral veil so content remains readable */}
+        <div className="absolute inset-0 bg-white/18" />
+      </div>
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
         
         {/* BARRA LATERAL DE FILTROS */}
