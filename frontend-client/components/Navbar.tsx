@@ -12,9 +12,9 @@ export default function Navbar() {
         </div>
 
         <div className="absolute inset-y-0 left-[33.33%] w-[33.34%] overflow-hidden">
-          <div className="absolute inset-0 -skew-x-12 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_11%,#ffffff_11%,#ffffff_22%)] opacity-78" />
-          <div className="absolute left-[4%] top-0 h-full w-[38%] -skew-x-12 bg-[#3c3b6e]/88" />
-          <div className="absolute left-[16%] top-1/2 -translate-y-1/2 text-[9px] tracking-[0.22em] text-white/85">✦ ✦ ✦</div>
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_7.7%,#ffffff_7.7%,#ffffff_15.4%)] opacity-82 [clip-path:polygon(6%_0,100%_0,94%_100%,0_100%)]" />
+          <div className="absolute left-[9%] top-[8%] h-[54%] w-[34%] bg-[#3c3b6e]/92 [clip-path:polygon(10%_0,100%_0,90%_100%,0_100%)]" />
+          <div className="absolute left-[12%] top-[14%] h-[40%] w-[28%] opacity-85 bg-[radial-gradient(circle,rgba(255,255,255,0.9)_1.2px,transparent_1.3px)] [background-size:9px_9px]" />
         </div>
 
         <div className="absolute inset-y-0 left-[66.66%] w-[33.34%] overflow-hidden">
