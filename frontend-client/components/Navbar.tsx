@@ -6,15 +6,30 @@ export default function Navbar() {
     <nav className="relative sticky top-0 z-50 w-full border-b border-gray-200/80 dark:border-slate-700 bg-white/88 dark:bg-slate-950 backdrop-blur-md shadow-sm overflow-hidden">
       {/* Dark mode diagonal flag composition */}
       <div className="absolute inset-0 pointer-events-none hidden dark:block">
-        <div className="absolute inset-y-0 -left-16 w-[38%] -skew-x-12 bg-[linear-gradient(90deg,#006847_0%,#006847_34%,#ffffff_34%,#ffffff_66%,#ce1126_66%,#ce1126_100%)] opacity-75" />
-        <div className="absolute left-[16%] top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-900/75">◉</div>
+        <div className="absolute inset-y-0 left-0 w-[33.34%] overflow-hidden">
+          <div className="absolute inset-0 -skew-x-12 -translate-x-[7%] bg-[linear-gradient(90deg,#006847_0%,#006847_34%,#ffffff_34%,#ffffff_66%,#ce1126_66%,#ce1126_100%)] opacity-80" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-black text-slate-900/80">◉</div>
+        </div>
 
-        <div className="absolute inset-y-0 left-[29%] w-[37%] -skew-x-12 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_11%,#ffffff_11%,#ffffff_22%)] opacity-70" />
-        <div className="absolute left-[37%] top-0 h-full w-[15%] -skew-x-12 bg-[#3c3b6e]/80" />
-        <div className="absolute left-[40%] top-1/2 -translate-y-1/2 text-[9px] tracking-[0.25em] text-white/80">✦ ✦ ✦</div>
+        <div className="absolute inset-y-0 left-[33.33%] w-[33.34%] overflow-hidden">
+          <div className="absolute inset-0 -skew-x-12 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_11%,#ffffff_11%,#ffffff_22%)] opacity-78" />
+          <div className="absolute left-[4%] top-0 h-full w-[38%] -skew-x-12 bg-[#3c3b6e]/88" />
+          <div className="absolute left-[16%] top-1/2 -translate-y-1/2 text-[9px] tracking-[0.22em] text-white/85">✦ ✦ ✦</div>
+        </div>
 
-        <div className="absolute inset-y-0 right-[-5%] w-[34%] -skew-x-12 bg-[linear-gradient(90deg,#d80621_0%,#d80621_32%,#ffffff_32%,#ffffff_68%,#d80621_68%,#d80621_100%)] opacity-75" />
-        <div className="absolute right-[13%] top-1/2 -translate-y-1/2 text-xl text-[#d80621]/85">🍁</div>
+        <div className="absolute inset-y-0 left-[66.66%] w-[33.34%] overflow-hidden">
+          <div className="absolute inset-0 -skew-x-12 translate-x-[7%] bg-[linear-gradient(90deg,#d80621_0%,#d80621_32%,#ffffff_32%,#ffffff_68%,#d80621_68%,#d80621_100%)] opacity-80" />
+          <svg
+            viewBox="0 0 64 64"
+            className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-[#d80621] drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
+            aria-hidden="true"
+          >
+            <path
+              fill="currentColor"
+              d="M31.8 6.5l3.2 7.8 8-2.9-2 8.2h8.6l-6.5 5.5 6.2 4.9-8.1 2.2 3.7 8-7.7-2.4-1.8 11.8h-3.1l-1.9-11.8-7.7 2.4 3.7-8-8.1-2.2 6.2-4.9-6.5-5.5h8.6l-2-8.2 8 2.9 3.2-7.8z"
+            />
+          </svg>
+        </div>
 
         {/* Contrast veil to keep nav text readable */}
         <div className="absolute inset-0 bg-slate-950/45" />
