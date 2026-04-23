@@ -2,6 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+type Database = {
+  public: {
+    Tables: Record<string, never>;
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
+  };
+};
+
 /**
  * Servicio centralizado de Supabase (Principio DRY + Singleton).
  * Al tener un único cliente compartido, evitamos múltiples conexiones
@@ -10,13 +20,13 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  */
 @Injectable()
 export class SupabaseService {
-  private readonly client: SupabaseClient;
+  private readonly client: SupabaseClient<Database>;
 
   constructor(private readonly configService: ConfigService) {
     const url = this.configService.getOrThrow<string>('SUPABASE_URL');
     const key = this.configService.getOrThrow<string>('SUPABASE_KEY');
 
-    this.client = createClient(url, key);
+    this.client = createClient<Database>(url, key);
   }
 
   /**
@@ -26,7 +36,7 @@ export class SupabaseService {
    *     .from('entradas')
    *     .select('*');
    */
-  getClient(): SupabaseClient {
+  getClient(): SupabaseClient<Database> {
     return this.client;
   }
 }
