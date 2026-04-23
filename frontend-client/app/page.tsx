@@ -40,33 +40,41 @@ export default function Home() {
               key={ticket.id}
               className="group glass flex flex-col overflow-hidden rounded-2xl p-6 transition-all hover:translate-y-[-4px] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-white/10"
             >
-              {/* Imagen/Representación visual del partido (con las banderas) */}
-              <div className="h-40 mb-4 rounded-xl bg-gradient-to-tr from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center shadow-inner relative overflow-hidden border border-white/5">
+              {/* Imagen/Representación visual del partido (con las banderas de fondo) */}
+              <div className="h-40 mb-4 rounded-xl flex items-center justify-center shadow-inner relative overflow-hidden border border-white/10 bg-black group-hover:border-white/20 transition-colors">
                 {ticket.partidoId.includes(' vs ') ? (
-                  <div className="flex items-center justify-center gap-6 z-10 w-full px-4">
-                    <div className="flex flex-col items-center drop-shadow-xl">
-                      <Bandera pais={ticket.partidoId.split(' vs ')[0]} />
-                      <span className="font-black text-white mt-3 text-sm tracking-widest drop-shadow-md">
+                  <>
+                    <div className="absolute inset-0 flex w-full h-full">
+                      <div className="w-1/2 h-full opacity-80 group-hover:opacity-100 transition-opacity duration-500">
+                        <Bandera pais={ticket.partidoId.split(' vs ')[0]} fill={true} />
+                      </div>
+                      <div className="w-1/2 h-full opacity-80 group-hover:opacity-100 transition-opacity duration-500">
+                        <Bandera pais={ticket.partidoId.split(' vs ')[1]} fill={true} />
+                      </div>
+                    </div>
+                    
+                    {/* Degradado para oscurecer las banderas y mejorar la legibilidad */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/90 z-10"></div>
+                    
+                    <div className="flex items-center justify-center gap-4 z-20 w-full px-4 relative">
+                      <span className="font-black text-white text-2xl tracking-widest drop-shadow-[0_4px_4px_rgba(0,0,0,1)] shadow-black">
                         {ticket.partidoId.split(' vs ')[0].slice(0, 3).toUpperCase()}
                       </span>
-                    </div>
 
-                    <span className="text-xs text-yellow-400 font-black italic tracking-widest px-3 py-1.5 rounded-full bg-black/60 border border-yellow-500/30 backdrop-blur-md shadow-2xl">
-                      VS
-                    </span>
+                      <span className="text-sm text-yellow-400 font-black italic tracking-widest px-4 py-2 rounded-full bg-black/80 border border-yellow-500/50 backdrop-blur-md shadow-2xl">
+                        VS
+                      </span>
 
-                    <div className="flex flex-col items-center drop-shadow-xl">
-                      <Bandera pais={ticket.partidoId.split(' vs ')[1]} />
-                      <span className="font-black text-white mt-3 text-sm tracking-widest drop-shadow-md">
+                      <span className="font-black text-white text-2xl tracking-widest drop-shadow-[0_4px_4px_rgba(0,0,0,1)] shadow-black">
                         {ticket.partidoId.split(' vs ')[1].slice(0, 3).toUpperCase()}
                       </span>
                     </div>
-                  </div>
+                  </>
                 ) : (
-                  <svg className="w-12 h-12 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <svg className="w-12 h-12 text-white/30 z-20 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 )}
                 {/* Decoración de fondo para que parezca un estadio/cancha de noche */}
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.05] mix-blend-overlay z-10 pointer-events-none"></div>
               </div>
 
               <div className="mb-4 flex items-center justify-between">
