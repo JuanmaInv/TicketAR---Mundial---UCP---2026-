@@ -4,24 +4,24 @@ import { ThemeToggle } from './ThemeToggle';
 export default function Navbar() {
   return (
     <nav className="relative sticky top-0 z-50 w-full border-b border-gray-200/80 dark:border-slate-700 bg-white/88 dark:bg-slate-950 backdrop-blur-md shadow-sm overflow-hidden">
-      {/* Dark mode diagonal flag composition */}
-      <div className="absolute inset-0 pointer-events-none hidden dark:block">
+      {/* Diagonal flag composition for both modes */}
+      <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-y-0 left-0 w-[33.34%] overflow-hidden">
-          <div className="absolute inset-0 -skew-x-12 -translate-x-[7%] bg-[linear-gradient(90deg,#006847_0%,#006847_34%,#ffffff_34%,#ffffff_66%,#ce1126_66%,#ce1126_100%)] opacity-80" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-black text-slate-900/80">◉</div>
+          <div className="absolute inset-0 -skew-x-12 -translate-x-[7%] bg-[linear-gradient(90deg,#006847_0%,#006847_34%,#ffffff_34%,#ffffff_66%,#ce1126_66%,#ce1126_100%)] opacity-55 dark:opacity-80" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-black text-slate-900/55 dark:text-slate-900/80">◉</div>
         </div>
 
         <div className="absolute inset-y-0 left-[33.33%] w-[33.34%] overflow-hidden">
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_7.7%,#ffffff_7.7%,#ffffff_15.4%)] opacity-82 [clip-path:polygon(6%_0,100%_0,94%_100%,0_100%)]" />
-          <div className="absolute left-[9%] top-[8%] h-[54%] w-[34%] bg-[#3c3b6e]/92 [clip-path:polygon(10%_0,100%_0,90%_100%,0_100%)]" />
-          <div className="absolute left-[12%] top-[14%] h-[40%] w-[28%] opacity-85 bg-[radial-gradient(circle,rgba(255,255,255,0.9)_1.2px,transparent_1.3px)] [background-size:9px_9px]" />
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_7.7%,#ffffff_7.7%,#ffffff_15.4%)] opacity-55 dark:opacity-82 [clip-path:polygon(6%_0,100%_0,94%_100%,0_100%)]" />
+          <div className="absolute left-[9%] top-[8%] h-[54%] w-[34%] bg-[#3c3b6e]/62 dark:bg-[#3c3b6e]/92 [clip-path:polygon(10%_0,100%_0,90%_100%,0_100%)]" />
+          <div className="absolute left-[12%] top-[14%] h-[40%] w-[28%] opacity-65 dark:opacity-85 bg-[radial-gradient(circle,rgba(255,255,255,0.9)_1.2px,transparent_1.3px)] [background-size:9px_9px]" />
         </div>
 
         <div className="absolute inset-y-0 left-[66.66%] w-[33.34%] overflow-hidden">
-          <div className="absolute inset-0 -skew-x-12 translate-x-[7%] bg-[linear-gradient(90deg,#d80621_0%,#d80621_32%,#ffffff_32%,#ffffff_68%,#d80621_68%,#d80621_100%)] opacity-80" />
+          <div className="absolute inset-0 -skew-x-12 translate-x-[7%] bg-[linear-gradient(90deg,#d80621_0%,#d80621_32%,#ffffff_32%,#ffffff_68%,#d80621_68%,#d80621_100%)] opacity-55 dark:opacity-80" />
           <svg
             viewBox="0 0 64 64"
-            className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-[#d80621] drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
+            className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-[#d80621]/80 dark:text-[#d80621] drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
             aria-hidden="true"
           >
             <path
@@ -31,12 +31,10 @@ export default function Navbar() {
           </svg>
         </div>
 
-        {/* Contrast veil to keep nav text readable */}
-        <div className="absolute inset-0 bg-slate-950/45" />
+        {/* Contrast veils to keep nav text readable on each theme */}
+        <div className="absolute inset-0 bg-white/72 dark:hidden" />
+        <div className="absolute inset-0 hidden dark:block bg-slate-950/45" />
       </div>
-
-      {/* Light mode clean surface */}
-      <div className="absolute inset-0 pointer-events-none dark:hidden bg-white/90" />
 
       <div className="relative z-10 container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
