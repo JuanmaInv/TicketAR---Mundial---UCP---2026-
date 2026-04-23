@@ -18,45 +18,8 @@ const SELECCIONES_2026 = [
   "Turquía", "Túnez", "Uruguay", "Uzbekistán"
 ];
 
-// 2. MOCK DE PARTIDOS SEGÚN EL CRONOGRAMA DE LA IMAGEN
-const ALL_MATCHES = [
-  // --- GRUPO J: EL CAMINO DE ARGENTINA (OFICIAL SEGÚN IMAGEN) ---
-  { id: 1, teamA: "Argentina", teamB: "Argelia", phase: "Grupos", date: "2026-06-11", stadium: "Mercedes-Benz Stadium (Atlanta)", sector: "Platea Baja Central", price: 450, defined: true },
-  { id: 2, teamA: "Argentina", teamB: "Austria", phase: "Grupos", date: "2026-06-21", stadium: "MetLife Stadium (New Jersey)", sector: "VIP Hospitality", price: 1250, defined: true },
-  { id: 3, teamA: "Argentina", teamB: "Jordania", phase: "Grupos", date: "2026-06-26", stadium: "Arrowhead Stadium (Kansas City)", sector: "Popular Sur", price: 280, defined: true },
-
-  // --- PARTIDOS DE ANFITRIONES Y OTROS GRUPOS (SEGÚN IMAGEN) ---
-  { id: 4, teamA: "México", teamB: "Sudáfrica", phase: "Grupos", date: "2026-06-11", stadium: "Estadio Azteca (CDMX)", sector: "Palco Club Premier", price: 550, defined: true },
-  { id: 5, teamA: "Canadá", teamB: "Qatar", phase: "Grupos", date: "2026-06-12", stadium: "BMO Field (Toronto)", sector: "Platea Baja West", price: 350, defined: true },
-  { id: 6, teamA: "Estados Unidos", teamB: "Paraguay", phase: "Grupos", date: "2026-06-12", stadium: "SoFi Stadium (Los Ángeles)", sector: "Main Level Corner", price: 650, defined: true },
-  { id: 7, teamA: "Brasil", teamB: "Marruecos", phase: "Grupos", date: "2026-06-15", stadium: "Hard Rock Stadium (Miami)", sector: "Lower Bowl Level 1", price: 900, defined: true },
-  { id: 8, teamA: "Alemania", teamB: "Ecuador", phase: "Grupos", date: "2026-06-15", stadium: "Gillette Stadium (Boston)", sector: "Platea Media", price: 380, defined: true },
-  { id: 9, teamA: "Países Bajos", teamB: "Japón", phase: "Grupos", date: "2026-06-16", stadium: "Levi's Stadium", sector: "Categoría 1", price: 420, defined: true },
-  { id: 10, teamA: "Bélgica", teamB: "Nueva Zelanda", phase: "Grupos", date: "2026-06-17", stadium: "NRG Stadium (Houston)", sector: "General Norte", price: 250, defined: true },
-  { id: 11, teamA: "España", teamB: "Uruguay", phase: "Grupos", date: "2026-06-16", stadium: "Lincoln Financial Field", sector: "Codo Preferencial", price: 480, defined: true },
-  { id: 12, teamA: "Francia", teamB: "Senegal", phase: "Grupos", date: "2026-06-18", stadium: "Lumen Field", sector: "Platea Alta East", price: 500, defined: true },
-  { id: 13, teamA: "Portugal", teamB: "Colombia", phase: "Grupos", date: "2026-06-20", stadium: "AT&T Stadium (Dallas)", sector: "Categoría 2", price: 600, defined: true },
-  { id: 14, teamA: "Inglaterra", teamB: "Croacia", phase: "Grupos", date: "2026-06-21", stadium: "MetLife Stadium", sector: "Platea Baja", price: 700, defined: true },
-  
-  // Asegurando el resto de selecciones de la imagen
-  { id: 15, teamA: "Corea del Sur", teamB: "UEFA Playoff D", phase: "Grupos", date: "2026-06-13", stadium: "BC Place", sector: "General", price: 150, defined: true },
-  { id: 16, teamA: "Suiza", teamB: "UEFA Playoff A", phase: "Grupos", date: "2026-06-14", stadium: "Arrowhead Stadium", sector: "Categoría 3", price: 180, defined: true },
-  { id: 17, teamA: "Haití", teamB: "Escocia", phase: "Grupos", date: "2026-06-16", stadium: "Hard Rock Stadium", sector: "Popular", price: 120, defined: true },
-  { id: 18, teamA: "Australia", teamB: "UEFA Playoff C", phase: "Grupos", date: "2026-06-17", stadium: "SoFi Stadium", sector: "General", price: 200, defined: true },
-  { id: 19, teamA: "Curazao", teamB: "Costa de Marfil", phase: "Grupos", date: "2026-06-19", stadium: "NRG Stadium", sector: "Platea Alta", price: 140, defined: true },
-  { id: 20, teamA: "UEFA Playoff B", teamB: "Túnez", phase: "Grupos", date: "2026-06-20", stadium: "BMO Field", sector: "General", price: 130, defined: true },
-  { id: 21, teamA: "Egipto", teamB: "Irán", phase: "Grupos", date: "2026-06-22", stadium: "Gillette Stadium", sector: "Codo", price: 210, defined: true },
-  { id: 22, teamA: "Cabo Verde", teamB: "Arabia Saudí", phase: "Grupos", date: "2026-06-23", stadium: "Levi's Stadium", sector: "General", price: 110, defined: true },
-  { id: 23, teamA: "Intercontinental 2", teamB: "Noruega", phase: "Grupos", date: "2026-06-24", stadium: "Lumen Field", sector: "Categoría 3", price: 190, defined: true },
-  { id: 24, teamA: "Intercontinental 1", teamB: "Uzbekistán", phase: "Grupos", date: "2026-06-25", stadium: "AT&T Stadium", sector: "Platea Media", price: 160, defined: true },
-  { id: 25, teamA: "Ghana", teamB: "Panamá", phase: "Grupos", date: "2026-06-26", stadium: "Rice-Eccles Stadium", sector: "Popular", price: 140, defined: true },
-
-  // --- ELIMINATORIAS (DATOS OFICIALES FIFA) ---
-  { id: 101, teamA: "1° Grupo J", teamB: "2° Grupo I", phase: "Octavos", date: "2026-06-30", stadium: "SoFi Stadium (L.A.)", sector: "Platea Preferencial", price: 850, defined: false },
-  { id: 102, teamA: "Ganador R32-1", teamB: "Ganador R32-2", phase: "Cuartos", date: "2026-07-09", stadium: "Gillette Stadium (Boston)", sector: "Categoría 1 Premium", price: 1600, defined: false },
-  { id: 103, teamA: "Ganador Q1", teamB: "Ganador Q2", phase: "Semifinal", date: "2026-07-14", stadium: "AT&T Stadium (Dallas)", sector: "VIP Club Suite", price: 3800, defined: false },
-  { id: 104, teamA: "Ganador Semi 1", teamB: "Ganador Semi 2", phase: "Final", date: "2026-07-19", stadium: "MetLife Stadium (NY/NJ)", sector: "Acceso Total Estadio", price: 6500, defined: false },
-];
+// 2. MOCK DE PARTIDOS (VACÍO PARA INTEGRACIÓN)
+const ALL_MATCHES: any[] = [];
 
 export default function MatchesPage() {
   const [selectedTeam, setSelectedTeam] = useState("Todos");
