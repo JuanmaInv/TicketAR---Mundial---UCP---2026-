@@ -69,8 +69,9 @@ export default function MatchesPage() {
             <h2 className="text-xl font-bold mb-6 text-blue-500 italic uppercase tracking-tighter">Filtros Avanzados</h2>
 
             <div className="mb-8">
-              <label className="block text-[10px] font-black text-zinc-500 uppercase mb-3 tracking-widest">Selección</label>
+              <label htmlFor="filtro-seleccion" className="block text-[10px] font-black text-zinc-500 uppercase mb-3 tracking-widest">Selección</label>
               <select
+                id="filtro-seleccion"
                 onChange={(e) => setSelectedTeam(e.target.value)}
                 className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-600 outline-none transition-all appearance-none"
               >
