@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import WorldCupLoader from '@/components/WorldCupLoader';
 import { getTickets } from '../lib/api';
 import { Ticket } from '../types/ticket';
 import Bandera from '@/components/Bandera';
@@ -30,9 +31,7 @@ export default function Home() {
       </div>
 
       {loading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-        </div>
+        <WorldCupLoader />
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {tickets.map((ticket) => (
