@@ -4,6 +4,9 @@
 
 `pnpm` debe instalarse primero de forma global en tu computadora para que el comando exista en la terminal. Despues, debes entrar en la carpeta del proyecto que quieras usar e instalar ahi sus dependencias. `pnpm` no se instala por carpeta: lo que se instala en cada carpeta son las librerias del proyecto.
 
+¿Por que es necesario?
+PNPM es una gestor de paquetes para proyectos de `Node. js`
+
 ### 1. Verificar que pnpm este instalado globalmente
 
 ```powershell

@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StadiumSectorsService } from './stadium-sectors.service';
+import { SectoresService } from './stadium-sectors.service';
 
-describe('StadiumSectorsService', () => {
-  let service: StadiumSectorsService;
+describe('SectoresService', () => {
+  let service: SectoresService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [StadiumSectorsService],
+      providers: [SectoresService],
     }).compile();
 
-    service = module.get<StadiumSectorsService>(StadiumSectorsService);
+    service = module.get<SectoresService>(SectoresService);
   });
 
-  it('should be defined', () => {
+  it('debería estar definido', () => {
     expect(service).toBeDefined();
   });
 });
