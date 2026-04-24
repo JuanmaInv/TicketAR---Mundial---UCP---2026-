@@ -32,6 +32,29 @@ Desarrollar una plataforma de venta de entradas enfocada en la seguridad y elimi
 
 ---
 
+## 🌐 Arquitectura de Integración (Fullstack)
+
+Para entender cómo funciona el ecosistema de **TicketAR**, dividimos la responsabilidad en tres pilares fundamentales:
+
+### 1. El Triángulo de Conectividad
+*   **Base de Datos (Supabase):** El corazón del sistema. Almacena tablas de partidos, usuarios y entradas. Gestiona la persistencia real de los datos.
+*   **Backend (NestJS):** El guardián y cerebro. Es el único que tiene la "llave maestra" (`service_role`) para escribir en la base de datos de forma segura. Valida reglas de negocio y procesa pagos.
+*   **Frontend (Next.js):** La cara del proyecto. Captura la intención del usuario y se comunica con el Backend mediante peticiones HTTP (REST) a `http://localhost:3000`.
+
+### 2. Flujo de Datos (Ejemplo: Compra de Entrada)
+1.  **Frontend:** El usuario elige un asiento y el Front envía un `POST /entradas`.
+2.  **Backend:** Recibe el pedido, valida que el partido exista y que el usuario no tenga ya otra entrada para ese partido.
+3.  **Backend ↔ Supabase:** Si todo es válido, el Backend escribe la reserva en la base de datos y activa el bloqueo de 15 minutos.
+4.  **Backend:** Devuelve la confirmación al usuario para que proceda al pago.
+
+### 3. El Rol del "Guardián" (NestJS)
+A diferencia de otros proyectos donde el Front habla directo con la DB, aquí **NestJS actúa como intermediario crítico**:
+*   **Seguridad:** El Front solo conoce la `anon_key`, mientras que el Backend usa la `service_role_key`.
+*   **Integridad:** Centralizamos validaciones complejas (como el chequeo de pasaportes) en un solo lugar.
+*   **Pagos:** El Backend procesa las confirmaciones de pasarelas antes de marcar un ticket como `PAGADO` en la DB.
+
+---
+
 ## 🚀 Inicio Rápido (Para el Desarrollador Nuevo)
 
 Si acabas de clonar el repositorio, seguí estos pasos en orden:
