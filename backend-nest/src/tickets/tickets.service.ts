@@ -1,59 +1,91 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { SupabaseService } from '../common/supabase/supabase.service';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
 
 @Injectable()
 export class EntradasService {
-  private baseDeDatosSimulada: TicketEntity[] = [];
+  constructor(private readonly supabaseService: SupabaseService) {}
 
-  crear(crearEntradaDto: CrearEntradaDto) {
-    // 🚨 Regla Crítica: Máximo 1 entrada por sesión por usuario
-    const entradaActiva = this.baseDeDatosSimulada.find(
-      (entrada) =>
-        entrada.userId === crearEntradaDto.idUsuario &&
-        (entrada.status === TicketStatus.RESERVED ||
-          entrada.status === TicketStatus.PAID),
-    );
+  /**
+   * Proceso Atómico de Reserva de Entrada.
+   * Sigue las reglas de negocio: Pasaporte -> No duplicados -> Stock -> Insertar.
+   */
+  async crear(crearEntradaDto: CrearEntradaDto): Promise<any> {
+    const supabase = this.supabaseService.getClient();
 
-    if (entradaActiva) {
-      throw new ConflictException(
-        'El usuario ya tiene una entrada activa o en reserva.',
-      );
+    // 1. VALIDACIÓN DE PASAPORTE
+    const { data: usuario, error: errorUsuario } = await supabase
+      .from('usuarios')
+      .select('pasaporte')
+      .eq('id', crearEntradaDto.idUsuario)
+      .single();
+
+    if (errorUsuario || !usuario?.pasaporte) {
+      throw new BadRequestException('El usuario debe tener un pasaporte registrado para reservar.');
     }
 
-    // 🚨 Reserva: El servidor bloquea el lugar por 15 minutos
-    const expiracion = new Date();
-    expiracion.setMinutes(expiracion.getMinutes() + 15);
+    // 2. REGLA CRÍTICA: MÁXIMO 1 ENTRADA POR PARTIDO
+    const { data: entradaExistente } = await supabase
+      .from('entradas')
+      .select('id')
+      .eq('usuario_id', crearEntradaDto.idUsuario)
+      .eq('partido_id', crearEntradaDto.idPartido)
+      .neq('estado', TicketStatus.CANCELADO) // Permitimos reservar si la anterior se canceló
+      .maybeSingle();
 
-    const nuevaEntrada: TicketEntity = {
-      id: crypto.randomUUID(),
-      userId: crearEntradaDto.idUsuario,
-      sectorId: crearEntradaDto.idSector,
-      status: TicketStatus.RESERVED,
-      reservationExpiresAt: expiracion,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    if (entradaExistente) {
+      throw new ConflictException('Ya tienes una reserva activa o pagada para este partido.');
+    }
 
-    this.baseDeDatosSimulada.push(nuevaEntrada);
+    // 3. VERIFICACIÓN DE STOCK (En la tabla de inventario real)
+    const { data: inventario, error: errorStock } = await supabase
+      .from('partido_sectores')
+      .select('asientos_disponibles, precio_especifico')
+      .eq('id_partido', crearEntradaDto.idPartido)
+      .eq('id_sector', crearEntradaDto.idSector)
+      .single();
+
+    if (errorStock || !inventario) {
+      throw new NotFoundException('El sector solicitado no está disponible para este partido.');
+    }
+
+    if (inventario.asientos_disponibles <= 0) {
+      throw new ConflictException('Lo sentimos, no quedan asientos disponibles en este sector.');
+    }
+
+    // 4. CREACIÓN DE LA RESERVA (Trigger de DB bajará el stock)
+    const fechaExpiracion = new Date();
+    fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
+
+    const { data: nuevaEntrada, error: errorInsert } = await supabase
+      .from('entradas')
+      .insert([
+        {
+          usuario_id: crearEntradaDto.idUsuario,
+          partido_id: crearEntradaDto.idPartido,
+          sector_id: crearEntradaDto.idSector,
+          estado: TicketStatus.RESERVADO,
+          fecha_expiracion_reserva: fechaExpiracion.toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (errorInsert) {
+      throw new BadRequestException(`Error al crear la reserva: ${errorInsert.message}`);
+    }
+
     return nuevaEntrada;
   }
 
-  obtenerTodas() {
-    return this.baseDeDatosSimulada;
-  }
-
-  obtenerUna(id: string) {
-    return this.baseDeDatosSimulada.find((entrada) => entrada.id === id);
-  }
-
-  marcarComoPagada(id: string) {
-    const entrada = this.obtenerUna(id);
-    if (entrada) {
-      entrada.status = TicketStatus.PAID;
-      entrada.updatedAt = new Date();
-    }
-    return entrada;
+  async obtenerTodas() {
+    const { data, error } = await this.supabaseService.getClient()
+      .from('entradas')
+      .select('*, partidos(*), sectores_estadio(*)'); // Traemos data relacionada
+    
+    if (error) throw new BadRequestException(error.message);
+    return data;
   }
 }
