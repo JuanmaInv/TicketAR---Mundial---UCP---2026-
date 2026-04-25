@@ -1,19 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntradasController } from './tickets.controller';
 import { EntradasService } from './tickets.service';
-
-// SPEC: Specification - se crean automáticamente con el comando npx nest g y sirven para escribir tests unitarios
+import { SupabaseService } from '../common/supabase/supabase.service';
 
 describe('EntradasController', () => {
   let controller: EntradasController;
 
+  const mockSupabaseService = {
+    getClient: jest.fn().mockReturnValue({}),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [EntradasController],
-      providers: [EntradasService],
+      providers: [
+        EntradasService,
+        {
+          provide: SupabaseService,
+          useValue: mockSupabaseService,
+        },
+      ],
     }).compile();
 
-    controller = module.get(EntradasController);
+    controller = module.get<EntradasController>(EntradasController);
   });
 
   it('debería estar definido', () => {
