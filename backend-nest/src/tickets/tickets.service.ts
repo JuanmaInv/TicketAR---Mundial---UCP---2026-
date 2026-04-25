@@ -1,7 +1,11 @@
-import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
-import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
 
 @Injectable()
@@ -23,7 +27,9 @@ export class EntradasService {
       .single();
 
     if (errorUsuario || !usuario?.pasaporte) {
-      throw new BadRequestException('El usuario debe tener un pasaporte registrado para reservar.');
+      throw new BadRequestException(
+        'El usuario debe tener un pasaporte registrado para reservar.',
+      );
     }
 
     // 2. REGLA CRÍTICA: MÁXIMO 1 ENTRADA POR PARTIDO
@@ -36,7 +42,9 @@ export class EntradasService {
       .maybeSingle();
 
     if (entradaExistente) {
-      throw new ConflictException('Ya tienes una reserva activa o pagada para este partido.');
+      throw new ConflictException(
+        'Ya tienes una reserva activa o pagada para este partido.',
+      );
     }
 
     // 3. VERIFICACIÓN DE STOCK (En la tabla de inventario real)
@@ -48,11 +56,15 @@ export class EntradasService {
       .single();
 
     if (errorStock || !inventario) {
-      throw new NotFoundException('El sector solicitado no está disponible para este partido.');
+      throw new NotFoundException(
+        'El sector solicitado no está disponible para este partido.',
+      );
     }
 
     if (inventario.asientos_disponibles <= 0) {
-      throw new ConflictException('Lo sentimos, no quedan asientos disponibles en este sector.');
+      throw new ConflictException(
+        'Lo sentimos, no quedan asientos disponibles en este sector.',
+      );
     }
 
     // 4. CREACIÓN DE LA RESERVA (Trigger de DB bajará el stock)
@@ -74,17 +86,20 @@ export class EntradasService {
       .single();
 
     if (errorInsert) {
-      throw new BadRequestException(`Error al crear la reserva: ${errorInsert.message}`);
+      throw new BadRequestException(
+        `Error al crear la reserva: ${errorInsert.message}`,
+      );
     }
 
     return nuevaEntrada;
   }
 
   async obtenerTodas() {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('entradas')
       .select('*, partidos(*), sectores_estadio(*)'); // Traemos data relacionada
-    
+
     if (error) throw new BadRequestException(error.message);
     return data;
   }

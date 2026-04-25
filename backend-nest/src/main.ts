@@ -9,14 +9,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule); // Crea la instancia de la aplicacion.
 
   // --- CONFIGURACIÓN DE SEGURIDAD Y VALIDACIÓN ---
-  
+
   // Escudo de seguridad global para validar DTOs (Data Transfer Objects)
   // Esto asegura que los datos que vienen del frontend sean exactamente lo que esperamos.
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,            // Elimina campos que no estén en el DTO
-    forbidNonWhitelisted: true,  // Rechaza la petición si hay campos extra
-    transform: true,             // Transforma los datos a los tipos de TypeScript del DTO
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Elimina campos que no estén en el DTO
+      forbidNonWhitelisted: true, // Rechaza la petición si hay campos extra
+      transform: true, // Transforma los datos a los tipos de TypeScript del DTO
+    }),
+  );
 
   // Configure el CORS para que el front pueda acceder al backend.
   app.enableCors({
