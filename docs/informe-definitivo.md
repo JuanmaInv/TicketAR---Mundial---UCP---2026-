@@ -8,6 +8,7 @@ Desarrollar una plataforma de venta de entradas enfocada en la seguridad y elimi
 - **Sectores:** Control de capacidad estricto por PLATEA, PALCO, POPULAR y PRENSA.
 - **Entregable:** Generación de código QR enviado por correo tras confirmar el pago.
 - **Reventa:** Sistema oficial integrado en la plataforma con comisión.
+- **Inventario Dinámico:** El stock se gestiona por la relación única `Partido-Sector`, permitiendo precios y capacidades independientes por cada encuentro.
 
 ## 🛠️ Stack Tecnológico (Monorepo)
 - **Backend:** NestJS (Modular) en `/backend-nest`.
@@ -43,8 +44,9 @@ Cada funcionalidad importante (Auth, Tickets, Usuarios) tiene su propio módulo 
 
 ### 2. DTOs (Data Transfer Objects)
 Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript que validan los datos que entran a la API (usando `class-validator`). 
-- *Misión:* Actúan como un "escudo" de seguridad. Si el frontend envía datos incorrectos, el DTO rechaza la petición con un error 400 antes de que llegue a nuestra lógica.
-- *Beneficio:* Permiten que el equipo de Frontend sepa exactamente qué formato de JSON deben enviar.
+- *Misión:* Actúan como un "escudo" de seguridad. Implementan el principio de **Zero Trust**: el servidor solo acepta los campos definidos (ej. `userId`, `partidoId`, `sectorId`) e ignora el resto (ej. `status`, `qrCode`).
+- *Validación Estricta:* Se utiliza `@IsUUID('4')` para prevenir inyecciones y asegurar que los identificadores sigan el estándar de Supabase.
+- *Configuración Global:* Se utiliza el `ValidationPipe` en `main.ts` con `whitelist: true` para limpiar automáticamente cualquier campo no deseado enviado por el cliente.
 
 ### 3. Controladores (Controllers)
 Los controladores (`.controller.ts`) reciben las peticiones HTTP (GET, POST, PUT, DELETE) desde internet.
@@ -74,7 +76,11 @@ Cada vez que se aborde una nueva funcionalidad importante (ej. `payments`, `user
 4. **Acoplar el DTO al Controlador:** Ve al `.controller.ts`, importa el DTO que creaste y úsalo en el método correspondiente (`@Body() data: CreateNombreDto`). *¡Regla estricta: prohibido usar `any`!*
 5. **Inyectar el Servicio:** Asegúrate de que el controlador tenga acceso a su servicio inyectándolo en el constructor (`constructor(private readonly miService: MiService) {}`).
 6. **Delegar (El mesero pasa el pedido):** En el método del controlador, invoca la función del servicio y pásale la información ya validada (`return this.miService.crear(data);`).
-7. **Escribir la Lógica (El Chef cocina):** Por último, ve al `.service.ts` y escribe todas las reglas críticas de negocio e interacciones con la base de datos de Supabase.
+7. **Escribir la Lógica (El Chef cocina):** En el `.service.ts`, implementamos las reglas críticas:
+   - **Fase de Reserva:** Bloqueo de 15 min (`reservationExpiresAt`).
+   - **Validación Cruzada:** Verificar que el usuario no tenga otro ticket para el mismo `partidoId`.
+   - **Gestión de Stock:** Asegurar que la `capacidad_disponible` en la tabla intermedia sea suficiente.
+8. **Auditoría:** Asegurar que el proceso guarde los tiempos en `createdAt` y `updatedAt` para seguimiento histórico.
 
 
 ## 🤖 Protocolo Erwin (IA Tutor)
