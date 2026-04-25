@@ -18,4 +18,3 @@ export class TicketEntity {
   createdAt: Date; // Cuándo se inició el proceso de compra.
   updatedAt: Date; // Cuándo fue la última actualización (ej: el cambio a 'PAGADO').
 }
-

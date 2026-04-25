@@ -1,4 +1,10 @@
 import { Module } from '@nestjs/common';
+import { PartidosController } from './matches.controller';
+import { PartidosService } from './matches.service';
 
-@Module({})
-export class MatchesModule {}
+@Module({
+  controllers: [PartidosController],
+  providers: [PartidosService],
+  exports: [PartidosService],
+})
+export class PartidosModule {}

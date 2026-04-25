@@ -19,5 +19,3 @@ export class CreateTicketDto {
   @IsNotEmpty({ message: 'Debe especificar un sector para reservar' })
   sectorId: string;
 }
-
-
