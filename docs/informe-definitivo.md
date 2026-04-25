@@ -83,7 +83,32 @@ Cada vez que se aborde una nueva funcionalidad importante (ej. `payments`, `user
 8. **Auditoría:** Asegurar que el proceso guarde los tiempos en `createdAt` y `updatedAt` para seguimiento histórico.
 
 
+## 📊 Gestión Automatizada de Inventario (Match-Sector Logic)
+Esta funcionalidad es el núcleo de la estabilidad del sistema TicketAR. Permite que cada encuentro del Mundial gestione su propia disponibilidad de forma independiente y segura.
+
+### 1. El Concepto: Desacoplamiento de Stock
+Para evitar conflictos de concurrencia y permitir flexibilidad, hemos separado la definición física del estadio de la disponibilidad por encuentro:
+*   **Tabla `sectores_estadio` (El Molde):** Define la capacidad total teórica (ej: 20,000 lugares) y el precio base de un sector.
+*   **Tabla `partido_sectores` (El Inventario Real):** Es la tabla donde ocurre la magia. Guarda cuántos lugares quedan **específicamente** para un partido "X" en un sector "Y".
+
+### 2. Automatización mediante Trigger (Paso a Paso)
+Hemos implementado un patrón de **Automatización de Lado del Servidor (Supabase/Postgres)** para garantizar que nunca exista un partido sin entradas disponibles:
+
+1.  **Evento de Creación:** Un administrador o proceso automático inserta un nuevo registro en la tabla `partidos`.
+2.  **Disparo del Trigger (`tr_inicializar_inventario_partido`):** El motor de la base de datos detecta la inserción y detiene el proceso un milisegundo para ejecutar la lógica de inventario.
+3.  **Ejecución de Función (`fn_inicializar_inventario_partido`):**
+    *   La función recorre la tabla `sectores_estadio`.
+    *   Filtra únicamente los sectores marcados como `activo = true`.
+    *   Realiza un `INSERT` masivo en `partido_sectores`, "sembrando" el stock inicial basado en la capacidad total del sector.
+4.  **Disponibilidad Inmediata:** Al finalizar la transacción, el partido ya cuenta con su inventario de entradas (ej: Popular: 10,000, Platea: 5,000) listo para ser consumido por la API de NestJS.
+
+### 3. Beneficios de esta Arquitectura
+*   **Integridad Garantizada:** Es imposible que un error humano olvide cargar las entradas de un partido; el motor de DB lo asegura por nosotros.
+*   **Precios Dinámicos:** Permite ajustar el `precio_especifico` para partidos de alta demanda (como la Final) sin alterar el precio base del estadio.
+*   **Escalabilidad:** Soporta miles de reservas simultáneas al trabajar con registros independientes por partido, reduciendo bloqueos en la base de datos.
+
 ## 🤖 Protocolo Erwin (IA Tutor)
+
 - **Método Socrático:** No dar código completo. Proporcionar pistas, teoría y fragmentos educativos.
 - **Foco Backend:** Erwin es Backend Engineer. Priorizar lógica de servicios, DTOs y seguridad en NestJS.
 - **Contexto:** Si falta información, preguntar antes de asumir.
