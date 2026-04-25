@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
-import { StadiumSectorEntity } from './entities/stadium-sector.entity';
+import { SectorEntidad } from './entities/stadium-sector.entity';
 import { SupabaseService } from 'src/common/supabase/supabase.service';
 
 @Injectable()
