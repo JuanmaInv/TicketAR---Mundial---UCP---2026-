@@ -25,9 +25,6 @@ export default function Home() {
         <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-6xl text-slate-900 dark:text-white drop-shadow-sm">
           Próximos <span className="text-[var(--usa-blue)]">Partidos</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-300 font-medium">
-          Reserva tus entradas para la Copa del Mundo 2026. Selección de asientos en tiempo real y confirmación inmediata.
-        </p>
       </div>
 
       {loading ? (
@@ -51,10 +48,10 @@ export default function Home() {
                         <Bandera pais={ticket.partidoId.split(' vs ')[1]} fill={true} />
                       </div>
                     </div>
-                    
+
                     {/* Degradado para oscurecer las banderas y mejorar la legibilidad del texto blanco sobre ellas */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/80 z-10"></div>
-                    
+
                     <div className="flex items-center justify-center gap-4 z-20 w-full px-4 relative">
                       <span className="font-black text-white text-2xl tracking-widest drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] shadow-black">
                         {ticket.partidoId.split(' vs ')[0].slice(0, 3).toUpperCase()}
@@ -89,7 +86,7 @@ export default function Home() {
                 {ticket.partidoId}
               </h3>
 
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-grow">
+              <p className="text-sm text-slate-600 dark:text-slate-200 mb-6 flex-grow">
                 Ticket oficial para la Copa Mundial 2026. Sector exclusivo: <strong className="text-slate-900 dark:text-white">{ticket.sector}</strong>. No te pierdas este encuentro histórico.
               </p>
 
