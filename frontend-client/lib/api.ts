@@ -23,3 +23,16 @@ export async function createTicket(ticket: Omit<Ticket, 'id'>): Promise<Ticket> 
   if (!res.ok) throw new Error('Error al reservar');
   return res.json();
 }
+
+export async function createUsuario(usuario: { email: string, nombre: string, apellido: string, numeroPasaporte: string }) {
+  const res = await fetch(`${API_URL}/usuarios`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(usuario),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || 'Error al crear usuario');
+  }
+  return res.json();
+}
