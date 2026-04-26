@@ -93,15 +93,18 @@ export class EntradasService {
       );
     }
 
-    // Retornamos mapeado a la entidad en inglés para consistencia con main
+    // Retornamos mapeado a la entidad en español
     return {
       id: nuevaEntrada.id,
-      userId: nuevaEntrada.usuario_id,
-      sectorId: nuevaEntrada.sector_id,
-      status: nuevaEntrada.estado,
-      reservationExpiresAt: new Date(nuevaEntrada.fecha_expiracion_reserva),
-      createdAt: new Date(nuevaEntrada.created_at),
-      updatedAt: new Date(nuevaEntrada.updated_at),
+      idUsuario: nuevaEntrada.usuario_id,
+      idPartido: nuevaEntrada.partido_id,
+      idSector: nuevaEntrada.sector_id,
+      estado: nuevaEntrada.estado,
+      fechaExpiracionReserva: nuevaEntrada.fecha_expiracion_reserva
+        ? new Date(nuevaEntrada.fecha_expiracion_reserva)
+        : undefined,
+      fechaCreacion: new Date(nuevaEntrada.created_at),
+      fechaActualizacion: new Date(nuevaEntrada.updated_at),
     } as TicketEntity;
   }
 
