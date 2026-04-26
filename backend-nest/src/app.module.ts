@@ -24,4 +24,4 @@ import { SupabaseModule } from './common/supabase/supabase.module';
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

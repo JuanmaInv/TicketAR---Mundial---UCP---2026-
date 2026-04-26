@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
@@ -23,7 +28,9 @@ export class EntradasService {
       .single();
 
     if (errorUsuario || !usuario?.pasaporte) {
-      throw new BadRequestException('El usuario debe tener un pasaporte registrado para comprar.');
+      throw new BadRequestException(
+        'El usuario debe tener un pasaporte registrado para comprar.',
+      );
     }
 
     // 2. MÁXIMO 1 ENTRADA POR PARTIDO
@@ -36,7 +43,9 @@ export class EntradasService {
       .maybeSingle();
 
     if (entradaExistente) {
-      throw new ConflictException('Ya tienes una reserva activa para este partido.');
+      throw new ConflictException(
+        'Ya tienes una reserva activa para este partido.',
+      );
     }
 
     // 3. VERIFICACIÓN DE STOCK
@@ -90,10 +99,11 @@ export class EntradasService {
   }
 
   async obtenerTodas() {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('entradas')
       .select('*');
-    
+
     if (error) throw new BadRequestException(error.message);
     return data;
   }

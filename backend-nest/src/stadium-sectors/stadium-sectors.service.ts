@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
-import { SectorEntidad } from './entities/stadium-sector.entity';
+
 import { SupabaseService } from '../common/supabase/supabase.service';
 
 @Injectable()
 export class SectoresService {
-  constructor(private readonly supabase: SupabaseService) { }
+  constructor(private readonly supabase: SupabaseService) {}
 
   async obtenerTodos() {
     const { data, error } = await this.supabase

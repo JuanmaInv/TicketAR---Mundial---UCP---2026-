@@ -8,4 +8,3 @@ export class SectorEntidad {
   createdAt: Date;
   updatedAt: Date;
 }
-
