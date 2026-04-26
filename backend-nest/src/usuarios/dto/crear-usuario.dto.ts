@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class CrearUsuarioDto {
   @IsEmail({}, { message: 'El formato del correo electrónico no es válido' })
@@ -18,4 +18,16 @@ export class CrearUsuarioDto {
     message: 'El pasaporte es obligatorio para validar la entrada',
   })
   numeroPasaporte: string;
+
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @IsOptional()
+  @IsString()
+  localidad?: string;
+
+  @IsOptional()
+  @IsString()
+  provincia?: string;
 }

@@ -1,9 +1,12 @@
 export class UsuarioEntidad {
-  id: string; // Puede ser un UUID proveniente de Supabase Auth
+  id: string; 
   email: string;
   nombre: string;
   apellido: string;
-  numeroPasaporte: string; // Requisito crítico del proyecto: Entrada obligatoria con Pasaporte
+  numeroPasaporte: string; 
+  telefono?: string;
+  localidad?: string;
+  provincia?: string;
   fechaCreacion: Date;
   fechaActualizacion: Date;
 }
