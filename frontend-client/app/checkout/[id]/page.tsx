@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import BuyerForm from '@/components/checkout/BuyerForm';
 import ResumenCompra from '@/components/checkout/ResumenCompra';
@@ -12,16 +12,37 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const { id: partidoId } = use(params);
 
-  // Estado para controlar en qué paso del checkout estamos
   const [paso, setPaso] = useState(2);
   const [datosComprador, setDatosComprador] = useState<DatosCompra | null>(null);
   const [procesando, setProcesando] = useState(false);
+  
+  // Timer persistente
+  const [fechaExpiracion, setFechaExpiracion] = useState<Date | null>(null);
 
-  // Timer mockeado con 15 minutos a futuro
-  const [fechaExpiracion] = useState(new Date(Date.now() + 15 * 60 * 1000));
+  useEffect(() => {
+    // Intentar recuperar el timer del localStorage
+    const storageKey = `checkout_timer_${partidoId}`;
+    const guardado = localStorage.getItem(storageKey);
+    
+    if (guardado) {
+      const fechaGuardada = new Date(guardado);
+      // Si ya expiró mientras la página estaba cerrada
+      if (fechaGuardada.getTime() <= Date.now()) {
+        manejarExpiracion();
+      } else {
+        setFechaExpiracion(fechaGuardada);
+      }
+    } else {
+      // Si es la primera vez, creamos uno de 15 minutos y lo guardamos
+      const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
+      localStorage.setItem(storageKey, nuevaFecha.toISOString());
+      setFechaExpiracion(nuevaFecha);
+    }
+  }, [partidoId]);
 
   const manejarExpiracion = () => {
-    alert("¡Ups! Se te acabaron los 15 minutos y se canceló la compra. Las entradas han sido liberadas.");
+    localStorage.removeItem(`checkout_timer_${partidoId}`);
+    alert("¡Ups! Se te acabaron los 15 minutos y se canceló la reserva. Las entradas han sido liberadas.");
     router.push('/');
   };
 
@@ -44,11 +65,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         localidad: datosComprador.localidad,
         provincia: datosComprador.provincia,
         cantidad: datosComprador.cantidad,
-        sector: 'PLATEA', // Por ahora default hasta conectar selector de asientos
-        precio: 50000,
+        sector: 'PLATEA',
+        precio: 3, 
         estado: 'vendido',
         fechaCompra: new Date().toISOString()
       });
+      
+      // Limpiar el timer al finalizar la compra
+      localStorage.removeItem(`checkout_timer_${partidoId}`);
       
       alert('¡Compra realizada con éxito! Recibirás tus tickets por correo.');
       router.push('/my-tickets');
@@ -74,10 +98,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
             {paso === 2 ? 'Ingreso de datos (Paso 2)' : 'Resumen (Paso 3)'}
           </h1>
           <div className="flex-shrink-0">
-            <CountdownTimer 
-              tiempoExpiracion={fechaExpiracion} 
-              onExpirar={manejarExpiracion} 
-            />
+            {fechaExpiracion && (
+              <CountdownTimer 
+                tiempoExpiracion={fechaExpiracion} 
+                onExpirar={manejarExpiracion} 
+              />
+            )}
           </div>
         </div>
         <p className="text-zinc-400 mb-6 border-b border-white/10 pb-4">
