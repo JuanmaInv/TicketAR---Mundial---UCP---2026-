@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PassportCredentialsController } from './passport-credentials.controller';
-import { PassportCredentialsService } from './passport-credentials.service';
+import { CredencialesController } from './passport-credentials.controller';
+import { CredencialesService } from './passport-credentials.service';
 
 @Module({
-  controllers: [PassportCredentialsController],
-  providers: [PassportCredentialsService],
-  exports: [PassportCredentialsService],
+  controllers: [CredencialesController],
+  providers: [CredencialesService],
+  exports: [CredencialesService],
 })
-export class PassportCredentialsModule {}
+export class CredencialesPasaporteModule {}

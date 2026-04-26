@@ -1,9 +1,9 @@
-export class PassportCredentialEntity {
-  id: string; // UUID
-  userId: string; // Relation to User
-  documentNumber: string; // Required logic
-  countryCode: string;
-  isValidated: boolean; // Must be true to buy ticket
-  createdAt: Date;
-  updatedAt: Date;
+export class CredencialPasaporteEntidad {
+  id: string; // UUID de Supabase
+  idUsuario: string; // Relación con el Usuario
+  numerodocumento: string; // Número de pasaporte (Requisito crítico)
+  codigoPais: string; // Ej: AR, USA, BRA
+  estaValidado: boolean; // Debe ser true para poder comprar una entrada
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
 }

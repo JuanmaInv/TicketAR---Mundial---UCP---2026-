@@ -1,23 +1,23 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import { StadiumSectorsService } from './stadium-sectors.service';
-import { CreateStadiumSectorDto } from './dto/create-stadium-sector.dto';
+import { SectoresService } from './stadium-sectors.service';
+import { CrearSectorDto } from './dto/create-stadium-sector.dto';
 
-@Controller('stadium-sectors')
-export class StadiumSectorsController {
-  constructor(private readonly stadiumSectorsService: StadiumSectorsService) {}
+@Controller('sectores')
+export class SectoresController {
+  constructor(private readonly sectoresService: SectoresService) {}
 
   @Get()
-  findAll() {
-    return this.stadiumSectorsService.findAll();
+  obtenerTodos() {
+    return this.sectoresService.obtenerTodos();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.stadiumSectorsService.findOne(id);
+  obtenerUno(@Param('id') id: string) {
+    return this.sectoresService.obtenerUno(id);
   }
 
   @Post()
-  create(@Body() createStadiumSectorDto: CreateStadiumSectorDto) {
-    return this.stadiumSectorsService.create(createStadiumSectorDto);
+  crear(@Body() crearSectorDto: CrearSectorDto) {
+    return this.sectoresService.crear(crearSectorDto);
   }
 }

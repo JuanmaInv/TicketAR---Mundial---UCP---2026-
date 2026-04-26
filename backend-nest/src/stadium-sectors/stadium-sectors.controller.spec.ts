@@ -1,18 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StadiumSectorsController } from './stadium-sectors.controller';
+import { SectoresController } from './stadium-sectors.controller';
+import { SectoresService } from './stadium-sectors.service';
 
-describe('StadiumSectorsController', () => {
-  let controller: StadiumSectorsController;
+describe('SectoresController', () => {
+  let controller: SectoresController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [StadiumSectorsController],
+      controllers: [SectoresController],
+      providers: [SectoresService],
     }).compile();
 
-    controller = module.get<StadiumSectorsController>(StadiumSectorsController);
+    controller = module.get(SectoresController);
   });
 
-  it('should be defined', () => {
+  it('debería estar definido', () => {
     expect(controller).toBeDefined();
   });
 });

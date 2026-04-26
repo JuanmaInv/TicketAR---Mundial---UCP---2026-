@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { StadiumSectorsController } from './stadium-sectors.controller';
-import { StadiumSectorsService } from './stadium-sectors.service';
+import { SectoresController } from './stadium-sectors.controller';
+import { SectoresService } from './stadium-sectors.service';
 
 @Module({
-  controllers: [StadiumSectorsController],
-  providers: [StadiumSectorsService],
-  exports: [StadiumSectorsService],
+  controllers: [SectoresController],
+  providers: [SectoresService],
+  exports: [SectoresService],
 })
-export class StadiumSectorsModule {}
+export class SectoresModule {}

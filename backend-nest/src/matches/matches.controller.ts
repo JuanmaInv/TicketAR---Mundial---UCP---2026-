@@ -1,18 +1,26 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
-import { MatchesService } from './matches.service';
-import { CreateMatchDto } from './dto/create-match.dto';
+import { PartidosService } from './matches.service';
+import { CrearPartidoDto } from './dto/create-match.dto';
 
-@Controller('matches')
-export class MatchesController {
-  constructor(private readonly matchesService: MatchesService) {}
+@Controller('partidos')
+export class PartidosController {
+  constructor(private readonly partidosService: PartidosService) {}
 
+  /**
+   * Endpoint POST /partidos
+   * Crea un partido recibiendo los datos en el Body.
+   */
   @Post()
-  create(@Body() createMatchDto: CreateMatchDto) {
-    return this.matchesService.create(createMatchDto);
+  async crear(@Body() crearPartidoDto: CrearPartidoDto) {
+    return await this.partidosService.crear(crearPartidoDto);
   }
 
+  /**
+   * Endpoint GET /partidos
+   * Retorna la lista de todos los partidos registrados.
+   */
   @Get()
-  findAll() {
-    return this.matchesService.findAll();
+  async obtenerTodos() {
+    return await this.partidosService.obtenerTodos();
   }
 }

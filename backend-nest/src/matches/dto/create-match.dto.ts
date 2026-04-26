@@ -1,19 +1,22 @@
 import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateMatchDto {
-  @IsString()
-  @IsNotEmpty()
-  teamA: string;
+export class CrearPartidoDto {
+  @IsString({ message: 'El equipo local debe ser texto' })
+  @IsNotEmpty({ message: 'El equipo local es obligatorio' })
+  equipoLocal: string;
 
-  @IsString()
-  @IsNotEmpty()
-  teamB: string;
+  @IsString({ message: 'El equipo visitante debe ser texto' })
+  @IsNotEmpty({ message: 'El equipo visitante es obligatorio' })
+  equipoVisitante: string;
 
-  @IsDateString()
-  @IsNotEmpty()
-  matchDate: Date;
+  @IsDateString(
+    {},
+    { message: 'La fecha del partido debe ser una fecha válida' },
+  )
+  @IsNotEmpty({ message: 'La fecha del partido es obligatoria' })
+  fechaPartido: Date;
 
-  @IsString()
-  @IsNotEmpty()
-  stadiumName: string;
+  @IsString({ message: 'El nombre del estadio debe ser texto' })
+  @IsNotEmpty({ message: 'El nombre del estadio es obligatorio' })
+  nombreEstadio: string;
 }
