@@ -639,6 +639,17 @@ El frontend **debe** usar estos valores exactos:
 
 ---
 
+
+## 🧩 Módulos Implementados y sus Responsabilidades
+Para mantener el principio de **Responsabilidad Única**, el sistema se divide en los siguientes módulos lógicos:
+
+1. **Users (Usuarios):** Gestiona el perfil del hincha. Su función principal es vincular la cuenta del usuario con su número de pasaporte validado.
+2. **Matches (Partidos):** Es el catálogo de eventos. Define qué selecciones juegan, en qué estadio y en qué fecha. Sin un partido, no se pueden emitir tickets.
+3. **Stadium-Sectors (Sectores del Estadio):** Controla el inventario y los precios. Define la capacidad máxima de cada sector (Popular, Platea, Palco, Prensa) y asegura que no se vendan más entradas de las permitidas.
+4. **Passport-Credentials (Validación de Identidad):** Actúa como un "oráculo" de seguridad. Simula la conexión con una API externa para verificar que un pasaporte sea real y no esté duplicado en el sistema.
+5. **Tickets (Entradas y Reservas):** El corazón de la lógica de negocio. Maneja el estado del ticket (Reservado, Pagado, Expirado), aplica la reserva temporal de 15 minutos y hace cumplir la regla de "1 entrada por usuario".
+6. **Payments (Pagos):** Se encarga de la pasarela de pago (Stripe/Mercado Pago). Una vez confirmado el pago, este módulo le ordena al módulo de Tickets cambiar el estado de la reserva a "Pagado".
+
 ## 🤖 Protocolo Erwin (IA Tutor)
 
 - **Método Socrático:** No dar código completo. Proporcionar pistas, teoría y fragmentos educativos.

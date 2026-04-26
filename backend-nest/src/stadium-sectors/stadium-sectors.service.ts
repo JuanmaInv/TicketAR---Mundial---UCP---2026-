@@ -1,53 +1,56 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
-import { StadiumSectorEntity } from './entities/stadium-sector.entity';
+
+import { SupabaseService } from '../common/supabase/supabase.service';
 
 @Injectable()
 export class SectoresService {
-  private baseDeDatosSimulada: StadiumSectorEntity[] = [
-    {
-      id: 'popular-norte',
-      name: 'POPULAR',
-      capacity: 10000,
-      availableSeats: 10000,
-      price: 50000, // ARS
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'platea-este',
-      name: 'PLATEA',
-      capacity: 5000,
-      availableSeats: 5000,
-      price: 150000, // ARS
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  constructor(private readonly supabase: SupabaseService) {}
 
-  obtenerTodos() {
-    return this.baseDeDatosSimulada;
+  async obtenerTodos() {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('sectores_estadio')
+      .select('*');
+
+    if (error) {
+      return [];
+    }
+    return data;
   }
 
-  obtenerUno(id: string) {
-    const sector = this.baseDeDatosSimulada.find((s) => s.id === id);
-    if (!sector) {
+  async obtenerUno(id: string) {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('sectores_estadio')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
       throw new NotFoundException('Sector de estadio no encontrado');
     }
-    return sector;
+    return data;
   }
 
-  crear(dto: CrearSectorDto) {
-    const nuevoSector: StadiumSectorEntity = {
-      id: crypto.randomUUID(),
-      name: dto.nombre,
-      capacity: dto.capacidad,
-      availableSeats: dto.capacidad,
-      price: dto.precio,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.baseDeDatosSimulada.push(nuevoSector);
-    return nuevoSector;
+  async crear(dto: CrearSectorDto) {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('sectores_estadio')
+      .insert([
+        {
+          nombre: dto.nombre,
+          capacidad: dto.capacidad,
+          capacidad_disponible: dto.capacidad,
+          precio: dto.precio,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error('Error al crear el sector: ' + error.message);
+    }
+    return data;
   }
 }
