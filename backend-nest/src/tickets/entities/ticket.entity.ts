@@ -2,15 +2,16 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 
 export class TicketEntity {
   id: string; // UUID de Supabase
-  userId: string; // Relación con el Usuario (quién compra)
-  sectorId: string; // Relación con StadiumSector (dónde se sienta)
+  idUsuario: string; // Relación con el Usuario
+  idPartido: string; // Relación con el Partido
+  idSector: string; // Relación con el Sector
 
-  status: TicketStatus; // RESERVED (bloqueo 15min), PAID, CANCELLED
+  estado: TicketStatus; // RESERVADO, PAGADO, CANCELADO
 
-  reservationExpiresAt?: Date; // Fundamental para la regla de negocio de "bloqueo temporal"
+  fechaExpiracionReserva?: Date; // Bloqueo temporal de 15 min
 
-  qrCode?: string; // Se generará y llenará únicamente cuando el status pase a PAID
+  codigoQr?: string; // Se genera al pagar
 
-  createdAt: Date;
-  updatedAt: Date;
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
 }

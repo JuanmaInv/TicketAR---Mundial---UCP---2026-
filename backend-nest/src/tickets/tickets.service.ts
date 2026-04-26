@@ -16,8 +16,9 @@ export class EntradasService {
   /**
    * Proceso Atómico de Reserva de Entrada.
    * Conectado a Supabase con nombres de entidad alineados con main.
+   * Sigue las reglas de negocio: Pasaporte -> No duplicados -> Stock -> Insertar.
    */
-  async crear(crearEntradaDto: CrearEntradaDto): Promise<any> {
+  async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
     const supabase = this.supabaseService.getClient();
 
     // 1. VALIDACIÓN DE PASAPORTE
@@ -33,7 +34,7 @@ export class EntradasService {
       );
     }
 
-    // 2. MÁXIMO 1 ENTRADA POR PARTIDO
+    // 2. REGLA CRÍTICA: MÁXIMO 1 ENTRADA POR PARTIDO
     const { data: entradaExistente } = await supabase
       .from('entradas')
       .select('id')
@@ -44,11 +45,11 @@ export class EntradasService {
 
     if (entradaExistente) {
       throw new ConflictException(
-        'Ya tienes una reserva activa para este partido.',
+        'Ya tienes una reserva activa o pagada para este partido.',
       );
     }
 
-    // 3. VERIFICACIÓN DE STOCK
+    // 3. VERIFICACIÓN DE STOCK (En la tabla de inventario real)
     const { data: inventario, error: errorStock } = await supabase
       .from('partido_sectores')
       .select('asientos_disponibles')
@@ -57,14 +58,18 @@ export class EntradasService {
       .single();
 
     if (errorStock || !inventario) {
-      throw new NotFoundException('Sector no disponible para este partido.');
+      throw new NotFoundException(
+        'El sector solicitado no está disponible para este partido.',
+      );
     }
 
     if (inventario.asientos_disponibles <= 0) {
-      throw new ConflictException('No quedan asientos disponibles.');
+      throw new ConflictException(
+        'Lo sentimos, no quedan asientos disponibles en este sector.',
+      );
     }
 
-    // 4. INSERCIÓN (Nombres de DB en snake_case, Entidad en CamelCase)
+    // 4. CREACIÓN DE LA RESERVA (Trigger de DB bajará el stock)
     const fechaExpiracion = new Date();
     fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
 
@@ -83,10 +88,12 @@ export class EntradasService {
       .single();
 
     if (errorInsert) {
-      throw new BadRequestException(`Error DB: ${errorInsert.message}`);
+      throw new BadRequestException(
+        `Error al crear la reserva: ${errorInsert.message}`,
+      );
     }
 
-    // Retornamos mapeado a la entidad en inglés
+    // Retornamos mapeado a la entidad en inglés para consistencia con main
     return {
       id: nuevaEntrada.id,
       userId: nuevaEntrada.usuario_id,
@@ -102,7 +109,7 @@ export class EntradasService {
     const { data, error } = await this.supabaseService
       .getClient()
       .from('entradas')
-      .select('*');
+      .select('*, partidos(*), sectores_estadio(*)'); // Traemos data relacionada
 
     if (error) throw new BadRequestException(error.message);
     return data;
