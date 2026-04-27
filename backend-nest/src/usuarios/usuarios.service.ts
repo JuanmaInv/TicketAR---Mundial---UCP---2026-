@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuarioEntidad } from './entities/usuario.entidad';
 import { SupabaseService } from '../common/supabase/supabase.service';
@@ -8,7 +8,8 @@ export class UsuariosService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
   async crear(crearUsuarioDto: CrearUsuarioDto): Promise<UsuarioEntidad> {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('usuarios')
       .insert([
         {
@@ -30,7 +31,8 @@ export class UsuariosService {
   }
 
   async buscarPorEmail(correo: string): Promise<UsuarioEntidad | null> {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('usuarios')
       .select('*')
       .eq('correo', correo) // Cambiado a correo
@@ -41,7 +43,8 @@ export class UsuariosService {
   }
 
   async actualizar(correo: string, datos: any): Promise<UsuarioEntidad> {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('usuarios')
       .update({
         nombre: datos.nombre,
@@ -61,12 +64,13 @@ export class UsuariosService {
   }
 
   async obtenerTodos(): Promise<UsuarioEntidad[]> {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('usuarios')
       .select('*');
 
     if (error) throw error;
-    return data.map(u => this.mapearEntidad(u));
+    return data.map((u) => this.mapearEntidad(u));
   }
 
   private mapearEntidad(data: any): UsuarioEntidad {

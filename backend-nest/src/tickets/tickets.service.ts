@@ -1,7 +1,5 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
-import { CrearEntradaDto } from './dto/create-ticket.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TicketEntity } from './entities/ticket.entity';
-import { TicketStatus } from '../common/enums/ticket-status.enum';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { UsuariosService } from '../usuarios/usuarios.service';
 
@@ -14,22 +12,28 @@ export class EntradasService {
 
   async crear(crearEntradaDto: any): Promise<TicketEntity> {
     // Buscamos al usuario por su 'correo' (antes email)
-    const usuario = await this.usuariosService.buscarPorEmail(crearEntradaDto.email);
-    
+    const usuario = await this.usuariosService.buscarPorEmail(
+      crearEntradaDto.email,
+    );
+
     if (!usuario) {
-      throw new NotFoundException(`No se encontró un usuario registrado con el correo: ${crearEntradaDto.email}`);
+      throw new NotFoundException(
+        `No se encontró un usuario registrado con el correo: ${crearEntradaDto.email}`,
+      );
     }
 
     const expiracion = new Date();
     expiracion.setMinutes(expiracion.getMinutes() + 15);
 
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('entradas')
       .insert([
         {
           id_usuario: usuario.id, // Cambiado de user_id a id_usuario
           id_partido: crearEntradaDto.partidoId, // Cambiado de partido_id a id_partido
-          id_sector: crearEntradaDto.idSector || '40ec8ced-1589-44a4-a957-cfae9b862b4a', // Cambiado de sector_id
+          id_sector:
+            crearEntradaDto.idSector || '40ec8ced-1589-44a4-a957-cfae9b862b4a', // Cambiado de sector_id
           estado: 'RESERVADO', // Cambiado de status a estado
           fecha_expiracion_reserva: expiracion, // Cambiado de reservation_expires_at
         },
@@ -46,16 +50,18 @@ export class EntradasService {
   }
 
   async obtenerTodas(): Promise<TicketEntity[]> {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('entradas')
       .select('*');
 
     if (error) throw error;
-    return data.map(item => this.mapearTicket(item));
+    return data.map((item) => this.mapearTicket(item));
   }
 
   async obtenerUna(id: string): Promise<TicketEntity | null> {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('entradas')
       .select('*')
       .eq('id', id)
@@ -66,7 +72,8 @@ export class EntradasService {
   }
 
   async marcarComoPagada(id: string): Promise<TicketEntity> {
-    const { data, error } = await this.supabaseService.getClient()
+    const { data, error } = await this.supabaseService
+      .getClient()
       .from('entradas')
       .update({ estado: 'CONFIRMADO' }) // Cambiado status -> estado
       .eq('id', id)
