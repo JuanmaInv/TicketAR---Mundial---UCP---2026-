@@ -1,38 +1,86 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuarioEntidad } from './entities/usuario.entidad';
+import { SupabaseService } from '../common/supabase/supabase.service';
 
 @Injectable()
 export class UsuariosService {
-  // Base de datos simulada en memoria (Mock)
-  private baseDeDatosSimulada: UsuarioEntidad[] = [];
+  constructor(private readonly supabaseService: SupabaseService) {}
 
-  crear(crearUsuarioDto: CrearUsuarioDto) {
-    // Validar regla de negocio: el pasaporte o email no pueden estar duplicados
-    const existe = this.baseDeDatosSimulada.find(
-      (usuario) =>
-        usuario.numeroPasaporte === crearUsuarioDto.numeroPasaporte ||
-        usuario.email === crearUsuarioDto.email,
-    );
+  async crear(crearUsuarioDto: CrearUsuarioDto): Promise<UsuarioEntidad> {
+    const { data, error } = await this.supabaseService.getClient()
+      .from('usuarios')
+      .insert([
+        {
+          correo: crearUsuarioDto.email, // Cambiado de email a correo
+          nombre: crearUsuarioDto.nombre,
+          apellido: crearUsuarioDto.apellido,
+          numero_pasaporte: crearUsuarioDto.numeroPasaporte,
+          telefono: crearUsuarioDto.telefono,
+          localidad: crearUsuarioDto.localidad,
+          provincia: crearUsuarioDto.provincia,
+          rol: 'cliente',
+        },
+      ])
+      .select()
+      .single();
 
-    if (existe) {
-      throw new ConflictException(
-        'Ya existe un usuario con este correo o pasaporte.',
-      );
-    }
-
-    const nuevoUsuario: UsuarioEntidad = {
-      id: crypto.randomUUID(), // Simulando ID generado por Supabase Auth
-      ...crearUsuarioDto,
-      fechaCreacion: new Date(),
-      fechaActualizacion: new Date(),
-    };
-
-    this.baseDeDatosSimulada.push(nuevoUsuario);
-    return nuevoUsuario;
+    if (error) throw error;
+    return this.mapearEntidad(data);
   }
 
-  obtenerTodos() {
-    return this.baseDeDatosSimulada;
+  async buscarPorEmail(correo: string): Promise<UsuarioEntidad | null> {
+    const { data, error } = await this.supabaseService.getClient()
+      .from('usuarios')
+      .select('*')
+      .eq('correo', correo) // Cambiado a correo
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return this.mapearEntidad(data);
+  }
+
+  async actualizar(correo: string, datos: any): Promise<UsuarioEntidad> {
+    const { data, error } = await this.supabaseService.getClient()
+      .from('usuarios')
+      .update({
+        nombre: datos.nombre,
+        apellido: datos.apellido,
+        numero_pasaporte: datos.numeroPasaporte,
+        telefono: datos.telefono,
+        localidad: datos.localidad,
+        provincia: datos.provincia,
+        fecha_actualizacion: new Date(),
+      })
+      .eq('correo', correo) // Cambiado a correo
+      .select()
+      .single();
+
+    if (error) throw error;
+    return this.mapearEntidad(data);
+  }
+
+  async obtenerTodos(): Promise<UsuarioEntidad[]> {
+    const { data, error } = await this.supabaseService.getClient()
+      .from('usuarios')
+      .select('*');
+
+    if (error) throw error;
+    return data.map(u => this.mapearEntidad(u));
+  }
+
+  private mapearEntidad(data: any): UsuarioEntidad {
+    return {
+      id: data.id,
+      email: data.correo, // Mapeamos de correo a email para el resto del sistema
+      nombre: data.nombre,
+      apellido: data.apellido,
+      numeroPasaporte: data.numero_pasaporte,
+      telefono: data.telefono,
+      localidad: data.localidad,
+      provincia: data.provincia,
+      fechaCreacion: data.fecha_creacion,
+      fechaActualizacion: data.fecha_actualizacion,
+    };
   }
 }
