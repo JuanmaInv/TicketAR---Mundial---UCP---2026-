@@ -14,12 +14,15 @@ export async function getTickets(): Promise<Ticket[]> {
   return [];
 }
 
-export async function createTicket(ticket: Omit<Ticket, 'id'>): Promise<Ticket> {
+export async function createTicket(datos: { idUsuario: string; idSector: string }): Promise<Ticket> {
   const res = await fetch(`${API_URL}/entradas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ticket),
+    body: JSON.stringify(datos),
   });
-  if (!res.ok) throw new Error('Error al reservar');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Error al reservar en la base de datos');
+  }
   return res.json();
 }

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Bandera from "@/components/Bandera";
 import WorldCupLoader from "@/components/WorldCupLoader";
 import SkeletonMatchCard from "@/components/SkeletonMatchCard";
 
-import { getPartidos } from "@/lib/api";
+import { getPartidos, createTicket } from "@/lib/api";
 import { Partido } from "@/types/ticket";
+import { Loader2, CheckCircle2, Ticket as TicketIcon } from "lucide-react";
 
 // 1. LAS 48 SELECCIONES (Para el filtro lateral)
 const SELECCIONES_2026 = [
@@ -24,6 +26,7 @@ const SELECCIONES_2026 = [
 // 2. MOCK DE PARTIDOS (ELIMINADO - AHORA USAMOS LA API)
 
 export default function MatchesPage() {
+  const router = useRouter();
   // --- ESTADOS PARA LA INTEGRACIÓN CON EL BACKEND ---
   const [partidos, setPartidos] = useState<Partido[]>([]); // Almacena los partidos reales
   const [error, setError] = useState<string | null>(null); // Manejo de errores de conexión
@@ -32,6 +35,10 @@ export default function MatchesPage() {
   const [selectedPhase, setSelectedPhase] = useState("Todas");
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // --- ESTADOS PARA LA SIMULACIÓN DE COMPRA ---
+  const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [successId, setSuccessId] = useState<string | null>(null);
 
   // --- CARGA DE DATOS REALES DESDE EL BACKEND (PUERTO 3000) ---
   useEffect(() => {
@@ -58,6 +65,28 @@ export default function MatchesPage() {
     const matchPhase = selectedPhase === "Todas" || match.fase === selectedPhase;
     return matchTeam && matchPhase;
   });
+
+  // --- FUNCIÓN PARA SIMULAR LA COMPRA (CONEXIÓN AL BACKEND) ---
+  const handleComprar = async (match: Partido) => {
+    setBuyingId(match.id);
+    try {
+      await createTicket({
+        idUsuario: "usuario-demo-123",
+        idSector: "sector-general-" + match.id
+      });
+      setSuccessId(match.id);
+      // Redirigimos al formulario de compra después de un pequeño delay para que se vea el éxito
+      setTimeout(() => {
+        router.push(`/checkout/${match.id}`);
+      }, 800);
+      
+    } catch (err: any) {
+      console.error("Error en la compra:", err);
+      alert("Error real de la base de datos: " + (err.message || "Error desconocido"));
+    } finally {
+      setBuyingId(null);
+    }
+  };
 
   return (
     <main className="min-h-screen py-10 px-4 md:px-8 text-slate-900 dark:text-white">
@@ -170,8 +199,34 @@ export default function MatchesPage() {
 
                   <div className="flex justify-between items-center pt-6 border-t border-slate-200 dark:border-white/5">
                     <p className="text-3xl font-black text-slate-900 dark:!text-white">${match.precio_base} <span className="text-xs text-slate-500 dark:!text-white">USD</span></p>
-                    <button className="bg-white text-black px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform group-hover:scale-105 shadow-xl">
-                      Comprar
+                    
+                    <button 
+                      onClick={() => handleComprar(match)}
+                      disabled={buyingId === match.id || successId === match.id}
+                      className={`px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all transform hover:scale-105 shadow-xl flex items-center gap-2
+                        ${successId === match.id 
+                          ? "bg-green-500 text-white" 
+                          : "bg-white text-black hover:bg-blue-600 hover:text-white"
+                        }
+                        ${buyingId === match.id ? "opacity-70 cursor-not-allowed" : ""}
+                      `}
+                    >
+                      {buyingId === match.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Conectando...
+                        </>
+                      ) : successId === match.id ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          ¡Reservado!
+                        </>
+                      ) : (
+                        <>
+                          <TicketIcon className="w-4 h-4" />
+                          Comprar
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
