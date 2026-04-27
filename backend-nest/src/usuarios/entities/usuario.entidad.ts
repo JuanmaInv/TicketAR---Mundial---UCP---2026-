@@ -1,9 +1,9 @@
 export class UsuarioEntidad {
-  id: string; 
+  id: string;
   email: string;
   nombre: string;
   apellido: string;
-  numeroPasaporte: string; 
+  numeroPasaporte: string;
   telefono?: string;
   localidad?: string;
   provincia?: string;
