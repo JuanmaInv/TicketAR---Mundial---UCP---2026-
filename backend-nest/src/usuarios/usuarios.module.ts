@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { UsuariosController } from './usuarios.controller';
 import { UsuariosService } from './usuarios.service';
+import { SupabaseModule } from '../common/supabase/supabase.module';
 
 @Module({
+  imports: [SupabaseModule],
   controllers: [UsuariosController],
   providers: [UsuariosService],
   exports: [UsuariosService],

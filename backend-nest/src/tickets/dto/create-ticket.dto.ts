@@ -5,6 +5,10 @@ export class CrearEntradaDto {
   @IsNotEmpty({ message: 'El ID de usuario es obligatorio para la reserva' })
   idUsuario: string;
 
+  @IsString({ message: 'El ID del partido debe ser válido' })
+  @IsNotEmpty({ message: 'Debe especificar un partido para reservar' })
+  idPartido: string;
+
   @IsString({ message: 'El ID del sector debe ser válido' })
   @IsNotEmpty({ message: 'Debe especificar un sector para reservar' })
   idSector: string;
