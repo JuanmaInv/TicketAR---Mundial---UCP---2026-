@@ -5,8 +5,11 @@ import { SupabaseService } from '../common/supabase/supabase.service';
 describe('UsuariosService', () => {
   let service: UsuariosService;
 
-  const mockSupabaseService = {
-    getClient: jest.fn(),
+  const mockUsuariosRepository = {
+    crear: jest.fn(),
+    buscarPorEmail: jest.fn(),
+    actualizar: jest.fn(),
+    obtenerTodos: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -14,8 +17,8 @@ describe('UsuariosService', () => {
       providers: [
         UsuariosService,
         {
-          provide: SupabaseService,
-          useValue: mockSupabaseService,
+          provide: 'IUsuariosRepository',
+          useValue: mockUsuariosRepository,
         },
       ],
     }).compile();
