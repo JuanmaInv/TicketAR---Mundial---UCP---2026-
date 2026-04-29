@@ -10,8 +10,8 @@ interface ResumenProps {
 }
 
 export default function ResumenCompra({ partidoId, datos, onVolver, onConfirmar }: ResumenProps) {
-  // Simulamos un precio estático para simular la compra (luego se conectará a la Base de Datos)
-  const PRECIO_UNITARIO = 50000;
+  // Precios simbólicos en ARS para pruebas con el backend ($1 a $4)
+  const PRECIO_UNITARIO = 3; 
   const total = PRECIO_UNITARIO * datos.cantidad;
 
   return (
@@ -41,8 +41,8 @@ export default function ResumenCompra({ partidoId, datos, onVolver, onConfirmar 
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <h3 className="font-semibold text-blue-800 mb-2">Detalle del Pago</h3>
           <div className="flex justify-between items-center text-blue-900">
-            <span>{datos.cantidad} x Entradas (${PRECIO_UNITARIO.toLocaleString('es-AR')} c/u)</span>
-            <span className="text-xl font-bold">${total.toLocaleString('es-AR')}</span>
+            <span>{datos.cantidad} x Entradas (ARS ${PRECIO_UNITARIO} c/u)</span>
+            <span className="text-xl font-bold">ARS ${total}</span>
           </div>
         </div>
       </div>

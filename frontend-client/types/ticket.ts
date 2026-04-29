@@ -46,6 +46,17 @@ export interface Ticket {
   // vendido: el ticket ha sido vendido
   estado: 'disponible' | 'pendiente' | 'vendido';
   fechaCreacion?: string; // Fecha de creacion del ticket
+
+  // Agregamos opcionalmente los campos del comprador para evitar errores de TS en el flujo
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  documento?: string;
+  telefono?: string;
+  localidad?: string;
+  provincia?: string;
+  cantidad?: number;
+  fechaCompra?: string;
 }
 
 //el backend tendra que tener una base de datos con las tablas: partidos, sectores, tickets y usuarios.

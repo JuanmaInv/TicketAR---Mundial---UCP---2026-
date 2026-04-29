@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
@@ -35,11 +36,12 @@ export class EntradasService {
     }
 
     // 2. REGLA CRÍTICA: MÁXIMO 1 ENTRADA POR PARTIDO
+    // Usamos los nombres de columna actualizados (id_usuario, id_partido)
     const { data: entradaExistente } = await supabase
       .from('entradas')
       .select('id')
-      .eq('usuario_id', crearEntradaDto.idUsuario)
-      .eq('partido_id', crearEntradaDto.idPartido)
+      .eq('id_usuario', crearEntradaDto.idUsuario)
+      .eq('id_partido', crearEntradaDto.idPartido)
       .neq('estado', TicketStatus.CANCELADO)
       .maybeSingle();
 
@@ -49,7 +51,7 @@ export class EntradasService {
       );
     }
 
-    // 3. VERIFICACIÓN DE STOCK (En la tabla de inventario real)
+    // 3. VERIFICACIÓN DE STOCK
     const { data: inventario, error: errorStock } = await supabase
       .from('partido_sectores')
       .select('asientos_disponibles')
@@ -77,9 +79,9 @@ export class EntradasService {
       .from('entradas')
       .insert([
         {
-          usuario_id: crearEntradaDto.idUsuario,
-          partido_id: crearEntradaDto.idPartido,
-          sector_id: crearEntradaDto.idSector,
+          id_usuario: crearEntradaDto.idUsuario,
+          id_partido: crearEntradaDto.idPartido,
+          id_sector: crearEntradaDto.idSector,
           estado: TicketStatus.RESERVADO,
           fecha_expiracion_reserva: fechaExpiracion.toISOString(),
         },
@@ -93,28 +95,97 @@ export class EntradasService {
       );
     }
 
-    // Retornamos mapeado a la entidad en español
-    return {
-      id: nuevaEntrada.id,
-      idUsuario: nuevaEntrada.usuario_id,
-      idPartido: nuevaEntrada.partido_id,
-      idSector: nuevaEntrada.sector_id,
-      estado: nuevaEntrada.estado,
-      fechaExpiracionReserva: nuevaEntrada.fecha_expiracion_reserva
-        ? new Date(nuevaEntrada.fecha_expiracion_reserva)
-        : undefined,
-      fechaCreacion: new Date(nuevaEntrada.created_at),
-      fechaActualizacion: new Date(nuevaEntrada.updated_at),
-    } as TicketEntity;
+    return this.mapearTicket(nuevaEntrada);
   }
 
-  async obtenerTodas() {
+  async obtenerTodas(): Promise<TicketEntity[]> {
     const { data, error } = await this.supabaseService
       .getClient()
       .from('entradas')
-      .select('*, partidos(*), sectores_estadio(*)'); // Traemos data relacionada
+      .select('*, partidos(*), sectores_estadio(*)');
 
     if (error) throw new BadRequestException(error.message);
-    return data;
+    return data.map(item => this.mapearTicket(item));
+  }
+
+  async obtenerUna(id: string): Promise<TicketEntity | null> {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('entradas')
+      .select('*, partidos(*), sectores_estadio(*)')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return this.mapearTicket(data);
+  }
+
+  async marcarComoPagada(id: string): Promise<TicketEntity> {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('entradas')
+      .update({ estado: TicketStatus.PAGADO })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new BadRequestException(error.message);
+    return this.mapearTicket(data);
+  }
+
+  // Tarea programada para limpiar reservas expiradas
+  @Cron(CronExpression.EVERY_MINUTE)
+  async manejarReservasExpiradas() {
+    const ahora = new Date().toISOString();
+
+    const { data: expiradas, error: errorBusqueda } = await this.supabaseService
+      .getClient()
+      .from('entradas')
+      .select('id, id_sector, id_partido')
+      .eq('estado', TicketStatus.RESERVADO)
+      .lt('fecha_expiracion_reserva', ahora);
+
+    if (errorBusqueda) {
+      console.error('[Cron] Error buscando expiradas:', errorBusqueda.message);
+      return;
+    }
+
+    if (expiradas && expiradas.length > 0) {
+      for (const ticket of expiradas) {
+        try {
+          // Devolvemos el stock usando la función RPC
+          await this.supabaseService.getClient().rpc('incrementar_stock_sector', {
+            p_partido_id: ticket.id_partido,
+            p_sector_id: ticket.id_sector,
+          });
+
+          // Marcamos como CANCELADO
+          await this.supabaseService
+            .getClient()
+            .from('entradas')
+            .update({ estado: TicketStatus.CANCELADO })
+            .eq('id', ticket.id);
+
+          console.log(`[Cron] Reserva ${ticket.id} cancelada por expiración.`);
+        } catch (err) {
+          console.error(`[Cron] Error procesando ticket ${ticket.id}:`, err.message);
+        }
+      }
+    }
+  }
+
+  private mapearTicket(data: any): TicketEntity {
+    return {
+      id: data.id,
+      idUsuario: data.id_usuario,
+      idPartido: data.id_partido,
+      idSector: data.id_sector,
+      estado: data.estado,
+      fechaExpiracionReserva: data.fecha_expiracion_reserva
+        ? new Date(data.fecha_expiracion_reserva)
+        : undefined,
+      fechaCreacion: new Date(data.created_at || data.fecha_creacion),
+      fechaActualizacion: new Date(data.updated_at || data.fecha_actualizacion),
+    };
   }
 }
