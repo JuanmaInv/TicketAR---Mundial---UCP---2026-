@@ -69,12 +69,13 @@ export class SupabasePartidosRepository implements IPartidosRepository {
       id: dbData.id,
       equipoLocal: dbData.equipo_local,
       equipoVisitante: dbData.equipo_visitante,
-      fechaPartido: dbData.fecha_partido,
+      fechaPartido: new Date(dbData.fecha_partido).toISOString(),
       nombreEstadio: dbData.nombre_estadio,
       fase: dbData.fase,
       precioBase: dbData.precio_base,
       estado: dbData.estado,
-      fechaCreacion: dbData.fecha_creacion,
+      fechaCreacion: new Date(dbData.fecha_creacion).toISOString(),
+      fechaActualizacion: new Date(dbData.fecha_actualizacion || dbData.fecha_creacion).toISOString(),
     };
   }
 }
