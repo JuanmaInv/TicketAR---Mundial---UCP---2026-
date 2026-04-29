@@ -11,7 +11,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
   constructor(private readonly supabaseService: SupabaseService) {}
 
   async crear(crearUsuarioDto: CrearUsuarioDto): Promise<UsuarioEntidad> {
-    const { data, error } = await this.supabaseService
+    const { data, error } = (await this.supabaseService
       .getClient()
       .from('usuarios')
       .insert([
@@ -27,26 +27,29 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
         },
       ])
       .select()
-      .single();
+      .single()) as { data: unknown; error: any };
 
     if (error) throw error;
     return this.mapearEntidad(data);
   }
 
   async buscarPorEmail(correo: string): Promise<UsuarioEntidad | null> {
-    const { data, error } = await this.supabaseService
+    const { data, error } = (await this.supabaseService
       .getClient()
       .from('usuarios')
       .select('*')
       .eq('correo', correo)
-      .maybeSingle();
+      .maybeSingle()) as { data: unknown; error: any };
 
     if (error || !data) return null;
     return this.mapearEntidad(data);
   }
 
-  async actualizar(correo: string, datos: any): Promise<UsuarioEntidad> {
-    const { data, error } = await this.supabaseService
+  async actualizar(
+    correo: string,
+    datos: Partial<CrearUsuarioDto>,
+  ): Promise<UsuarioEntidad> {
+    const { data, error } = (await this.supabaseService
       .getClient()
       .from('usuarios')
       .update({
@@ -60,7 +63,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       })
       .eq('correo', correo)
       .select()
-      .single();
+      .single()) as { data: unknown; error: any };
 
     if (error) throw error;
     return this.mapearEntidad(data);
@@ -76,18 +79,31 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
     return data.map((u) => this.mapearEntidad(u));
   }
 
-  private mapearEntidad(data: any): UsuarioEntidad {
+  private mapearEntidad(data: unknown): UsuarioEntidad {
+    const d = data as {
+      id: string;
+      correo: string;
+      nombre: string;
+      apellido: string;
+      numero_pasaporte: string;
+      telefono: string;
+      localidad: string;
+      provincia: string;
+      fecha_creacion: Date;
+      fecha_actualizacion: Date;
+    };
+
     return {
-      id: data.id,
-      email: data.correo,
-      nombre: data.nombre,
-      apellido: data.apellido,
-      numeroPasaporte: data.numero_pasaporte,
-      telefono: data.telefono,
-      localidad: data.localidad,
-      provincia: data.provincia,
-      fechaCreacion: data.fecha_creacion,
-      fechaActualizacion: data.fecha_actualizacion,
+      id: d.id,
+      email: d.correo,
+      nombre: d.nombre,
+      apellido: d.apellido,
+      numeroPasaporte: d.numero_pasaporte,
+      telefono: d.telefono,
+      localidad: d.localidad,
+      provincia: d.provincia,
+      fechaCreacion: d.fecha_creacion,
+      fechaActualizacion: d.fecha_actualizacion,
     };
   }
 }

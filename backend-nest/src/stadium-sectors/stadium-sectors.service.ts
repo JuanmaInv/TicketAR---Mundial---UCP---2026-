@@ -14,7 +14,7 @@ export class SectoresService {
     try {
       return await this.sectoresRepository.crear(crearSectorDto);
     } catch (error) {
-      throw new Error('Error al crear el sector: ' + error.message);
+      throw new Error('Error al crear el sector: ' + (error as Error).message);
     }
   }
 
@@ -31,7 +31,7 @@ export class SectoresService {
       return sector;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new NotFoundException(error.message);
+      throw new NotFoundException((error as Error).message);
     }
   }
 }
