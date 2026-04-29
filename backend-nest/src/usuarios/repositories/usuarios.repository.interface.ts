@@ -1,0 +1,9 @@
+import { UsuarioEntidad } from '../entities/usuario.entidad';
+import { CrearUsuarioDto } from '../dto/crear-usuario.dto';
+
+export interface IUsuariosRepository {
+  crear(usuario: CrearUsuarioDto): Promise<UsuarioEntidad>;
+  buscarPorEmail(email: string): Promise<UsuarioEntidad | null>;
+  actualizar(email: string, datos: any): Promise<UsuarioEntidad>;
+  obtenerTodos(): Promise<UsuarioEntidad[]>;
+}
