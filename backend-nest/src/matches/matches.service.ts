@@ -11,18 +11,18 @@ export class PartidosService {
   ) {}
 
   async crear(crearPartidoDto: CrearPartidoDto): Promise<PartidoEntidad> {
-    return this.partidosRepository.crear(crearPartidoDto);
+    return await this.partidosRepository.crear(crearPartidoDto);
   }
 
   async obtenerTodos(): Promise<PartidoEntidad[]> {
-    return this.partidosRepository.obtenerTodos();
+    return await this.partidosRepository.obtenerTodos();
   }
 
   async obtenerUno(id: string): Promise<PartidoEntidad> {
-    const partido = await this.partidosRepository.obtenerUno(id);
-    if (!partido) {
-      throw new NotFoundException(`Partido con ID ${id} no encontrado`);
+    try {
+      return await this.partidosRepository.obtenerUno(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
     }
-    return partido;
   }
 }

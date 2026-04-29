@@ -1,71 +1,80 @@
 import { Injectable } from '@nestjs/common';
-import { SupabaseService } from '../../common/supabase/supabase.service';
 import { IPartidosRepository } from './matches.repository.interface';
-import { CrearPartidoDto } from '../dto/create-match.dto';
+import { SupabaseService } from '../../common/supabase/supabase.service';
 import { PartidoEntidad } from '../entities/match.entity';
+import { CrearPartidoDto } from '../dto/create-match.dto';
 
 @Injectable()
 export class SupabasePartidosRepository implements IPartidosRepository {
-  private readonly table = 'partidos';
+  private readonly TABLE_NAME = 'partidos';
 
   constructor(private readonly supabaseService: SupabaseService) {}
 
-  async crear(dto: CrearPartidoDto): Promise<PartidoEntidad> {
+  async crear(crearPartidoDto: CrearPartidoDto): Promise<PartidoEntidad> {
     const { data, error } = await this.supabaseService
       .getClient()
-      .from(this.table)
+      .from(this.TABLE_NAME)
       .insert([
         {
-          equipo_local: dto.equipoLocal,
-          equipo_visitante: dto.equipoVisitante,
-          fecha_partido: dto.fechaPartido,
-          nombre_estadio: dto.nombreEstadio,
-          fase: dto.fase,
-          precio_base: dto.precioBase,
-          estado: 'PROGRAMADO',
+          equipo_local: crearPartidoDto.equipoLocal,
+          equipo_visitante: crearPartidoDto.equipoVisitante,
+          fecha_partido: crearPartidoDto.fechaPartido,
+          nombre_estadio: crearPartidoDto.nombreEstadio,
+          fase: crearPartidoDto.fase,
+          precio_base: crearPartidoDto.precioBase,
+          estado: 'programado',
         },
       ])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Error al crear partido en Supabase: ${error.message}`);
+    }
+
     return this.mapToEntity(data);
   }
 
   async obtenerTodos(): Promise<PartidoEntidad[]> {
     const { data, error } = await this.supabaseService
       .getClient()
-      .from(this.table)
-      .select('*');
+      .from(this.TABLE_NAME)
+      .select('*')
+      .order('fecha_partido', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`Error al obtener partidos: ${error.message}`);
+    }
+
     return data.map((item) => this.mapToEntity(item));
   }
 
-  async obtenerUno(id: string): Promise<PartidoEntidad | null> {
+  async obtenerUno(id: string): Promise<PartidoEntidad> {
     const { data, error } = await this.supabaseService
       .getClient()
-      .from(this.table)
+      .from(this.TABLE_NAME)
       .select('*')
       .eq('id', id)
-      .maybeSingle();
+      .single();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      throw new Error(`Partido con ID ${id} no encontrado`);
+    }
+
     return this.mapToEntity(data);
   }
 
-  private mapToEntity(data: any): PartidoEntidad {
+  private mapToEntity(dbData: any): PartidoEntidad {
     return {
-      id: data.id,
-      equipoLocal: data.equipo_local,
-      equipoVisitante: data.equipo_visitante,
-      fechaPartido: new Date(data.fecha_partido),
-      nombreEstadio: data.nombre_estadio,
-      fase: data.fase,
-      precioBase: data.precio_base,
-      estado: data.estado,
-      fechaCreacion: new Date(data.fecha_creacion),
-      fechaActualizacion: new Date(data.fecha_actualizacion || data.fecha_creacion),
+      id: dbData.id,
+      equipoLocal: dbData.equipo_local,
+      equipoVisitante: dbData.equipo_visitante,
+      fechaPartido: dbData.fecha_partido,
+      nombreEstadio: dbData.nombre_estadio,
+      fase: dbData.fase,
+      precioBase: dbData.precio_base,
+      estado: dbData.estado,
+      fechaCreacion: dbData.fecha_creacion,
     };
   }
 }
