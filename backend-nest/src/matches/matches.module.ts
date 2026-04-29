@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PartidosController } from './matches.controller';
 import { PartidosService } from './matches.service';
+import { PartidosController } from './matches.controller';
 import { SupabaseModule } from '../common/supabase/supabase.module';
 import { SupabasePartidosRepository } from './repositories/supabase-matches.repository';
 

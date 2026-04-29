@@ -1,12 +1,12 @@
 export class PartidoEntidad {
-  id: string; // UUID de Supabase
+  id: string;
   equipoLocal: string;
   equipoVisitante: string;
-  fechaPartido: Date;
+  fechaPartido: string;
   nombreEstadio: string;
   fase: string;
+  estado: string;
   precioBase: number;
-  estado: 'PROGRAMADO' | 'EN_CURSO' | 'FINALIZADO' | 'CANCELADO';
-  fechaCreacion: Date;
-  fechaActualizacion: Date;
+  fechaCreacion?: string;
+  fechaActualizacion?: string;
 }

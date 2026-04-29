@@ -1,27 +1,31 @@
-import { IsDateString, IsNotEmpty, IsString, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class CrearPartidoDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'El equipo local debe ser un texto' })
+  @IsNotEmpty({ message: 'El equipo local es obligatorio' })
   equipoLocal: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'El equipo visitante debe ser un texto' })
+  @IsNotEmpty({ message: 'El equipo visitante es obligatorio' })
   equipoVisitante: string;
 
-  @IsDateString()
-  @IsNotEmpty()
+  @IsString({ message: 'La fecha del partido debe ser un texto (ISO)' })
+  @IsNotEmpty({ message: 'La fecha del partido es obligatoria' })
   fechaPartido: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'El nombre del estadio debe ser un texto' })
+  @IsNotEmpty({ message: 'El nombre del estadio es obligatorio' })
   nombreEstadio: string;
 
-  @IsString()
-  @IsNotEmpty()
-  fase: string;
+  @IsString({ message: 'La fase debe ser un texto' })
+  @IsOptional()
+  fase?: string;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @IsString({ message: 'El estado debe ser un texto' })
+  @IsOptional()
+  estado?: string;
+
+  @IsNumber({}, { message: 'El precio base debe ser un número' })
+  @IsNotEmpty({ message: 'El precio base es obligatorio' })
   precioBase: number;
 }
