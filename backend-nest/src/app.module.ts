@@ -1,19 +1,23 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TicketsModule } from './tickets/tickets.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PassportCredentialsModule } from './passport-credentials/passport-credentials.module';
 import { StadiumSectorsModule } from './stadium-sectors/stadium-sectors.module';
-import { MatchesModule } from './matches/matches.module';
+import { PartidosModule } from './matches/matches.module';
+import { SupabaseModule } from './common/supabase/supabase.module';
 
-
-//MODULO RAIZ QUE CONECTA A TODOS LOS MODULOS ANTERIORES
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    SupabaseModule,
     TicketsModule,
     PaymentsModule,
     PassportCredentialsModule,
     StadiumSectorsModule,
-    MatchesModule
+    PartidosModule,
   ],
   controllers: [],
   providers: [],

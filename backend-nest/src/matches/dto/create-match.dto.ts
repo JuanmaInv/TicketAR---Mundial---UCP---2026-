@@ -1,19 +1,27 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString, IsNumber } from 'class-validator';
 
-export class CreateMatchDto {
+export class CrearPartidoDto {
   @IsString()
   @IsNotEmpty()
-  teamA: string;
+  equipoLocal: string;
 
   @IsString()
   @IsNotEmpty()
-  teamB: string;
+  equipoVisitante: string;
 
   @IsDateString()
   @IsNotEmpty()
-  matchDate: Date;
+  fechaPartido: string;
 
   @IsString()
   @IsNotEmpty()
-  stadiumName: string;
+  nombreEstadio: string;
+
+  @IsString()
+  @IsNotEmpty()
+  fase: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  precioBase: number;
 }
