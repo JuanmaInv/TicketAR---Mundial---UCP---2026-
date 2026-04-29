@@ -23,7 +23,10 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return true;
   }
 
-  async buscarEntradaActiva(idUsuario: string, idPartido: string): Promise<boolean> {
+  async buscarEntradaActiva(
+    idUsuario: string,
+    idPartido: string,
+  ): Promise<boolean> {
     const { data } = await this.supabase
       .from('entradas')
       .select('id')
@@ -35,7 +38,10 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return !!data;
   }
 
-  async obtenerStockDisponible(idPartido: string, idSector: string): Promise<number | null> {
+  async obtenerStockDisponible(
+    idPartido: string,
+    idSector: string,
+  ): Promise<number | null> {
     const { data, error } = await this.supabase
       .from('partido_sectores')
       .select('asientos_disponibles')
@@ -78,7 +84,10 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return this.mapearTicket(data);
   }
 
-  async actualizarEstado(id: string, estado: TicketStatus): Promise<TicketEntity> {
+  async actualizarEstado(
+    id: string,
+    estado: TicketStatus,
+  ): Promise<TicketEntity> {
     const { data, error } = await this.supabase
       .from('entradas')
       .update({ estado })
