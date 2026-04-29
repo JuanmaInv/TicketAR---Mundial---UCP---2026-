@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsuariosController } from './usuarios.controller';
 import { UsuariosService } from './usuarios.service';
 
+import { SupabaseService } from '../common/supabase/supabase.service';
+
 describe('UsuariosController', () => {
   let controller: UsuariosController;
 

@@ -11,7 +11,11 @@ export class SectoresService {
   ) {}
 
   async crear(crearSectorDto: CrearSectorDto): Promise<SectorEstadioEntidad> {
-    return await this.sectoresRepository.crear(crearSectorDto);
+    try {
+      return await this.sectoresRepository.crear(crearSectorDto);
+    } catch (error) {
+      throw new Error('Error al crear el sector: ' + error.message);
+    }
   }
 
   async obtenerTodos(): Promise<SectorEstadioEntidad[]> {
@@ -20,8 +24,13 @@ export class SectoresService {
 
   async obtenerUno(id: string): Promise<SectorEstadioEntidad> {
     try {
-      return await this.sectoresRepository.obtenerUno(id);
+      const sector = await this.sectoresRepository.obtenerUno(id);
+      if (!sector) {
+        throw new NotFoundException('Sector de estadio no encontrado');
+      }
+      return sector;
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       throw new NotFoundException(error.message);
     }
   }
