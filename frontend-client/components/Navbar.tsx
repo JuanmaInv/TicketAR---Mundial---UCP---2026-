@@ -1,32 +1,67 @@
+"use client";
+
 import Link from 'next/link';
+import { UserButton, useUser } from '@clerk/nextjs';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function Navbar() {
+  const { isSignedIn, isLoaded } = useUser();
+
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <nav className="relative sticky top-0 z-50 w-full border-b border-slate-700 bg-slate-950 backdrop-blur-md shadow-sm overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-y-0 left-0 w-[33.34%] overflow-hidden">
+          <div className="absolute inset-0 -skew-x-12 -translate-x-[7%] bg-[linear-gradient(90deg,#006847_0%,#006847_34%,#ffffff_34%,#ffffff_66%,#ce1126_66%,#ce1126_100%)] opacity-80" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-black text-slate-900/80">◉</div>
+        </div>
+
+        <div className="absolute inset-y-0 left-[33.33%] w-[33.34%] overflow-hidden">
+          <div className="absolute inset-0 opacity-82 [clip-path:polygon(6%_0,100%_0,94%_100%,0_100%)]">
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_7.7%,#ffffff_7.7%,#ffffff_15.4%)]" />
+            <div className="absolute left-0 top-0 h-[54%] w-[40%] bg-[#3c3b6e]" />
+            <div className="absolute left-[3%] top-[6%] h-[40%] w-[32%] opacity-90 bg-[radial-gradient(circle,rgba(255,255,255,0.9)_1.2px,transparent_1.3px)] [background-size:8px_8px]" />
+          </div>
+        </div>
+
+        <div className="absolute inset-y-0 left-[66.66%] w-[33.34%] overflow-hidden">
+          <div className="absolute inset-0 -skew-x-12 translate-x-[7%] bg-[linear-gradient(90deg,#d80621_0%,#d80621_32%,#ffffff_32%,#ffffff_68%,#d80621_68%,#d80621_100%)] opacity-80" />
+          <svg viewBox="0 0 64 64" className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-[#d80621] drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">
+            <path fill="currentColor" d="M31.8 6.5l3.2 7.8 8-2.9-2 8.2h8.6l-6.5 5.5 6.2 4.9-8.1 2.2 3.7 8-7.7-2.4-1.8 11.8h-3.1l-1.9-11.8-7.7 2.4 3.7-8-8.1-2.2 6.2-4.9-6.5-5.5h8.6l-2-8.2 8 2.9 3.2-7.8z" />
+          </svg>
+        </div>
+        <div className="absolute inset-0 bg-slate-950/45" />
+      </div>
+
+      <div className="relative z-10 container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold tracking-tighter text-white">
+          <span className="text-2xl font-bold tracking-tighter text-slate-100 uppercase italic">
             Ticket<span className="text-blue-500">AR</span>
-            <span className="ml-1 text-xs font-light text-blue-300">MUNDIAL</span>
           </span>
         </Link>
-        
+
+        {/* Menú Dinámico */}
         <div className="hidden items-center gap-8 md:flex">
-          <Link href="/" className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">
-            Inicio
-          </Link>
-          <Link href="/matches" className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">
-            Partidos
-          </Link>
-          <Link href="/my-tickets" className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">
-            Mis Entradas
-          </Link>
+          <Link href="/" className="text-[10px] font-black uppercase tracking-widest text-slate-100 hover:text-white">Inicio</Link>
+          <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-slate-100 hover:text-white">Partidos</Link>
+          <Link href="/about" className="text-[10px] font-black uppercase tracking-widest text-slate-100 hover:text-white">Sobre Nosotros</Link>
+          
+          {isLoaded && isSignedIn && (
+            <>
+              <Link href="/my-tickets" className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300">Mis Entradas</Link>
+              <Link href="/profile" className="text-[10px] font-black uppercase tracking-widest text-green-400 hover:text-green-300">Mis Datos</Link>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-            Iniciar Sesión
-          </button>
+          <ThemeToggle />
+          {isLoaded && (
+            isSignedIn ? <UserButton /> : (
+              <Link href="/login" className="rounded-full bg-blue-600 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white hover:bg-blue-700 shadow-xl shadow-blue-900/20 transition-all">
+                Ingresar
+              </Link>
+            )
+          )}
         </div>
       </div>
     </nav>

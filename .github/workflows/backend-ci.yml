@@ -4,9 +4,9 @@ name: Backend CI (NestJS)
 
 on:
   push:
-    branches: [ "main", "feat/**" ]
+    branches: [ "main", "feat/**", "RAMA-INTEGRACION-BACKEND" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "RAMA-INTEGRACION-BACKEND" ]
 
 jobs:
   validacion:
@@ -36,3 +36,9 @@ jobs:
 
       - name: Compilar proyecto (Build)
         run: pnpm run build
+
+      - name: Ejecutar Linter (Estilo de código)
+        run: pnpm run lint
+
+      - name: Ejecutar Tests Unitarios
+        run: pnpm run test

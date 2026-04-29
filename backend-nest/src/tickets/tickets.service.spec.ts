@@ -1,0 +1,36 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { EntradasService } from './tickets.service';
+
+describe('EntradasService', () => {
+  let service: EntradasService;
+
+  const mockEntradasRepository = {
+    validarPasaporteUsuario: jest.fn(),
+    buscarEntradaActiva: jest.fn(),
+    obtenerStockDisponible: jest.fn(),
+    crear: jest.fn(),
+    obtenerTodas: jest.fn(),
+    obtenerUna: jest.fn(),
+    actualizarEstado: jest.fn(),
+    obtenerExpiradas: jest.fn(),
+    incrementarStock: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        EntradasService,
+        {
+          provide: 'IEntradasRepository',
+          useValue: mockEntradasRepository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<EntradasService>(EntradasService);
+  });
+
+  it('debería estar definido', () => {
+    expect(service).toBeDefined();
+  });
+});
