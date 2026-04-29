@@ -20,8 +20,6 @@ describe('Partidos (e2e)', () => {
   });
 
   it('/partidos (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/partidos')
-      .expect(200);
+    return request(app.getHttpServer()).get('/partidos').expect(200);
   });
 });

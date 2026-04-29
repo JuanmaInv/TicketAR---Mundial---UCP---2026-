@@ -1,7 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsuariosService } from './usuarios.service';
-import { SupabaseService } from '../common/supabase/supabase.service';
-
 describe('UsuariosService', () => {
   let service: UsuariosService;
 

@@ -7,7 +7,10 @@ export class CrearPartidoDto {
   @IsString({ message: 'El equipo visitante es obligatorio' })
   equipoVisitante: string;
 
-  @IsDateString({}, { message: 'La fecha del partido debe ser una fecha válida' })
+  @IsDateString(
+    {},
+    { message: 'La fecha del partido debe ser una fecha válida' },
+  )
   fechaPartido: string;
 
   @IsString({ message: 'El nombre del estadio es obligatorio' })

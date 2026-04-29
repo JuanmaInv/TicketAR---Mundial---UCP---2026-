@@ -3,14 +3,13 @@ import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuarioEntidad } from './entities/usuario.entidad';
 import type { IUsuariosRepository } from './repositories/usuarios.repository.interface';
 
-
 //REPOSITORY USANDO INTERFAZ
 @Injectable()
 export class UsuariosService {
   constructor(
     @Inject('IUsuariosRepository')
     private readonly usuariosRepository: IUsuariosRepository,
-  ) { }
+  ) {}
 
   async crear(crearUsuarioDto: CrearUsuarioDto): Promise<UsuarioEntidad> {
     // Aquí podrías agregar lógica de negocio antes de guardar

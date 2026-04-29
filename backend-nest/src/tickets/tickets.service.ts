@@ -20,9 +20,10 @@ export class EntradasService {
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
     // 1. VALIDACIÓN DE PASAPORTE
-    const tienePasaporte = await this.entradasRepository.validarPasaporteUsuario(
-      crearEntradaDto.idUsuario,
-    );
+    const tienePasaporte =
+      await this.entradasRepository.validarPasaporteUsuario(
+        crearEntradaDto.idUsuario,
+      );
     if (!tienePasaporte) {
       throw new BadRequestException(
         'El usuario debe tener un pasaporte registrado para comprar.',
@@ -92,14 +93,23 @@ export class EntradasService {
       for (const ticket of expiradas) {
         try {
           // Devolvemos el stock
-          await this.entradasRepository.incrementarStock(ticket.id_partido, ticket.id_sector);
+          await this.entradasRepository.incrementarStock(
+            ticket.id_partido,
+            ticket.id_sector,
+          );
 
           // Marcamos como CANCELADO
-          await this.entradasRepository.actualizarEstado(ticket.id, TicketStatus.CANCELADO);
+          await this.entradasRepository.actualizarEstado(
+            ticket.id,
+            TicketStatus.CANCELADO,
+          );
 
           console.log(`[Cron] Reserva ${ticket.id} cancelada por expiración.`);
         } catch (err) {
-          console.error(`[Cron] Error procesando ticket ${ticket.id}:`, err.message);
+          console.error(
+            `[Cron] Error procesando ticket ${ticket.id}:`,
+            err.message,
+          );
         }
       }
     }
