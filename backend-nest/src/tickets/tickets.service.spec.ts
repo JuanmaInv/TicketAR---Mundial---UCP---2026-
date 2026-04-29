@@ -1,17 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntradasService } from './tickets.service';
-import { SupabaseService } from '../common/supabase/supabase.service';
 
 describe('EntradasService', () => {
   let service: EntradasService;
 
-  const mockSupabaseService = {
-    getClient: jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockReturnThis(),
-    }),
+  const mockEntradasRepository = {
+    validarPasaporteUsuario: jest.fn(),
+    buscarEntradaActiva: jest.fn(),
+    obtenerStockDisponible: jest.fn(),
+    crear: jest.fn(),
+    obtenerTodas: jest.fn(),
+    obtenerUna: jest.fn(),
+    actualizarEstado: jest.fn(),
+    obtenerExpiradas: jest.fn(),
+    incrementarStock: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -19,8 +21,8 @@ describe('EntradasService', () => {
       providers: [
         EntradasService,
         {
-          provide: SupabaseService,
-          useValue: mockSupabaseService,
+          provide: 'IEntradasRepository',
+          useValue: mockEntradasRepository,
         },
       ],
     }).compile();

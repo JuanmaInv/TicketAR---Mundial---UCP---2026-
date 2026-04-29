@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SectoresService } from './stadium-sectors.service';
+import { PartidosService } from './matches.service';
 
-describe('SectoresService', () => {
-  let service: SectoresService;
+describe('PartidosService', () => {
+  let service: PartidosService;
 
-  const mockSectoresRepository = {
+  const mockPartidosRepository = {
     crear: jest.fn(),
     obtenerTodos: jest.fn(),
     obtenerUno: jest.fn(),
@@ -13,15 +13,15 @@ describe('SectoresService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        SectoresService,
+        PartidosService,
         {
-          provide: 'ISectoresRepository',
-          useValue: mockSectoresRepository,
+          provide: 'IPartidosRepository',
+          useValue: mockPartidosRepository,
         },
       ],
     }).compile();
 
-    service = module.get<SectoresService>(SectoresService);
+    service = module.get<PartidosService>(PartidosService);
   });
 
   it('should be defined', () => {
