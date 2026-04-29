@@ -23,13 +23,22 @@ export class EntradasService {
     const supabase = this.supabaseService.getClient();
 
     // 1. VALIDACIÓN DE PASAPORTE
+    console.log('--- DEPURACIÓN DE RESERVA ---');
+    console.log('IDs recibidos en DTO:', {
+      idUsuario: crearEntradaDto.idUsuario,
+      idPartido: crearEntradaDto.idPartido,
+      idSector: crearEntradaDto.idSector
+    });
+
     const { data: usuario, error: errorUsuario } = await supabase
       .from('usuarios')
-      .select('pasaporte')
+      .select('numero_pasaporte')
       .eq('id', crearEntradaDto.idUsuario)
       .single();
 
-    if (errorUsuario || !usuario?.pasaporte) {
+    console.log('Resultado búsqueda usuario:', { usuario, errorUsuario });
+
+    if (errorUsuario || !usuario?.numero_pasaporte) {
       throw new BadRequestException(
         'El usuario debe tener un pasaporte registrado para comprar.',
       );
@@ -51,13 +60,16 @@ export class EntradasService {
       );
     }
 
-    // 3. VERIFICACIÓN DE STOCK
+    // 3. VERIFICACIÓN DE STOCK (En la tabla de inventario real)
+    console.log('Buscando stock en tabla partido_sectorestrigger...');
     const { data: inventario, error: errorStock } = await supabase
-      .from('partido_sectores')
-      .select('asientos_disponibles')
-      .eq('id_partido', crearEntradaDto.idPartido)
-      .eq('id_sector', crearEntradaDto.idSector)
+      .from('partido_sectorestrigger')
+      .select('capacidad_disponible')
+      .eq('partido_id', crearEntradaDto.idPartido)
+      .eq('sector_id', crearEntradaDto.idSector)
       .single();
+
+    console.log('Resultado búsqueda stock:', { inventario, errorStock });
 
     if (errorStock || !inventario) {
       throw new NotFoundException(
@@ -65,7 +77,7 @@ export class EntradasService {
       );
     }
 
-    if (inventario.asientos_disponibles <= 0) {
+    if (inventario.capacidad_disponible <= 0) {
       throw new ConflictException(
         'Lo sentimos, no quedan asientos disponibles en este sector.',
       );
@@ -151,6 +163,7 @@ export class EntradasService {
     }
 
     if (expiradas && expiradas.length > 0) {
+      console.log(`[Cron] Se encontraron ${expiradas.length} reservas expiradas.`);
       for (const ticket of expiradas) {
         try {
           // Devolvemos el stock usando la función RPC
