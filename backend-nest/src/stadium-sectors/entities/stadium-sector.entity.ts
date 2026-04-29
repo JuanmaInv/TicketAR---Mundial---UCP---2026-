@@ -1,9 +1,8 @@
-export class StadiumSectorEntity {
+export class SectorEstadioEntidad {
   id: string;
-  name: string; // PLATEA, PALCO, POPULAR, PRENSA
-  capacity: number;
-  availableSeats: number;
-  price: number;
-  createdAt: Date;
-  updatedAt: Date;
+  nombre: string;
+  capacidad: number;
+  capacidadDisponible: number;
+  precio: number;
+  fechaCreacion?: Date;
 }

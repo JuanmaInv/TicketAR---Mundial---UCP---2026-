@@ -39,3 +39,6 @@ jobs:
 
       - name: Ejecutar Linter (Estilo de código)
         run: pnpm run lint
+
+      - name: Ejecutar Tests Unitarios
+        run: pnpm run test
