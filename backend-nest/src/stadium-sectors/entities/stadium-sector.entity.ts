@@ -1,10 +1,8 @@
-export class SectorEntidad {
+export class SectorEstadioEntidad {
   id: string;
-  nombre: string; // POPULAR, PALCO, PLATEA, PRENSA
+  nombre: string;
   capacidad: number;
   capacidadDisponible: number;
   precio: number;
-  activo: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  fechaCreacion?: Date;
 }

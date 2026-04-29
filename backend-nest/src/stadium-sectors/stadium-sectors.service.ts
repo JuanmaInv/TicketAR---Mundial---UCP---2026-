@@ -1,56 +1,54 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+<<<<<<< Updated upstream
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
-
-import { SupabaseService } from '../common/supabase/supabase.service';
+import type { ISectoresRepository } from './repositories/sectores.repository.interface';
+=======
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { CrearSectorDto } from './dto/create-stadium-sector.dto';
+import type { ISectoresRepository } from './repositories/stadium-sectors.repository.interface';
+import { SectorEstadioEntidad } from './entities/stadium-sector.entity';
+>>>>>>> Stashed changes
 
 @Injectable()
 export class SectoresService {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    @Inject('ISectoresRepository')
+    private readonly sectoresRepository: ISectoresRepository,
+  ) {}
 
+<<<<<<< Updated upstream
   async obtenerTodos() {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('sectores_estadio')
-      .select('*');
-
-    if (error) {
-      return [];
-    }
-    return data;
+    return this.sectoresRepository.obtenerTodos();
   }
 
   async obtenerUno(id: string) {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('sectores_estadio')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error || !data) {
+    const sector = await this.sectoresRepository.obtenerUno(id);
+    if (!sector) {
       throw new NotFoundException('Sector de estadio no encontrado');
     }
-    return data;
+    return sector;
   }
 
   async crear(dto: CrearSectorDto) {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('sectores_estadio')
-      .insert([
-        {
-          nombre: dto.nombre,
-          capacidad: dto.capacidad,
-          capacidad_disponible: dto.capacidad,
-          precio: dto.precio,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) {
+    try {
+      return await this.sectoresRepository.crear(dto);
+    } catch (error) {
       throw new Error('Error al crear el sector: ' + error.message);
+=======
+  async crear(crearSectorDto: CrearSectorDto): Promise<SectorEstadioEntidad> {
+    return await this.sectoresRepository.crear(crearSectorDto);
+  }
+
+  async obtenerTodos(): Promise<SectorEstadioEntidad[]> {
+    return await this.sectoresRepository.obtenerTodos();
+  }
+
+  async obtenerUno(id: string): Promise<SectorEstadioEntidad> {
+    try {
+      return await this.sectoresRepository.obtenerUno(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+>>>>>>> Stashed changes
     }
-    return data;
   }
 }
