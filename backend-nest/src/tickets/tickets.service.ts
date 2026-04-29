@@ -10,6 +10,7 @@ import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
 import type { IEntradasRepository } from './repositories/entradas.repository.interface';
+import { TicketStateFactory } from './states/ticket-state.factory';
 
 @Injectable()
 export class EntradasService {
@@ -81,6 +82,15 @@ export class EntradasService {
   }
 
   async marcarComoPagada(id: string): Promise<TicketEntity> {
+    const ticket = await this.entradasRepository.obtenerUna(id);
+    if (!ticket) {
+      throw new NotFoundException('Reserva no encontrada.');
+    }
+
+    // Aplicar Patrón State para validar transición
+    const estadoActual = TicketStateFactory.create(ticket.estado);
+    estadoActual.pagar();
+
     return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
   }
 
@@ -92,6 +102,10 @@ export class EntradasService {
     if (expiradas.length > 0) {
       for (const ticket of expiradas) {
         try {
+          // Validar con el patrón State antes de cancelar
+          const estadoActual = TicketStateFactory.create(ticket.estado);
+          estadoActual.cancelar();
+
           // Devolvemos el stock
           await this.entradasRepository.incrementarStock(
             ticket.id_partido,

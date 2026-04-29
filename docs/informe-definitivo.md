@@ -50,7 +50,7 @@ Para entender cómo funciona el ecosistema de **TicketAR**, dividimos la respons
 
 ### 3. El Rol del "Guardián" (NestJS)
 A diferencia de otros proyectos donde el Front habla directo con la DB, aquí **NestJS actúa como intermediario crítico**:
-*   **Seguridad:** El Front solo conoce la `anon_key`, mientras que el Backend usa la `service_role_key`.
+*   **Security:** El Front solo conoce la `anon_key`, mientras que el Backend usa la `service_role_key`.
 *   **Integridad:** Centralizamos validaciones complejas (como el chequeo de pasaportes) en un solo lugar.
 *   **Pagos:** El Backend procesa las confirmaciones de pasarelas antes de marcar un ticket como `PAGADO` en la DB.
 
@@ -170,6 +170,39 @@ Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript 
 | `.service.ts` | Toda la lógica de negocio | Única capa que toca la DB |
 | `.entity.ts` | Define la forma de los datos en DB | Refleja exactamente las columnas de Supabase |
 | `.module.ts` | Agrupa y conecta las piezas | Se registra en `AppModule` |
+
+---
+
+## 🎨 Patrones de Diseño de Software
+
+Para garantizar que el sistema sea mantenible, testeable y escalable, hemos aplicado patrones de diseño de nivel empresarial que desacoplan la lógica de negocio de la infraestructura:
+
+### 1. Patrón Repositorio (Repository Pattern)
+Es el pilar fundamental de nuestra capa de persistencia. Actúa como una capa de mediación entre la lógica de negocio (`Service`) y la fuente de datos externa (`Supabase`).
+
+- **Implementación:** Definimos interfaces (contratos) como `IPartidosRepository` y una implementación concreta `SupabasePartidosRepository`.
+- **Inyección de Dependencias:** El servicio pide la interfaz (`@Inject('IPartidosRepository')`), lo que permite cambiar la implementación sin afectar el código que la consume.
+- **Beneficios:** 
+    - **Desacoplamiento:** El servicio no conoce los detalles de implementación de Supabase (tablas, consultas, etc.).
+    - **Testabilidad:** Permite inyectar repositorios "mockeados" en los tests unitarios.
+
+### 2. Patrón Adapter (Adaptador)
+Lo utilizamos para normalizar los datos que vienen de fuentes externas antes de que lleguen a nuestro dominio.
+
+- **El Problema:** Supabase devuelve datos en *snake_case* (ej: `fecha_partido`), pero nuestro dominio usa *camelCase* (ej: `fechaPartido`).
+- **La Solución:** El método `mapToEntity` dentro de los repositorios actúa como un **Adaptador de Datos**, traduciendo el esquema físico de la base de datos al esquema lógico de la aplicación.
+
+### 3. Patrón State (Estado)
+Implementado específicamente para gestionar el ciclo de vida crítico de las entradas (Reservada -> Pagada -> Cancelada).
+
+- **Propósito:** Encapsular las reglas de transición de estados. Por ejemplo, evitar que una entrada cancelada (por expiración de 15 min) pueda ser pagada.
+- **Estructura:**
+    - `TicketState` (Interfaz): Define acciones como `pagar()` y `cancelar()`.
+    - `ReservadoState`, `PagadoState`, `CanceladoState`: Implementaciones concretas que lanzan excepciones si la acción es ilegal.
+- **Beneficio:** Centraliza la lógica de negocio y evita que el `Service` se llene de condicionales `if/else` frágiles.
+
+### 4. Singleton Pattern
+NestJS garantiza que servicios críticos como `SupabaseService` se instancien una sola vez por toda la aplicación, optimizando la gestión de conexiones y memoria.
 
 ---
 
