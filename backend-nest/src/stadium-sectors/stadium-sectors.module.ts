@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
-import { SectoresController } from './stadium-sectors.controller';
 import { SectoresService } from './stadium-sectors.service';
+<<<<<<< Updated upstream
 import { SupabaseModule } from '../common/supabase/supabase.module';
 import { SupabaseSectoresRepository } from './repositories/supabase-sectores.repository';
+=======
+import { SectoresController } from './stadium-sectors.controller';
+import { SupabaseSectoresRepository } from './repositories/supabase-stadium-sectors.repository';
+>>>>>>> Stashed changes
 
 @Module({
   imports: [SupabaseModule],

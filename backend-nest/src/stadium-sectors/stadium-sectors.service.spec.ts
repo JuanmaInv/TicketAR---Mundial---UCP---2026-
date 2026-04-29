@@ -1,17 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SectoresService } from './stadium-sectors.service';
-import { SupabaseService } from '../common/supabase/supabase.service';
 
 describe('SectoresService', () => {
   let service: SectoresService;
 
-  const mockSupabaseService = {
-    getClient: jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockReturnThis(),
-    }),
+  const mockSectoresRepository = {
+    crear: jest.fn(),
+    obtenerTodos: jest.fn(),
+    obtenerUno: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -19,8 +15,8 @@ describe('SectoresService', () => {
       providers: [
         SectoresService,
         {
-          provide: SupabaseService,
-          useValue: mockSupabaseService,
+          provide: 'ISectoresRepository',
+          useValue: mockSectoresRepository,
         },
       ],
     }).compile();
