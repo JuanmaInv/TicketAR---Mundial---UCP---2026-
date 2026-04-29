@@ -14,6 +14,7 @@ Desarrollar una plataforma de venta de entradas enfocada en la seguridad y elimi
 - **Sectores:** Control de capacidad estricto por PLATEA, PALCO, POPULAR y PRENSA.
 - **Entregable:** Generación de código QR enviado por correo tras confirmar el pago.
 - **Reventa:** Sistema oficial integrado en la plataforma con comisión.
+- **Inventario Dinámico:** El stock se gestiona por la relación única `Partido-Sector`, permitiendo precios y capacidades independientes por cada encuentro.
 
 ---
 
@@ -154,7 +155,13 @@ HTTP Request
 [ Database ]     ← Persiste los datos (Supabase)
 ```
 
-### Roles de cada capa
+### 1. DTOs (Data Transfer Objects)
+Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript que validan los datos que entran a la API (usando `class-validator`). 
+- *Misión:* Actúan como un "escudo" de seguridad. Implementan el principio de **Zero Trust**: el servidor solo acepta los campos definidos (ej. `userId`, `partidoId`, `sectorId`) e ignora el resto (ej. `status`, `qrCode`).
+- *Validación Estricta:* Se utiliza `@IsUUID('4')` para prevenir inyecciones y asegurar que los identificadores sigan el estándar de Supabase.
+- *Configuración Global:* Se utiliza el `ValidationPipe` en `main.ts` con `whitelist: true` para limpiar automáticamente cualquier campo no deseado enviado por el cliente.
+
+### 2. Roles de cada capa
 
 | Archivo | Rol | Regla |
 |---------|-----|-------|
@@ -166,383 +173,37 @@ HTTP Request
 
 ---
 
-## ✅ Flujo de Trabajo Backend: La Receta para Agregar un Módulo Nuevo
+## 🧩 Módulos Implementados y sus Responsabilidades
 
-Seguir **estrictamente** este orden al crear cualquier funcionalidad nueva:
+Para mantener el principio de **Responsabilidad Única**, el sistema se divide en los siguientes módulos lógicos:
 
-```
-1. Módulo → 2. Entidad → 3. DTO → 4. Controlador → 5. Servicio → 6. Tests → 7. Base de Datos → 8. Build
-```
-
----
-
-### Paso 1 — Módulo (El Esqueleto)
-
-**Comando:**
-```bash
-cd backend-nest
-npx nest g module nombre-modulo
-npx nest g controller nombre-modulo
-npx nest g service nombre-modulo
-```
-
-**Qué hace:** Genera la carpeta `src/nombre-modulo/` con 3 archivos base y los conecta automáticamente al `AppModule`.
-
-**Verificar:** Abrir `src/app.module.ts` y confirmar que el nuevo módulo aparece en `imports: []`.
+1. **Users (Usuarios):** Gestiona el perfil del hincha. Su función principal es vincular la cuenta del usuario con su número de pasaporte validado.
+2. **Matches (Partidos):** Es el catálogo de eventos. Define qué selecciones juegan, en qué estadio y en qué fecha. Sin un partido, no se pueden emitir tickets.
+3. **Stadium-Sectors (Sectores del Estadio):** Controla el inventario y los precios base de la estructura física del estadio.
+4. **Passport-Credentials (Validación de Identidad):** Actúa como un "oráculo" de seguridad. Simula la conexión con una API externa para verificar pasaportes.
+5. **Tickets (Entradas y Reservas):** El corazón de la lógica de negocio. Maneja el estado del ticket, aplica la reserva de 15 minutos y hace cumplir la regla de "1 entrada por usuario".
+6. **Payments (Pagos):** Se encarga de la pasarela de pago. Una vez confirmado, ordena el cambio de estado a "Pagado".
 
 ---
 
-### Paso 2 — Entidad (El Plano de la DB)
-
-**Crear:** `src/nombre-modulo/entities/nombre.entity.ts`
-
-**Qué es:** Una clase TypeScript plana que define los campos que tendrá la tabla en Supabase.
-
-```typescript
-// Ejemplo: partido.entity.ts
-export class PartidoEntidad {
-  id: string;           // UUID de Supabase
-  equipoLocal: string;
-  equipoVisitante: string;
-  fechaPartido: Date;
-  estado: 'PROGRAMADO' | 'EN_CURSO' | 'FINALIZADO' | 'CANCELADO';
-  fechaCreacion: Date;
-  fechaActualizacion: Date;
-}
-```
-
-**Por qué primero:** Sin saber qué guardar, no se puede diseñar el DTO del siguiente paso.
-
----
-
-### Paso 3 — DTO (El Escudo Protector)
-
-**Crear:** `src/nombre-modulo/dto/crear-nombre.dto.ts`
-
-**Qué es:** Una clase con decoradores de `class-validator` que valida automáticamente los datos que llegan del frontend.
-
-```typescript
-// Ejemplo: crear-partido.dto.ts
-import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
-
-export class CrearPartidoDto {
-  @IsString({ message: 'El equipo local debe ser texto' })
-  @IsNotEmpty({ message: 'El equipo local es obligatorio' })
-  equipoLocal: string;
-
-  @IsDateString({}, { message: 'La fecha debe ser una fecha válida (ISO)' })
-  @IsNotEmpty()
-  fechaPartido: Date;
-}
-```
-
-**Resultado:** Si el frontend envía datos incorrectos, el DTO rechaza automáticamente con un `400 Bad Request` antes de que llegue al servicio.
-
-> ⚠️ **IMPORTANTE:** Para que el DTO valide, el `main.ts` debe tener habilitado el `ValidationPipe`:
-> ```typescript
-> app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-> ```
-
----
-
-### Paso 4 — Controlador (El Mesero)
-
-**Editar:** `src/nombre-modulo/nombre-modulo.controller.ts`
-
-**Regla de oro:** El controlador **no tiene lógica de negocio**. Solo recibe, delega y responde.
-
-```typescript
-@Controller('partidos')          // ← Define la ruta base: /partidos
-export class PartidosController {
-  constructor(private readonly partidosService: PartidosService) {}
-
-  @Get()                         // GET /partidos
-  obtenerTodos() {
-    return this.partidosService.obtenerTodos();
-  }
-
-  @Post()                        // POST /partidos
-  crear(@Body() dto: CrearPartidoDto) {
-    return this.partidosService.crear(dto);   // ← Delega al servicio
-  }
-}
-```
-
-> 💡 **Nota sobre idiomas:** Las rutas del `@Controller()` están en **español** para consistencia con el proyecto (`'partidos'`, `'sectores'`, `'entradas'`, etc.).
-
----
-
-### Paso 5 — Servicio y CRUD (El Chef)
-
-**Editar:** `src/nombre-modulo/nombre-modulo.service.ts`
-
-**Fase 1 — Mock-Driven Development:** Usar un array en memoria para desarrollar sin depender de Supabase.
-
-```typescript
-@Injectable()
-export class PartidosService {
-  // Datos de semilla para desarrollo (se reemplaza con Supabase en el Paso 7)
-  private baseDeDatosSimulada: PartidoEntidad[] = [
-    {
-      id: 'uuid-ejemplo-001',
-      equipoLocal: 'Argentina',
-      equipoVisitante: 'Brasil',
-      fechaPartido: new Date('2026-06-15T18:00:00Z'),
-      nombreEstadio: 'MetLife Stadium',
-      estado: 'PROGRAMADO',
-      fechaCreacion: new Date(),
-      fechaActualizacion: new Date(),
-    },
-  ];
-
-  obtenerTodos(): PartidoEntidad[] {
-    return this.baseDeDatosSimulada;
-  }
-
-  crear(dto: CrearPartidoDto): PartidoEntidad {
-    const nuevo: PartidoEntidad = {
-      id: crypto.randomUUID(),
-      ...dto,
-      estado: 'PROGRAMADO',
-      fechaCreacion: new Date(),
-      fechaActualizacion: new Date(),
-    };
-    this.baseDeDatosSimulada.push(nuevo);
-    return nuevo;
-  }
-}
-```
-
-> ⚠️ **Limitación del mock:** Los datos se pierden cada vez que el servidor reinicia. Esto es intencional en esta fase.
-
----
-
-### Paso 6 — Tests (Los Specs)
-
-Nest CLI genera automáticamente archivos `.spec.ts` al crear módulos. Hay que **completarlos** correctamente.
-
-#### Error frecuente: dependencias faltantes en el módulo de testing
-
-```typescript
-// ❌ INCORRECTO — NestJS no puede inyectar el servicio al controlador
-const module = await Test.createTestingModule({
-  controllers: [PartidosController],
-}).compile();
-
-// ✅ CORRECTO — El servicio se provee para que NestJS pueda inyectarlo
-const module = await Test.createTestingModule({
-  controllers: [PartidosController],
-  providers: [PartidosService],    // ← SIEMPRE incluir los providers del controlador
-}).compile();
-```
-
-**Regla:** Si el controlador tiene `constructor(private service: AlgunServicio)`, ese servicio **debe estar en `providers`** del módulo de testing.
-
-#### Correr los tests
-
-```bash
-pnpm run test           # Corre todos los specs una vez
-pnpm run test:watch     # Modo watch (re-corre al guardar)
-pnpm run test:cov       # Con reporte de cobertura
-```
-
-**Resultado esperado:** Todos los suites en `PASS`. Si hay `FAIL`, revisar el error antes de avanzar al siguiente paso.
-
----
-
-### Paso 7 — Base de Datos (La Bóveda — Supabase)
-
-**Estado actual del proyecto:** ✅ Infraestructura lista — pendiente conectar cada servicio.
-
-#### Arquitectura de la integración
-
-Se implementó un patrón de **Singleton centralizado** para el cliente de Supabase. En vez de crear el cliente en cada servicio, existe un módulo compartido en `/common` que lo provee a toda la aplicación:
-
-```
-src/common/
-├── enums/
-│   └── sector-type.enum.ts     ← Única fuente de verdad de sectores
-└── supabase/
-    ├── supabase.service.ts      ← Crea y expone el cliente de Supabase
-    └── supabase.module.ts       ← Distribuye el servicio globalmente
-```
-
-#### `supabase.service.ts` — El cliente único
-
-```typescript
-@Injectable()
-export class SupabaseService {
-  private readonly client: SupabaseClient;
-
-  constructor(private readonly configService: ConfigService) {
-    // getOrThrow lanza excepción si la variable no existe en .env
-    const url = this.configService.getOrThrow<string>('SUPABASE_URL');
-    const key = this.configService.getOrThrow<string>('SUPABASE_KEY');
-    this.client = createClient(url, key);
-  }
-
-  getClient(): SupabaseClient {
-    return this.client;
-  }
-}
-```
-
-> **¿Por qué `private readonly configService`?** El modificador `private` limita el acceso a la clase. El `readonly` garantiza que la referencia no se reasigne después del constructor. El shorthand de TypeScript declara y asigna la propiedad en una sola línea.
-
-#### `supabase.module.ts` — Distribución global
-
-```typescript
-@Global()   // ← Hace que SupabaseService esté disponible sin importar este módulo
-@Module({
-  providers: [SupabaseService],
-  exports: [SupabaseService],   // ← Otros módulos pueden inyectarlo
-})
-export class SupabaseModule {}
-```
-
-#### `app.module.ts` — Registro en el root
-
-```typescript
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),  // Carga el .env
-    SupabaseModule,                            // Distribuye el cliente
-    UsuariosModule,
-    // ... resto de módulos
-  ],
-})
-export class AppModule {}
-```
-
-#### Cómo usar el cliente en cualquier servicio (próximo paso)
-
-```typescript
-// En cualquier servicio, inyectar SupabaseService:
-@Injectable()
-export class PartidosService {
-  constructor(private readonly supabase: SupabaseService) {}
-
-  async obtenerTodos() {
-    const { data, error } = await this.supabase.getClient()
-      .from('partidos')   // ← nombre exacto de la tabla en Supabase
-      .select('*');
-    if (error) throw new InternalServerErrorException(error.message);
-    return data;
-  }
-}
-```
-
-**Variables de entorno requeridas** (ver `.env.example`):
-```
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_KEY=eyJhbGci...   # service_role key (NUNCA en el frontend)
-```
-
-> ⚠️ **Seguridad crítica:** En el backend se usa la `service_role` key porque el servidor nunca es visible al usuario. La `anon` key es para el cliente de Next.js en el frontend.
-
-> 💡 **Ventaja arquitectónica:** Solo el Servicio cambia al conectar la DB. Los Controladores, DTOs y Módulos no se tocan.
-
----
-
-### Paso 8 — Build (La Prueba de Fuego)
-
-**Antes de todo PR, ejecutar:**
-
-```bash
-pnpm run build
-```
-
-- Sin output de error → ✅ TypeScript limpio, listo para mergear.
-- Con errores `TS2345`, `TS2322`, etc. → ❌ Corregir antes de hacer push.
-
-**Por qué es obligatorio:** El compilador detecta errores de tipos que el editor puede ignorar. Si el build no pasa, la CI lo rechazará.
-
----
-
-## 🧩 Módulos Implementados — Estado Actual
-
-| Módulo | Carpeta | Ruta HTTP | Estado |
-|--------|---------|-----------|--------|
-| Usuarios | `src/usuarios/` | `/usuarios` | ✅ Mock |
-| Partidos | `src/matches/` | `/partidos` | ✅ Mock |
-| Sectores | `src/stadium-sectors/` | `/sectores` | ✅ Mock |
-| Entradas | `src/tickets/` | `/entradas` | ✅ Mock |
-| Pagos | `src/payments/` | `/pagos` | 🔲 Esqueleto |
-| Credenciales Pasaporte | `src/passport-credentials/` | `/credenciales-pasaporte` | ✅ Mock |
-
-**Infraestructura compartida (`/common`):**
-
-| Recurso | Archivo | Estado |
-|---------|---------|--------|
-| Enum de sectores | `common/enums/sector-type.enum.ts` | ✅ |
-| Cliente de Supabase | `common/supabase/supabase.service.ts` | ✅ |
-| Módulo global DB | `common/supabase/supabase.module.ts` | ✅ |
-| Carga de variables de entorno | `ConfigModule` en `app.module.ts` | ✅ |
-
----
-
-## 📋 Diccionario de Datos (Contrato con el Frontend)
-
-### Módulo Usuarios (`/usuarios`)
-- **Entidad `UsuarioEntidad`** (`usuario.entity.ts`):
-  - `id`: string (UUID de Supabase)
-  - `email`: string
-  - `nombre`: string
-  - `apellido`: string
-  - `numeroPasaporte`: string
-  - `rol`: `'USUARIO'` | `'ADMIN'` | `'PRENSA'`
-- **DTO `CrearUsuarioDto`** (`crear-usuario.dto.ts`): Requeridos `email`, `nombre`, `apellido`, `numeroPasaporte`.
-
-### Módulo Partidos (`/partidos`)
-- **Entidad `PartidoEntidad`** (`match.entity.ts`):
-  - `id`: string (UUID de Supabase)
-  - `equipoLocal`: string
-  - `equipoVisitante`: string
-  - `fechaPartido`: Date (ISO string)
-  - `nombreEstadio`: string
-  - `estado`: `'PROGRAMADO'` | `'EN_CURSO'` | `'FINALIZADO'` | `'CANCELADO'`
-  - `fechaCreacion`: Date
-  - `fechaActualizacion`: Date
-- **DTO `CrearPartidoDto`** (`create-match.dto.ts`): Requeridos `equipoLocal`, `equipoVisitante`, `fechaPartido`, `nombreEstadio`.
-
-### Módulo Sectores (`/sectores`)
-- **Entidad `StadiumSectorEntity`** (`stadium-sector.entity.ts`):
-  - `id`: string
-  - `name`: string (`'PLATEA'` | `'PALCO'` | `'POPULAR'` | `'PRENSA'`)
-  - `capacity`: number
-  - `availableSeats`: number
-  - `price`: number (en ARS)
-  - `createdAt`: Date
-  - `updatedAt`: Date
-- **DTO `CrearSectorDto`** (`create-stadium-sector.dto.ts`): Requeridos `nombre`, `capacidad`, `precio`.
-
-### Módulo Entradas (`/entradas`)
-- **Entidad `TicketEntity`** (`ticket.entity.ts`):
-  - `id`: string (UUID de Supabase)
-  - `userId`: string (relación con Usuario)
-  - `sectorId`: string (relación con Sector)
-  - `status`: `TicketStatus` → `'RESERVADO'` | `'PAGADO'` | `'CANCELADO'`
-  - `reservationExpiresAt?`: Date (bloqueo 15 min)
-  - `qrCode?`: string (solo cuando status = `'PAGADO'`)
-  - `createdAt`: Date
-  - `updatedAt`: Date
-- **DTO `CrearEntradaDto`** (`create-ticket.dto.ts`): Requeridos `idUsuario`, `idSector`.
-
-### Módulo Pagos (`/pagos`) — ⏳ Pendiente
-- **Módulo `PagosModule`** declarado y listo.
-- Entidad y DTO pendientes de implementación.
-- Campos esperados: `idEntrada`, `monto`, `moneda` (`'ARS'`), `estado` (`'PENDIENTE'`|`'COMPLETADO'`|`'FALLIDO'`), `pasarela` (`'MERCADOPAGO'`|`'STRIPE'`).
-
-### Módulo Credenciales de Pasaporte (`/credenciales-pasaporte`)
-- **Entidad `CredencialPasaporteEntidad`** (`passport-credential.entity.ts`):
-  - `id`: string (UUID de Supabase)
-  - `idUsuario`: string
-  - `numerodocumento`: string (requisito crítico)
-  - `codigoPais`: string (`'AR'`, `'USA'`, `'BRA'`, etc.)
-  - `estaValidado`: boolean (debe ser `true` para emitir entradas)
-  - `fechaCreacion`: Date
-  - `fechaActualizacion`: Date
-- **DTO `ValidarPasaporteDto`** (`validate-passport.dto.ts`): Requeridos `idUsuario`, `numerodocumento`, `codigoPais` (2-3 caracteres).
+## 📊 Gestión Automatizada de Inventario (Match-Sector Logic)
+
+Esta funcionalidad es el núcleo de la estabilidad del sistema TicketAR. Permite que cada encuentro del Mundial gestione su propia disponibilidad de forma independiente y segura.
+
+### 1. El Concepto: Desacoplamiento de Stock
+Para evitar conflictos de concurrencia y permitir flexibilidad, hemos separado la definición física del estadio de la disponibilidad por encuentro:
+*   **Tabla `sectores_estadio` (El Molde):** Define la capacidad total teórica (ej: 20,000 lugares) y el precio base de un sector.
+*   **Tabla `partido_sectores` (El Inventario Real):** Es la tabla donde ocurre la magia. Guarda cuántos lugares quedan **específicamente** para un partido "X" en un sector "Y".
+
+### 2. Automatización mediante Trigger (Paso a Paso)
+Hemos implementado un patrón de **Automatización de Lado del Servidor (Supabase/Postgres)** para garantizar que nunca exista un partido sin entradas disponibles:
+
+1.  **Evento de Creación:** Un administrador o proceso automático inserta un nuevo registro en la tabla `partidos`.
+2.  **Disparo del Trigger (`tr_inicializar_inventario_partido`):** El motor de la base de datos detecta la inserción y detiene el proceso un milisegundo para ejecutar la lógica de inventario.
+3.  **Ejecución de Función (`fn_inicializar_inventario_partido`):**
+    *   La función recorre la tabla `sectores_estadio`.
+    *   Realiza un `INSERT` masivo en `partido_sectores`, "sembrando" el stock inicial basado en la capacidad total del sector.
+4.  **Disponibilidad Inmediata:** Al finalizar la transacción, el partido ya cuenta con su inventario de entradas listo para ser consumido por la API de NestJS.
 
 ---
 
@@ -570,72 +231,13 @@ El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones d
 | GET | `/entradas` | Lista todas las entradas |
 | POST | `/entradas` | Reserva una entrada, bloquea 15 min (body: `CrearEntradaDto`) |
 
-#### Usuarios
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/usuarios` | Lista todos los usuarios |
-| POST | `/usuarios` | Registra un usuario (body: `CrearUsuarioDto`) |
-
-#### Credenciales de Pasaporte
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/credenciales-pasaporte` | Valida pasaporte (body: `ValidarPasaporteDto`) |
-
----
-
-## 🛡️ Autenticación y Seguridad
-
-Utilizamos **Supabase Auth**. Flujo para el frontend:
-
-1. El usuario se loguea mediante el Supabase Client en el frontend.
-2. El frontend obtiene el `access_token` (JWT).
-3. **Obligatorio:** Cada petición al backend (excepto `GET /partidos`) debe incluir:
-   ```
-   Authorization: Bearer <JWT_TOKEN>
-   ```
-
----
-
-## ⚠️ Manejo de Errores (Error Contract)
-
-El backend responde con esta estructura estándar en caso de fallo:
-
-```json
-{
-  "statusCode": 400,
-  "message": ["El nombre es obligatorio", "El correo no es válido"],
-  "error": "Bad Request",
-  "timestamp": "2026-04-20T12:00:00Z",
-  "path": "/usuarios"
-}
-```
-
 ---
 
 ## 🧠 Reglas de Negocio Críticas
 
-1. **La Regla de los 15 Minutos:** Al crear una entrada, el backend guarda `reservationExpiresAt = now + 15min`. El frontend debe mostrar una cuenta regresiva. Pasado ese tiempo, la entrada pasa a `CANCELADO` y el lugar se libera.
-2. **Validación de Pasaporte:** No se emite ninguna entrada si el `estaValidado` de la credencial del usuario es `false`.
+1. **La Regla de los 15 Minutos:** Al crear una entrada, el backend guarda `reservationExpiresAt = now + 15min`. Pasado ese tiempo, la entrada se cancela y el lugar se libera.
+2. **Validación de Pasaporte:** No se emite ninguna entrada si el usuario no tiene un pasaporte registrado y válido en la tabla `usuarios`.
 3. **Un Ticket por Partido:** El servicio verifica que el usuario no tenga ya una entrada activa (`RESERVADO` o `PAGADO`) para el mismo partido antes de crear una nueva.
-
----
-
-## 🛠️ Enums Compartidos (Single Source of Truth)
-
-Ubicación: `backend-nest/src/common/enums/`
-
-El frontend **debe** usar estos valores exactos:
-
-- **`TipoSector`** (`sector-type.enum.ts`):
-  - `POPULAR` — Acceso general.
-  - `PLATEA` — Asientos numerados.
-  - `PALCO` — Zona preferencial.
-  - `PRENSA` — Periodistas acreditados.
-
-- **`TicketStatus`** (`ticket-status.enum.ts`):
-  - `RESERVADO` — Bloqueado por el servidor (15 min).
-  - `PAGADO` — Pago confirmado, QR generado.
-  - `CANCELADO` — Reserva expirada o pago rechazado.
 
 ---
 

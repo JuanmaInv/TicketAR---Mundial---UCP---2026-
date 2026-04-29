@@ -20,9 +20,8 @@ export class SupabaseService {
     const url = this.configService.getOrThrow<string>('SUPABASE_URL');
     const key = this.configService.getOrThrow<string>('SUPABASE_KEY');
 
-    // `as unknown as SupabaseClient<any>` resuelve el conflicto de tipos del linter
-    // sin perder la funcionalidad real del cliente de Supabase.
-    this.client = createClient(url, key) as unknown as SupabaseClient<any>;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    this.client = createClient(url, key) as any;
   }
 
   /**
