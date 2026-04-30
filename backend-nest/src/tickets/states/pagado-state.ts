@@ -8,10 +8,14 @@ export class PagadoState implements TicketState {
   }
 
   pagar(): void {
-    throw new BadRequestException('Esta entrada ya ha sido pagada correctamente.');
+    throw new BadRequestException(
+      'Esta entrada ya ha sido pagada correctamente.',
+    );
   }
 
   cancelar(): void {
-    throw new BadRequestException('No se puede cancelar una entrada que ya ha sido pagada.');
+    throw new BadRequestException(
+      'No se puede cancelar una entrada que ya ha sido pagada.',
+    );
   }
 }

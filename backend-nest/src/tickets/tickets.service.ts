@@ -12,12 +12,19 @@ import { TicketStatus } from '../common/enums/ticket-status.enum';
 import type { IEntradasRepository } from './repositories/entradas.repository.interface';
 import { TicketStateFactory } from './states/ticket-state.factory';
 
+interface TicketExpirado {
+  id: string;
+  id_partido: string;
+  id_sector: string;
+  estado: TicketStatus;
+}
+
 @Injectable()
 export class EntradasService {
   constructor(
     @Inject('IEntradasRepository')
     private readonly entradasRepository: IEntradasRepository,
-  ) {}
+  ) { }
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
     // 1. VALIDACIÓN DE PASAPORTE
@@ -97,7 +104,9 @@ export class EntradasService {
   @Cron(CronExpression.EVERY_MINUTE)
   async manejarReservasExpiradas() {
     const ahora = new Date().toISOString();
-    const expiradas = await this.entradasRepository.obtenerExpiradas(ahora);
+    const expiradas = (await this.entradasRepository.obtenerExpiradas(
+      ahora,
+    )) as TicketExpirado[];
 
     if (expiradas.length > 0) {
       for (const ticket of expiradas) {
@@ -122,7 +131,7 @@ export class EntradasService {
         } catch (err) {
           console.error(
             `[Cron] Error procesando ticket ${ticket.id}:`,
-            err.message,
+            (err as Error).message,
           );
         }
       }

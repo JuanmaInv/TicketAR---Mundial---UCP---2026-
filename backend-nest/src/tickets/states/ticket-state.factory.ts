@@ -14,7 +14,7 @@ export class TicketStateFactory {
       case TicketStatus.CANCELADO:
         return new CanceladoState();
       default:
-        throw new Error(`Estado de ticket desconocido: ${status}`);
+        throw new Error(`Estado de ticket desconocido: ${status as string}`);
     }
   }
 }

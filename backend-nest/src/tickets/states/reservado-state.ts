@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import { TicketState } from './ticket-state.interface';
 
