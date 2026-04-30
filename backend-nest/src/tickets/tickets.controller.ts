@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { EntradasService } from './tickets.service';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
 
@@ -14,5 +14,10 @@ export class EntradasController {
   @Get()
   obtenerTodas() {
     return this.entradasService.obtenerTodas();
+  }
+
+  @Post(':id/pagar')
+  pagar(@Param('id') id: string) {
+    return this.entradasService.pagar(id);
   }
 }

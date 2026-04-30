@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsuariosService } from './usuarios.service';
+import { ValidadorDocumentosService } from './strategies/validador-documentos.service';
 describe('UsuariosService', () => {
   let service: UsuariosService;
 
@@ -17,6 +18,10 @@ describe('UsuariosService', () => {
         {
           provide: 'IUsuariosRepository',
           useValue: mockUsuariosRepository,
+        },
+        {
+          provide: ValidadorDocumentosService,
+          useValue: { validar: jest.fn() },
         },
       ],
     }).compile();

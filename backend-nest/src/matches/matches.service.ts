@@ -22,7 +22,7 @@ export class PartidosService {
     try {
       return await this.partidosRepository.obtenerUno(id);
     } catch (error) {
-      throw new NotFoundException(error.message);
+      throw new NotFoundException((error as Error).message);
     }
   }
 }

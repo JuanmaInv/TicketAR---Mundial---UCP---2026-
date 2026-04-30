@@ -2,10 +2,11 @@ export class PartidoEntidad {
   id: string;
   equipoLocal: string;
   equipoVisitante: string;
-  fechaPartido: Date;
+  fechaPartido: string;
   nombreEstadio: string;
   fase: string;
-  precioBase: number;
   estado: string;
-  fechaCreacion?: Date;
+  precioBase: number;
+  fechaCreacion?: string;
+  fechaActualizacion?: string;
 }
