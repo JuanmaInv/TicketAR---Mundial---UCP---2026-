@@ -6,6 +6,17 @@ interface BanderaProps {
 }
 
 export default function Bandera({ pais, fill = false }: BanderaProps) {
+  // Guard: si pais es undefined, null o string vacío, mostramos fallback inmediatamente
+  if (!pais) {
+    return (
+      <div
+        className={`${fill ? 'w-full h-full' : 'text-2xl w-[44px] h-[32px]'} flex items-center justify-center bg-zinc-800 rounded-sm border border-zinc-700`}
+        title="País desconocido"
+      >
+        🌍
+      </div>
+    );
+  }
   // Diccionario básico de códigos ISO para FlagCDN
   // Agregué los países que vi en tu mock-tickets.ts
   const codigos: Record<string, string> = {
