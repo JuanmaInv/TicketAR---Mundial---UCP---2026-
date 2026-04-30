@@ -25,7 +25,7 @@ export class EntradasService {
     @Inject('IEntradasRepository')
     private readonly entradasRepository: IEntradasRepository,
     private readonly ticketStateFactory: TicketStateFactory,
-  ) { }
+  ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
     // 1. VALIDACIÓN DE PASAPORTE

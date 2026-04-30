@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntradasService } from './tickets.service';
+import { TicketStateFactory } from './states/ticket-state.factory';
 
 describe('EntradasService', () => {
   let service: EntradasService;
@@ -23,6 +24,10 @@ describe('EntradasService', () => {
         {
           provide: 'IEntradasRepository',
           useValue: mockEntradasRepository,
+        },
+        {
+          provide: TicketStateFactory,
+          useValue: { create: jest.fn() },
         },
       ],
     }).compile();

@@ -11,4 +11,4 @@ import { TicketStateFactory } from './states/ticket-state.factory';
   providers: [EntradasService, TicketStateFactory],
   exports: [EntradasService],
 })
-export class EntradasModule { }
+export class EntradasModule {}

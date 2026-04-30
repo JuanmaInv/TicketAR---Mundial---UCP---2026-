@@ -18,7 +18,9 @@ export class ValidadorDocumentosService {
     const strategy = this.strategies.find((s) => s.canHandle(tipo));
 
     if (!strategy) {
-      throw new BadRequestException(`No hay una estrategia de validación para el tipo: ${tipo}`);
+      throw new BadRequestException(
+        `No hay una estrategia de validación para el tipo: ${tipo}`,
+      );
     }
 
     const esValido = strategy.execute(valor);

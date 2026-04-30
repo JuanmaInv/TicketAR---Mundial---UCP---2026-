@@ -18,12 +18,19 @@ export class ReservadoState implements TicketState {
 
   pagar(): void {
     const ahora = new Date();
-    if (this.ticket.fechaExpiracionReserva && ahora > this.ticket.fechaExpiracionReserva) {
+    if (
+      this.ticket.fechaExpiracionReserva &&
+      ahora > this.ticket.fechaExpiracionReserva
+    ) {
       this.logger.warn(`Intento de pago en ticket expirado: ${this.ticket.id}`);
-      throw new BadRequestException('La reserva ha expirado (pasaron los 15 min).');
+      throw new BadRequestException(
+        'La reserva ha expirado (pasaron los 15 min).',
+      );
     }
-    
-    this.logger.log(`Transición exitosa: Ticket ${this.ticket.id} pasando a PAGADO.`);
+
+    this.logger.log(
+      `Transición exitosa: Ticket ${this.ticket.id} pasando a PAGADO.`,
+    );
   }
 
   cancelar(): void {
