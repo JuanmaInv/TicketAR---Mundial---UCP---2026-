@@ -11,7 +11,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
   constructor(private readonly supabaseService: SupabaseService) {}
 
   async crear(crearPartidoDto: CrearPartidoDto): Promise<PartidoEntidad> {
-    const { data, error } = await this.supabaseService
+    const { data, error } = (await this.supabaseService
       .getClient()
       .from(this.TABLE_NAME)
       .insert([
@@ -26,7 +26,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
         },
       ])
       .select()
-      .single();
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) {
       throw new Error(`Error al crear partido en Supabase: ${error.message}`);
@@ -36,26 +36,29 @@ export class SupabasePartidosRepository implements IPartidosRepository {
   }
 
   async obtenerTodos(): Promise<PartidoEntidad[]> {
-    const { data, error } = await this.supabaseService
+    const { data, error } = (await this.supabaseService
       .getClient()
       .from(this.TABLE_NAME)
       .select('*')
-      .order('fecha_partido', { ascending: true });
+      .order('fecha_partido', { ascending: true })) as {
+      data: unknown[];
+      error: Error | null;
+    };
 
     if (error) {
       throw new Error(`Error al obtener partidos: ${error.message}`);
     }
 
-    return data.map((item) => this.mapToEntity(item));
+    return (data || []).map((item) => this.mapToEntity(item));
   }
 
   async obtenerUno(id: string): Promise<PartidoEntidad> {
-    const { data, error } = await this.supabaseService
+    const { data, error } = (await this.supabaseService
       .getClient()
       .from(this.TABLE_NAME)
       .select('*')
       .eq('id', id)
-      .single();
+      .single()) as { data: unknown; error: Error | null };
 
     if (error || !data) {
       throw new Error(`Partido con ID ${id} no encontrado`);
@@ -64,17 +67,33 @@ export class SupabasePartidosRepository implements IPartidosRepository {
     return this.mapToEntity(data);
   }
 
-  private mapToEntity(dbData: any): PartidoEntidad {
+  private mapToEntity(dbData: unknown): PartidoEntidad {
+    const data = dbData as {
+      id: string;
+      equipo_local: string;
+      equipo_visitante: string;
+      fecha_partido: string;
+      nombre_estadio: string;
+      fase: string;
+      precio_base: number;
+      estado: string;
+      fecha_creacion: string;
+      fecha_actualizacion?: string;
+    };
+
     return {
-      id: dbData.id,
-      equipoLocal: dbData.equipo_local,
-      equipoVisitante: dbData.equipo_visitante,
-      fechaPartido: dbData.fecha_partido,
-      nombreEstadio: dbData.nombre_estadio,
-      fase: dbData.fase,
-      precioBase: dbData.precio_base,
-      estado: dbData.estado,
-      fechaCreacion: dbData.fecha_creacion,
+      id: data.id,
+      equipoLocal: data.equipo_local,
+      equipoVisitante: data.equipo_visitante,
+      fechaPartido: new Date(data.fecha_partido).toISOString(),
+      nombreEstadio: data.nombre_estadio,
+      fase: data.fase,
+      precioBase: data.precio_base,
+      estado: data.estado,
+      fechaCreacion: new Date(data.fecha_creacion).toISOString(),
+      fechaActualizacion: new Date(
+        data.fecha_actualizacion || data.fecha_creacion,
+      ).toISOString(),
     };
   }
 }

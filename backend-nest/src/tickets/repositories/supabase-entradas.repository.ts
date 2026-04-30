@@ -15,11 +15,11 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   async validarPasaporteUsuario(idUsuario: string): Promise<boolean> {
     const { data, error } = await this.supabase
       .from('usuarios')
-      .select('pasaporte')
+      .select('numero_pasaporte')
       .eq('id', idUsuario)
       .single();
 
-    if (error || !data?.pasaporte) return false;
+    if (error || !data?.numero_pasaporte) return false;
     return true;
   }
 
@@ -50,15 +50,15 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
       .single();
 
     if (error || !data) return null;
-    return data.asientos_disponibles;
+    return Number(data.asientos_disponibles);
   }
 
   async crear(datos: any): Promise<TicketEntity> {
-    const { data, error } = await this.supabase
+    const { data, error } = (await this.supabase
       .from('entradas')
       .insert([datos])
       .select()
-      .single();
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) throw error;
     return this.mapearTicket(data);
@@ -74,11 +74,11 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   }
 
   async obtenerUna(id: string): Promise<TicketEntity | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = (await this.supabase
       .from('entradas')
       .select('*, partidos(*), sectores_estadio(*)')
       .eq('id', id)
-      .maybeSingle();
+      .maybeSingle()) as { data: unknown; error: Error | null };
 
     if (error || !data) return null;
     return this.mapearTicket(data);
@@ -88,12 +88,12 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     id: string,
     estado: TicketStatus,
   ): Promise<TicketEntity> {
-    const { data, error } = await this.supabase
+    const { data, error } = (await this.supabase
       .from('entradas')
       .update({ estado })
       .eq('id', id)
       .select()
-      .single();
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) throw error;
     return this.mapearTicket(data);
@@ -117,18 +117,33 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     });
   }
 
-  private mapearTicket(data: any): TicketEntity {
+  private mapearTicket(data: unknown): TicketEntity {
+    const d = data as {
+      id: string;
+      id_usuario: string;
+      id_partido: string;
+      id_sector: string;
+      estado: TicketStatus;
+      fecha_expiracion_reserva?: string;
+      created_at?: string;
+      fecha_creacion?: string;
+      updated_at?: string;
+      fecha_actualizacion?: string;
+    };
+
     return {
-      id: data.id,
-      idUsuario: data.id_usuario,
-      idPartido: data.id_partido,
-      idSector: data.id_sector,
-      estado: data.estado,
-      fechaExpiracionReserva: data.fecha_expiracion_reserva
-        ? new Date(data.fecha_expiracion_reserva)
+      id: d.id,
+      idUsuario: d.id_usuario,
+      idPartido: d.id_partido,
+      idSector: d.id_sector,
+      estado: d.estado,
+      fechaExpiracionReserva: d.fecha_expiracion_reserva
+        ? new Date(d.fecha_expiracion_reserva)
         : undefined,
-      fechaCreacion: new Date(data.created_at || data.fecha_creacion),
-      fechaActualizacion: new Date(data.updated_at || data.fecha_actualizacion),
+      fechaCreacion: new Date(d.created_at || d.fecha_creacion || new Date()),
+      fechaActualizacion: new Date(
+        d.updated_at || d.fecha_actualizacion || new Date(),
+      ),
     };
   }
 }

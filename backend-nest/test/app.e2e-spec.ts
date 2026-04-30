@@ -20,6 +20,7 @@ describe('Partidos (e2e)', () => {
   });
 
   it('/partidos (GET)', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return request(app.getHttpServer()).get('/partidos').expect(200);
   });
 });
