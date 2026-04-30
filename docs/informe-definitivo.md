@@ -178,28 +178,24 @@ Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript 
 Para que el sistema se banque el tráfico del Mundial y no se nos rompa todo cuando querramos escalar, armamos una arquitectura bien profesional con NestJS. La idea es que cada parte del código haga una sola cosa y que sea fácil de probar.
 
 ### 1. Patrón Repositorio (Repository Pattern)
-Es clave para no ensuciar los servicios con consultas directas. Hace de puente entre la lógica de negocio y la base de datos (Supabase).
-- **Contrato:** Usamos interfaces para definir qué datos necesitamos, sin importar cómo se consiguen.
-- **Independencia:** El servicio solo pide los datos y el repositorio se encarga del laburo sucio.
-- **Ventaja:** Si mañana cambiamos de base de datos, solo tocamos el repositorio y el resto del sistema ni se entera.
+Es el puente entre el servicio y la base de datos (Supabase).
+- **Contrato:** Usamos interfaces para que al servicio no le importe de dónde vienen los datos.
+- **Independencia:** Si cambiamos de DB, solo tocamos el repositorio.
 
 ### 2. Patrón State (Estado Activo)
-En vez de manejar el estado de un ticket con un simple texto, usamos objetos con lógica propia.
-- **Contexto:** Cada estado (`Reservado`, `Pagado`, `Cancelado`) sabe qué transiciones están permitidas.
-- **Validación:** El estado "Reservado" es el que sabe si ya pasaron los 15 minutos y debe expirar.
-- **Inyección:** Usamos un **Factory** inyectable para que estos estados puedan usar el Logger y otros servicios del sistema.
+Manejamos el ciclo de vida del ticket con objetos inteligentes en lugar de simples strings.
+- **Transiciones:** Cada estado (`Reservado`, `Pagado`, `Cancelado`) valida si el cambio es posible.
+- **Inyección:** Usamos una **Factory Inyectable** para que los estados puedan usar el Logger del sistema.
 
 ### 3. Patrón Adapter (Mapeo de Datos)
-Lo usamos para que nuestro código no dependa de cómo Supabase (o cualquier DB) devuelve los datos.
-- **Traducción:** El adaptador (implementado dentro del repositorio) traduce nombres de columnas como `numero_pasaporte` a `numeroPasaporte`.
-- **Limpieza:** Se encarga de convertir tipos de datos raros de la DB a objetos puros de TypeScript.
-- **Protección:** Si la base de datos cambia un nombre de campo, solo arreglamos el adaptador en un solo lugar.
+Es fundamental para desacoplarnos de la estructura de la base de datos.
+- **Mapeo:** El repositorio actúa como adaptador, transformando el `snake_case` de Supabase al `camelCase` de nuestro dominio.
+- **Protección:** Evita que un cambio en la tabla de la DB rompa todo el sistema.
 
 ### 4. Patrón Strategy (Validación Dinámica)
-Lo usamos para que la validación de usuarios sea flexible según el documento que presenten.
-- **Estrategias:** Tenemos una lógica distinta para validar un DNI y otra para un Pasaporte.
-- **Flexibilidad:** El sistema elige la estrategia correcta en tiempo de ejecución.
-- **Escalabilidad:** Sumar un nuevo tipo de documento es tan fácil como crear una nueva clase que siga el contrato.
+Lo usamos para que la validación de identidad sea flexible y escalable.
+- **Estrategias:** Clases separadas para validar DNI o Pasaporte.
+- **Extensibilidad:** Si agregamos un nuevo tipo de documento, solo creamos una nueva estrategia sin tocar el servicio.
 
 ### 5. Base Común (Common Patterns)
 Para no repetir código y que todo el proyecto hable el mismo idioma, creamos una carpeta `src/common/patterns`. Ahí guardamos los moldes (`interfaces`) de estos patrones para que cualquier otro módulo los pueda usar de entrada.
