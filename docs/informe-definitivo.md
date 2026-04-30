@@ -175,34 +175,33 @@ Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript 
 
 ## 🎨 Patrones de Diseño de Software
 
-Para garantizar que el sistema sea mantenible, testeable y escalable, hemos aplicado patrones de diseño de nivel empresarial que desacoplan la lógica de negocio de la infraestructura:
+Para que el sistema se banque el tráfico del Mundial y no se nos rompa todo cuando querramos escalar, armamos una arquitectura bien profesional con NestJS. La idea es que cada parte del código haga una sola cosa y que sea fácil de probar.
 
 ### 1. Patrón Repositorio (Repository Pattern)
-Es el pilar fundamental de nuestra capa de persistencia. Actúa como una capa de mediación entre la lógica de negocio (`Service`) y la fuente de datos externa (`Supabase`).
+Es clave para no ensuciar los servicios con consultas directas. Hace de puente entre la lógica de negocio y la base de datos (Supabase).
+- **Contrato:** Usamos interfaces para definir qué datos necesitamos, sin importar cómo se consiguen.
+- **Independencia:** Al `EntradasService` no le calienta si usamos Supabase o un archivo de texto; él solo pide `buscarEntradaActiva()` y el repositorio se encarga del laburo sucio.
+- **Ventaja:** Si mañana decidimos cambiar de base de datos, solo tocamos el repositorio y el resto del sistema ni se entera.
 
-- **Implementación:** Definimos interfaces (contratos) como `IPartidosRepository` y una implementación concreta `SupabasePartidosRepository`.
-- **Inyección de Dependencias:** El servicio pide la interfaz (`@Inject('IPartidosRepository')`), lo que permite cambiar la implementación sin afectar el código que la consume.
-- **Beneficios:** 
-    - **Desacoplamiento:** El servicio no conoce los detalles de implementación de Supabase (tablas, consultas, etc.).
-    - **Testabilidad:** Permite inyectar repositorios "mockeados" en los tests unitarios.
+### 2. Patrón State (Estado Activo)
+En vez de manejar el estado de un ticket con un simple texto (un "string"), usamos objetos que tienen "cerebro".
+- **Contexto:** Cuando queremos pasar una entrada de "Reservada" a "Pagada", el estado mismo valida si eso se puede hacer.
+- **Lógica propia:** Cada clase (`ReservadoState`, `PagadoState`, etc.) sabe exactamente qué reglas aplicar, sacándole esa responsabilidad al servicio de entradas.
+- **Uso:** Implementamos una base común (`IState`) para que todos los estados sigan el mismo camino.
 
-### 2. Patrón Adapter (Adaptador)
-Lo utilizamos para normalizar los datos que vienen de fuentes externas antes de que lleguen a nuestro dominio.
+### 3. Patrón Factory (Inyectable)
+Sacamos los métodos estáticos que estaban "atados con alambre" y los convertimos en un servicio real de NestJS.
+- **Control:** Ahora el `TicketStateFactory` es un Provider. Esto nos permite usar la inyección de dependencias de Nest en todo el flujo.
+- **Flexibilidad:** El Factory decide qué objeto de estado crear según lo que venga de la base, asegurándose de que el ticket siempre sepa cómo comportarse.
 
-- **El Problema:** Supabase devuelve datos en *snake_case* (ej: `fecha_partido`), pero nuestro dominio usa *camelCase* (ej: `fechaPartido`).
-- **La Solución:** El método `mapToEntity` dentro de los repositorios actúa como un **Adaptador de Datos**, traduciendo el esquema físico de la base de datos al esquema lógico de la aplicación.
+### 4. Patrón Strategy (Validación Dinámica)
+Lo usamos para que la carga de usuarios sea súper flexible según el documento que presenten.
+- **El Problema:** Validar un DNI no es lo mismo que validar un Pasaporte internacional. No queríamos llenar el código de `if/else` gigantes.
+- **La Solución:** Cada tipo de documento tiene su propia "estrategia" de validación. El sistema elige la correcta en el momento y la ejecuta.
+- **Escalabilidad:** Si mañana el Mundial suma un nuevo tipo de ID, solo creamos una clase nueva y listo, no rompemos nada de lo que ya funciona.
 
-### 3. Patrón State (Estado)
-Implementado específicamente para gestionar el ciclo de vida crítico de las entradas (Reservada -> Pagada -> Cancelada).
-
-- **Propósito:** Encapsular las reglas de transición de estados. Por ejemplo, evitar que una entrada cancelada (por expiración de 15 min) pueda ser pagada.
-- **Estructura:**
-    - `TicketState` (Interfaz): Define acciones como `pagar()` y `cancelar()`.
-    - `ReservadoState`, `PagadoState`, `CanceladoState`: Implementaciones concretas que lanzan excepciones si la acción es ilegal.
-- **Beneficio:** Centraliza la lógica de negocio y evita que el `Service` se llene de condicionales `if/else` frágiles.
-
-### 4. Singleton Pattern
-NestJS garantiza que servicios críticos como `SupabaseService` se instancien una sola vez por toda la aplicación, optimizando la gestión de conexiones y memoria.
+### 5. Base Común (Common Patterns)
+Para no repetir código y que todo el proyecto hable el mismo idioma, creamos una carpeta `src/common/patterns`. Ahí guardamos los moldes (`interfaces`) de estos patrones para que cualquier otro módulo los pueda usar de entrada.
 
 ---
 

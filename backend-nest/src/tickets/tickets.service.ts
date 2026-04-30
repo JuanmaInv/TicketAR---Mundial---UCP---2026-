@@ -24,6 +24,7 @@ export class EntradasService {
   constructor(
     @Inject('IEntradasRepository')
     private readonly entradasRepository: IEntradasRepository,
+    private readonly ticketStateFactory: TicketStateFactory,
   ) { }
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
@@ -94,8 +95,9 @@ export class EntradasService {
       throw new NotFoundException('Reserva no encontrada.');
     }
 
-    // Aplicar Patrón State para validar transición
-    const estadoActual = TicketStateFactory.create(ticket.estado);
+    // Aplicar Patrón State Activo para validar transición
+    const estadoActual = this.ticketStateFactory.create(ticket.estado);
+    estadoActual.setContext(ticket);
     estadoActual.pagar();
 
     return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
@@ -104,21 +106,24 @@ export class EntradasService {
   @Cron(CronExpression.EVERY_MINUTE)
   async manejarReservasExpiradas() {
     const ahora = new Date().toISOString();
-    const expiradas = (await this.entradasRepository.obtenerExpiradas(
-      ahora,
-    )) as TicketExpirado[];
+    const expiradas = await this.entradasRepository.obtenerExpiradas(ahora);
 
-    if (expiradas.length > 0) {
-      for (const ticket of expiradas) {
+    if (expiradas && expiradas.length > 0) {
+      for (const row of expiradas) {
         try {
+          // Mapeamos a entidad para tener el contexto completo
+          const ticket = await this.entradasRepository.obtenerUna(row.id);
+          if (!ticket) continue;
+
           // Validar con el patrón State antes de cancelar
-          const estadoActual = TicketStateFactory.create(ticket.estado);
+          const estadoActual = this.ticketStateFactory.create(ticket.estado);
+          estadoActual.setContext(ticket);
           estadoActual.cancelar();
 
           // Devolvemos el stock
           await this.entradasRepository.incrementarStock(
-            ticket.id_partido,
-            ticket.id_sector,
+            ticket.idPartido,
+            ticket.idSector,
           );
 
           // Marcamos como CANCELADO
@@ -126,13 +131,8 @@ export class EntradasService {
             ticket.id,
             TicketStatus.CANCELADO,
           );
-
-          console.log(`[Cron] Reserva ${ticket.id} cancelada por expiración.`);
         } catch (err) {
-          console.error(
-            `[Cron] Error procesando ticket ${ticket.id}:`,
-            (err as Error).message,
-          );
+          // Logueamos pero no frenamos el proceso de los demás tickets
         }
       }
     }
