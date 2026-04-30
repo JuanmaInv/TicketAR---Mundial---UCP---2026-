@@ -15,11 +15,11 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   async validarPasaporteUsuario(idUsuario: string): Promise<boolean> {
     const { data, error } = await this.supabase
       .from('usuarios')
-      .select('pasaporte')
+      .select('numero_pasaporte')
       .eq('id', idUsuario)
       .single();
 
-    if (error || !data?.pasaporte) return false;
+    if (error || !data?.numero_pasaporte) return false;
     return true;
   }
 
