@@ -46,7 +46,7 @@ export default function ComponenteCalendario() {
 
   for (let dia = 1; dia <= totalDias; dia++) {
     const cadenaFecha = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-    const partidosDelDia = partidos.filter(p => p.fecha_partido.startsWith(cadenaFecha));
+    const partidosDelDia = partidos.filter(p => p.fecha_partido?.startsWith(cadenaFecha));
 
     dias.push(
       <div key={dia} className="min-h-[140px] border border-slate-200 dark:border-slate-700/60 p-2 flex flex-col hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
