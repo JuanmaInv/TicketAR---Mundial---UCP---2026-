@@ -13,6 +13,7 @@ import { SupabaseEntradasRepository } from './repositories/supabase-entradas.rep
   providers: [
     EntradasService,
     TicketStateFactory,
+    SupabaseEntradasRepository,
     {
       provide: 'IEntradasRepository',
       useClass: SupabaseEntradasRepository,
@@ -21,3 +22,4 @@ import { SupabaseEntradasRepository } from './repositories/supabase-entradas.rep
   exports: [EntradasService],
 })
 export class EntradasModule {}
+
