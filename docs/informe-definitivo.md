@@ -192,10 +192,10 @@ Es fundamental para desacoplarnos de la estructura de la base de datos.
 - **Mapeo:** El repositorio actúa como adaptador, transformando el `snake_case` de Supabase al `camelCase` de nuestro dominio.
 - **Protección:** Evita que un cambio en la tabla de la DB rompa todo el sistema.
 
-### 4. Patrón Strategy (Validación Dinámica)
-Lo usamos para que la validación de identidad sea flexible y escalable.
-- **Estrategias:** Clases separadas para validar DNI o Pasaporte.
-- **Extensibilidad:** Si agregamos un nuevo tipo de documento, solo creamos una nueva estrategia sin tocar el servicio.
+### 4. Patrón Strategy (Flexibilidad y Escalabilidad)
+Este patrón es nuestra navaja suiza para manejar diferentes lógicas sin ensuciar el código principal. Lo aplicamos en dos áreas críticas:
+- **Validación de Identidad:** Clases separadas para validar DNI o Pasaporte. Si el Mundial agrega un "ID de Fan", solo creamos una nueva estrategia.
+- **Pasarela de Pagos:** Implementamos una `IPaymentStrategy` que nos permite alternar entre `Stripe`, `MercadoPago` o una `SimulatedStrategy` para testing. Esto asegura que el sistema de tickets no dependa de un proveedor de pagos específico.
 
 ### 5. Base Común (Common Patterns)
 Para no repetir código y que todo el proyecto hable el mismo idioma, creamos una carpeta `src/common/patterns`. Ahí guardamos los moldes (`interfaces`) de estos patrones para que cualquier otro módulo los pueda usar de entrada.

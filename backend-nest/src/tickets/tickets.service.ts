@@ -9,6 +9,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
+import { PaymentsService } from '../payments/payments.service';
 import type { IEntradasRepository } from './repositories/entradas.repository.interface';
 import { TicketStateFactory } from './states/ticket-state.factory';
 
@@ -25,6 +26,7 @@ export class EntradasService {
     @Inject('IEntradasRepository')
     private readonly entradasRepository: IEntradasRepository,
     private readonly ticketStateFactory: TicketStateFactory,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
@@ -98,8 +100,24 @@ export class EntradasService {
     // Aplicar Patrón State Activo para validar transición
     const estadoActual = this.ticketStateFactory.create(ticket.estado);
     estadoActual.setContext(ticket);
-    estadoActual.pagar();
+    await estadoActual.pagar(this.paymentsService);
 
+    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+  }
+
+  async pagar(id: string): Promise<TicketEntity> {
+    const ticket = await this.entradasRepository.obtenerUna(id);
+    if (!ticket) {
+      throw new NotFoundException(`Ticket ${id} no encontrado.`);
+    }
+
+    const estado = this.ticketStateFactory.create(ticket.estado);
+    estado.setContext(ticket);
+
+    // El estado procesa el pago usando el servicio de pagos (Strategy)
+    await estado.pagar(this.paymentsService);
+
+    // Si llegamos acá, el pago fue exitoso según el estado
     return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
   }
 

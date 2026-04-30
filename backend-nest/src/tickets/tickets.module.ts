@@ -4,9 +4,10 @@ import { EntradasService } from './tickets.service';
 import { SupabaseModule } from '../common/supabase/supabase.module';
 import { UsuariosModule } from '../usuarios/usuarios.module';
 import { TicketStateFactory } from './states/ticket-state.factory';
+import { PagosModule } from '../payments/payments.module';
 
 @Module({
-  imports: [SupabaseModule, UsuariosModule],
+  imports: [SupabaseModule, UsuariosModule, PagosModule],
   controllers: [EntradasController],
   providers: [EntradasService, TicketStateFactory],
   exports: [EntradasService],

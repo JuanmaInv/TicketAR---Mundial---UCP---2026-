@@ -27,7 +27,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
         },
       ])
       .select()
-      .single()) as { data: unknown; error: any };
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) throw error;
     return this.mapearEntidad(data);
@@ -39,7 +39,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       .from('usuarios')
       .select('*')
       .eq('correo', correo)
-      .maybeSingle()) as { data: unknown; error: any };
+      .maybeSingle()) as { data: unknown; error: Error | null };
 
     if (error || !data) return null;
     return this.mapearEntidad(data);
@@ -63,7 +63,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       })
       .eq('correo', correo)
       .select()
-      .single()) as { data: unknown; error: any };
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) throw error;
     return this.mapearEntidad(data);

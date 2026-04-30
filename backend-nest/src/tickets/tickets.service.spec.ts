@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntradasService } from './tickets.service';
 import { TicketStateFactory } from './states/ticket-state.factory';
+import { PaymentsService } from '../payments/payments.service';
 
 describe('EntradasService', () => {
   let service: EntradasService;
@@ -28,6 +29,10 @@ describe('EntradasService', () => {
         {
           provide: TicketStateFactory,
           useValue: { create: jest.fn() },
+        },
+        {
+          provide: PaymentsService,
+          useValue: { processTicketPayment: jest.fn() },
         },
       ],
     }).compile();

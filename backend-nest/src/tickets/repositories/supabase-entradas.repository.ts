@@ -50,7 +50,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
       .single();
 
     if (error || !data) return null;
-    return data.asientos_disponibles;
+    return Number(data.asientos_disponibles);
   }
 
   async crear(datos: any): Promise<TicketEntity> {
@@ -58,7 +58,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
       .from('entradas')
       .insert([datos])
       .select()
-      .single()) as { data: unknown; error: any };
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) throw error;
     return this.mapearTicket(data);
@@ -74,11 +74,11 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   }
 
   async obtenerUna(id: string): Promise<TicketEntity | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = (await this.supabase
       .from('entradas')
       .select('*, partidos(*), sectores_estadio(*)')
       .eq('id', id)
-      .maybeSingle();
+      .maybeSingle()) as { data: unknown; error: Error | null };
 
     if (error || !data) return null;
     return this.mapearTicket(data);
@@ -93,7 +93,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
       .update({ estado })
       .eq('id', id)
       .select()
-      .single()) as { data: unknown; error: any };
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) throw error;
     return this.mapearTicket(data);

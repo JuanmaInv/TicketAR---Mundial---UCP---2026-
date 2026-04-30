@@ -2,6 +2,7 @@ import { BadRequestException, Logger } from '@nestjs/common';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import { TicketState } from './ticket-state.interface';
 import { TicketEntity } from '../entities/ticket.entity';
+import { PaymentsService } from '../../payments/payments.service';
 
 export class CanceladoState implements TicketState {
   private ticket: TicketEntity;
@@ -16,14 +17,16 @@ export class CanceladoState implements TicketState {
     return TicketStatus.CANCELADO;
   }
 
-  pagar(): void {
-    this.logger.error(`Intento de pago en ticket CANCELADO: ${this.ticket.id}`);
-    throw new BadRequestException(
-      'No se puede pagar una entrada que ha sido cancelada.',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  pagar(_paymentsService: PaymentsService): Promise<void> {
+    return Promise.reject(
+      new BadRequestException(
+        'No se puede pagar un ticket que ha sido cancelado.',
+      ),
     );
   }
 
   cancelar(): void {
-    throw new BadRequestException('Esta entrada ya está cancelada.');
+    throw new BadRequestException('Este ticket ya está cancelado.');
   }
 }

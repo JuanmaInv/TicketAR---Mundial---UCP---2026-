@@ -2,6 +2,7 @@ import { BadRequestException, Logger } from '@nestjs/common';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import { TicketState } from './ticket-state.interface';
 import { TicketEntity } from '../entities/ticket.entity';
+import { PaymentsService } from '../../payments/payments.service';
 
 export class PagadoState implements TicketState {
   private ticket: TicketEntity;
@@ -16,10 +17,10 @@ export class PagadoState implements TicketState {
     return TicketStatus.PAGADO;
   }
 
-  pagar(): void {
-    this.logger.warn(`Intento de doble pago en ticket: ${this.ticket.id}`);
-    throw new BadRequestException(
-      'Esta entrada ya ha sido pagada correctamente.',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  pagar(_paymentsService: PaymentsService): Promise<void> {
+    return Promise.reject(
+      new BadRequestException('Este ticket ya ha sido pagado.'),
     );
   }
 

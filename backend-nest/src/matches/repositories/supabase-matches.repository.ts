@@ -26,7 +26,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
         },
       ])
       .select()
-      .single()) as { data: unknown; error: any };
+      .single()) as { data: unknown; error: Error | null };
 
     if (error) {
       throw new Error(`Error al crear partido en Supabase: ${error.message}`);
@@ -42,7 +42,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
       .select('*')
       .order('fecha_partido', { ascending: true })) as {
       data: unknown[];
-      error: any;
+      error: Error | null;
     };
 
     if (error) {
@@ -58,7 +58,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
       .from(this.TABLE_NAME)
       .select('*')
       .eq('id', id)
-      .single()) as { data: unknown; error: any };
+      .single()) as { data: unknown; error: Error | null };
 
     if (error || !data) {
       throw new Error(`Partido con ID ${id} no encontrado`);
