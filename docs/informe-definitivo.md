@@ -50,7 +50,7 @@ Para entender cómo funciona el ecosistema de **TicketAR**, dividimos la respons
 
 ### 3. El Rol del "Guardián" (NestJS)
 A diferencia de otros proyectos donde el Front habla directo con la DB, aquí **NestJS actúa como intermediario crítico**:
-*   **Seguridad:** El Front solo conoce la `anon_key`, mientras que el Backend usa la `service_role_key`.
+*   **Security:** El Front solo conoce la `anon_key`, mientras que el Backend usa la `service_role_key`.
 *   **Integridad:** Centralizamos validaciones complejas (como el chequeo de pasaportes) en un solo lugar.
 *   **Pagos:** El Backend procesa las confirmaciones de pasarelas antes de marcar un ticket como `PAGADO` en la DB.
 
@@ -170,6 +170,35 @@ Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript 
 | `.service.ts` | Toda la lógica de negocio | Única capa que toca la DB |
 | `.entity.ts` | Define la forma de los datos en DB | Refleja exactamente las columnas de Supabase |
 | `.module.ts` | Agrupa y conecta las piezas | Se registra en `AppModule` |
+
+---
+
+## 🎨 Patrones de Diseño de Software
+
+Para que el sistema se banque el tráfico del Mundial y no se nos rompa todo cuando querramos escalar, armamos una arquitectura bien profesional con NestJS. La idea es que cada parte del código haga una sola cosa y que sea fácil de probar.
+
+### 1. Patrón Repositorio (Repository Pattern)
+Es el puente entre el servicio y la base de datos (Supabase).
+- **Contrato:** Usamos interfaces para que al servicio no le importe de dónde vienen los datos.
+- **Independencia:** Si cambiamos de DB, solo tocamos el repositorio.
+
+### 2. Patrón State (Estado Activo)
+Manejamos el ciclo de vida del ticket con objetos inteligentes en lugar de simples strings.
+- **Transiciones:** Cada estado (`Reservado`, `Pagado`, `Cancelado`) valida si el cambio es posible.
+- **Inyección:** Usamos una **Factory Inyectable** para que los estados puedan usar el Logger del sistema.
+
+### 3. Patrón Adapter (Mapeo de Datos)
+Es fundamental para desacoplarnos de la estructura de la base de datos.
+- **Mapeo:** El repositorio actúa como adaptador, transformando el `snake_case` de Supabase al `camelCase` de nuestro dominio.
+- **Protección:** Evita que un cambio en la tabla de la DB rompa todo el sistema.
+
+### 4. Patrón Strategy (Flexibilidad y Escalabilidad)
+Este patrón es nuestra navaja suiza para manejar diferentes lógicas sin ensuciar el código principal. Lo aplicamos en dos áreas críticas:
+- **Validación de Identidad:** Clases separadas para validar DNI o Pasaporte. Si el Mundial agrega un "ID de Fan", solo creamos una nueva estrategia.
+- **Pasarela de Pagos:** Implementamos una `IPaymentStrategy` que nos permite alternar entre `Stripe`, `MercadoPago` o una `SimulatedStrategy` para testing. Esto asegura que el sistema de tickets no dependa de un proveedor de pagos específico.
+
+### 5. Base Común (Common Patterns)
+Para no repetir código y que todo el proyecto hable el mismo idioma, creamos una carpeta `src/common/patterns`. Ahí guardamos los moldes (`interfaces`) de estos patrones para que cualquier otro módulo los pueda usar de entrada.
 
 ---
 
