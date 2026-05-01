@@ -10,6 +10,7 @@ interface Sector {
 }
 
 interface SectorSelectorProps {
+  partidoId: string;
   onComprar: (sector: string, cantidad: number, total: number) => void;
 }
 
@@ -21,7 +22,7 @@ const SECTORES: Sector[] = [
   { nombre: 'Suite', precio: 3000, color: 'bg-orange-600', capacidad: 500 },
 ];
 
-export default function SectorSelector({ onComprar }: SectorSelectorProps) {
+export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string>('General');
   const [cantidad, setCantidad] = useState(1);
 
@@ -38,50 +39,128 @@ export default function SectorSelector({ onComprar }: SectorSelectorProps) {
 
   return (
     <div className="w-full space-y-8">
-      {/* Mapa Visual del Estadio */}
-      <div className="bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-2xl p-8">
-        <div className="text-center mb-8">
-          <div className="inline-block bg-green-600 rounded-lg px-12 py-6">
-            <p className="text-white font-bold text-2xl">⚽ CANCHA ⚽</p>
-          </div>
-        </div>
+      {/* Info del Partido */}
+      <div className="text-zinc-400 mb-4">
+        <p className="text-sm">Partido ID: <span className="text-white font-bold">{partidoId}</span></p>
+      </div>
 
-        {/* Grid de Sectores */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {SECTORES.map(sector => (
-            <button
-              key={sector.nombre}
-              onClick={() => setSectorSeleccionado(sector.nombre)}
-              className={`
-                relative p-6 rounded-xl transition-all transform cursor-pointer
-                ${sectorSeleccionado === sector.nombre 
-                  ? 'ring-4 ring-offset-2 ring-blue-400 shadow-xl scale-105 dark:ring-offset-slate-900' 
-                  : 'opacity-70 hover:opacity-90 hover:scale-102'
-                }
-                ${sector.color}
-              `}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <span className="font-bold text-white text-sm uppercase tracking-wide">
-                  {sector.nombre}
-                </span>
-                <span className="text-white font-bold text-lg">
-                  ${sector.precio}
-                </span>
-                <span className="text-white text-xs opacity-90">
-                  {sector.capacidad} lugares
-                </span>
+      {/* Visualización Realista del Estadio */}
+      <div className="bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-2xl p-8">
+        <div className="max-w-3xl mx-auto">
+          {/* MAPA DEL ESTADIO - LAYOUT CIRCULAR */}
+          <div className="relative w-full bg-gradient-to-b from-zinc-700 to-zinc-800 rounded-3xl p-6 mb-6">
+            {/* CAMPO EN CENTRO */}
+            <div className="flex justify-center mb-6">
+              <div className="bg-green-600 rounded-xl px-16 py-8 text-center">
+                <p className="text-white font-bold text-2xl">⚽ CANCHA ⚽</p>
               </div>
-              
-              {sectorSeleccionado === sector.nombre && (
-                <div className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
-                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+            </div>
+
+            {/* GRID DEL ESTADIO - 3x3 layout */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* ESQUINA ARRIBA IZQ */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setSectorSeleccionado('Popular')}
+                  className={`${SECTORES[0].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
+                    ${sectorSeleccionado === 'Popular' 
+                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
+                      : 'opacity-75 hover:opacity-100'
+                    }`}
+                >
+                  <div>POPULAR</div>
+                  <div className="text-sm">${SECTORES[0].precio}</div>
+                </button>
+              </div>
+
+              {/* ARRIBA CENTRO */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setSectorSeleccionado('General')}
+                  className={`${SECTORES[1].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
+                    ${sectorSeleccionado === 'General' 
+                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
+                      : 'opacity-75 hover:opacity-100'
+                    }`}
+                >
+                  <div>GENERAL</div>
+                  <div className="text-sm">${SECTORES[1].precio}</div>
+                </button>
+              </div>
+
+              {/* ESQUINA ARRIBA DER */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setSectorSeleccionado('Palco')}
+                  className={`${SECTORES[2].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
+                    ${sectorSeleccionado === 'Palco' 
+                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
+                      : 'opacity-75 hover:opacity-100'
+                    }`}
+                >
+                  <div>PALCO</div>
+                  <div className="text-sm">${SECTORES[2].precio}</div>
+                </button>
+              </div>
+
+              {/* IZQUIERDA CENTRO */}
+              <div className="flex justify-center items-center">
+                <div className="text-white text-xs font-bold opacity-50">CAMPO</div>
+              </div>
+
+              {/* CENTRO - ESTADIO */}
+              <div className="flex justify-center items-center">
+                <div className="w-20 h-20 bg-green-700 rounded-xl border-4 border-white flex items-center justify-center">
+                  <span className="text-white font-bold text-xs text-center">CANCHA</span>
                 </div>
-              )}
-            </button>
-          ))}
+              </div>
+
+              {/* DERECHA CENTRO */}
+              <div className="flex justify-center items-center">
+                <div className="text-white text-xs font-bold opacity-50">CAMPO</div>
+              </div>
+
+              {/* ESQUINA ABAJO IZQ */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setSectorSeleccionado('VIP')}
+                  className={`${SECTORES[3].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
+                    ${sectorSeleccionado === 'VIP' 
+                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
+                      : 'opacity-75 hover:opacity-100'
+                    }`}
+                >
+                  <div>VIP</div>
+                  <div className="text-sm">${SECTORES[3].precio}</div>
+                </button>
+              </div>
+
+              {/* ABAJO CENTRO */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setSectorSeleccionado('Suite')}
+                  className={`${SECTORES[4].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
+                    ${sectorSeleccionado === 'Suite' 
+                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
+                      : 'opacity-75 hover:opacity-100'
+                    }`}
+                >
+                  <div>SUITE</div>
+                  <div className="text-sm">${SECTORES[4].precio}</div>
+                </button>
+              </div>
+
+              {/* ESQUINA ABAJO DER */}
+              <div className="flex justify-center">
+                <div className="text-white text-xs font-bold opacity-50">---</div>
+              </div>
+            </div>
+
+            {/* LEYENDA */}
+            <div className="text-center text-xs text-zinc-400">
+              Haz clic en un sector para seleccionarlo (aparecerá destacado)
+            </div>
+          </div>
         </div>
       </div>
 
