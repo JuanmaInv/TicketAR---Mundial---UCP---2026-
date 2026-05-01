@@ -44,121 +44,77 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
         <p className="text-sm">Partido ID: <span className="text-white font-bold">{partidoId}</span></p>
       </div>
 
-      {/* Visualización Realista del Estadio */}
-      <div className="bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-2xl p-8">
-        <div className="max-w-3xl mx-auto">
-          {/* MAPA DEL ESTADIO - LAYOUT CIRCULAR */}
-          <div className="relative w-full bg-gradient-to-b from-zinc-700 to-zinc-800 rounded-3xl p-6 mb-6">
-            {/* CAMPO EN CENTRO */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-green-600 rounded-xl px-16 py-8 text-center">
-                <p className="text-white font-bold text-2xl">⚽ CANCHA ⚽</p>
-              </div>
-            </div>
+      {/* Visualización del Estadio */}
+      <div className="bg-gradient-to-b from-zinc-800 to-zinc-950 rounded-3xl p-6 md:p-8 border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_center,_rgba(45,212,191,0.08)_0%,_rgba(0,0,0,0)_45%),linear-gradient(180deg,#3f3f46_0%,#27272a_100%)]">
+            <div className="absolute inset-4 rounded-[1.8rem] border border-white/10 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.03)_0%,_rgba(255,255,255,0)_55%)] shadow-inner" />
 
-            {/* GRID DEL ESTADIO - 3x3 layout */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {/* ESQUINA ARRIBA IZQ */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setSectorSeleccionado('Popular')}
-                  className={`${SECTORES[0].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
-                    ${sectorSeleccionado === 'Popular' 
-                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
-                      : 'opacity-75 hover:opacity-100'
-                    }`}
-                >
-                  <div>POPULAR</div>
-                  <div className="text-sm">${SECTORES[0].precio}</div>
-                </button>
-              </div>
-
-              {/* ARRIBA CENTRO */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setSectorSeleccionado('General')}
-                  className={`${SECTORES[1].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
-                    ${sectorSeleccionado === 'General' 
-                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
-                      : 'opacity-75 hover:opacity-100'
-                    }`}
-                >
-                  <div>GENERAL</div>
-                  <div className="text-sm">${SECTORES[1].precio}</div>
-                </button>
-              </div>
-
-              {/* ESQUINA ARRIBA DER */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setSectorSeleccionado('Palco')}
-                  className={`${SECTORES[2].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
-                    ${sectorSeleccionado === 'Palco' 
-                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
-                      : 'opacity-75 hover:opacity-100'
-                    }`}
-                >
-                  <div>PALCO</div>
-                  <div className="text-sm">${SECTORES[2].precio}</div>
-                </button>
-              </div>
-
-              {/* IZQUIERDA CENTRO */}
-              <div className="flex justify-center items-center">
-                <div className="text-white text-xs font-bold opacity-50">CAMPO</div>
-              </div>
-
-              {/* CENTRO - ESTADIO */}
-              <div className="flex justify-center items-center">
-                <div className="w-20 h-20 bg-green-700 rounded-xl border-4 border-white flex items-center justify-center">
-                  <span className="text-white font-bold text-xs text-center">CANCHA</span>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative h-[42%] w-[42%] min-w-[14rem] min-h-[14rem]">
+                <div className="absolute inset-0 rounded-full bg-[#d9a441] opacity-80 blur-[1px]" />
+                <div className="absolute inset-[9%] rounded-full bg-[#f0b85b] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.08)]" />
+                <div className="absolute inset-[18%] rounded-full bg-[#e4a23d] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.08)]" />
+                <div className="absolute inset-[28%] rounded-full bg-[#b86f1d] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.08)]" />
+                <div className="absolute inset-[38%] rounded-full bg-[#2ea44f] border-[3px] border-white/90 shadow-[0_0_0_2px_rgba(0,0,0,0.15)] flex items-center justify-center">
+                  <div className="absolute inset-4 rounded-full border border-white/80" />
+                  <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/80" />
+                  <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80" />
                 </div>
               </div>
-
-              {/* DERECHA CENTRO */}
-              <div className="flex justify-center items-center">
-                <div className="text-white text-xs font-bold opacity-50">CAMPO</div>
-              </div>
-
-              {/* ESQUINA ABAJO IZQ */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setSectorSeleccionado('VIP')}
-                  className={`${SECTORES[3].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
-                    ${sectorSeleccionado === 'VIP' 
-                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
-                      : 'opacity-75 hover:opacity-100'
-                    }`}
-                >
-                  <div>VIP</div>
-                  <div className="text-sm">${SECTORES[3].precio}</div>
-                </button>
-              </div>
-
-              {/* ABAJO CENTRO */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setSectorSeleccionado('Suite')}
-                  className={`${SECTORES[4].color} p-4 rounded-lg font-bold text-white text-center cursor-pointer transition-all transform
-                    ${sectorSeleccionado === 'Suite' 
-                      ? 'ring-4 ring-blue-400 shadow-lg scale-110' 
-                      : 'opacity-75 hover:opacity-100'
-                    }`}
-                >
-                  <div>SUITE</div>
-                  <div className="text-sm">${SECTORES[4].precio}</div>
-                </button>
-              </div>
-
-              {/* ESQUINA ABAJO DER */}
-              <div className="flex justify-center">
-                <div className="text-white text-xs font-bold opacity-50">---</div>
-              </div>
             </div>
 
-            {/* LEYENDA */}
-            <div className="text-center text-xs text-zinc-400">
-              Haz clic en un sector para seleccionarlo (aparecerá destacado)
+            <div className="absolute inset-0">
+              <button
+                onClick={() => setSectorSeleccionado('Popular')}
+                className={`absolute left-[50%] top-[13%] -translate-x-1/2 rounded-2xl px-5 py-4 font-black text-white shadow-xl transition-transform ${SECTORES[0].color} ${sectorSeleccionado === 'Popular' ? 'ring-4 ring-white scale-105' : 'opacity-90 hover:scale-105'}`}
+              >
+                POPULAR
+                <span className="block text-lg">${SECTORES[0].precio}</span>
+              </button>
+
+              <button
+                onClick={() => setSectorSeleccionado('General')}
+                className={`absolute left-[50%] top-[31%] -translate-x-1/2 rounded-2xl px-5 py-4 font-black text-white shadow-xl transition-transform ${SECTORES[1].color} ${sectorSeleccionado === 'General' ? 'ring-4 ring-white scale-105' : 'opacity-90 hover:scale-105'}`}
+              >
+                GENERAL
+                <span className="block text-lg">${SECTORES[1].precio}</span>
+              </button>
+
+              <button
+                onClick={() => setSectorSeleccionado('Palco')}
+                className={`absolute right-[12%] top-[31%] rounded-2xl px-5 py-4 font-black text-white shadow-xl transition-transform ${SECTORES[2].color} ${sectorSeleccionado === 'Palco' ? 'ring-4 ring-white scale-105' : 'opacity-90 hover:scale-105'}`}
+              >
+                PALCO
+                <span className="block text-lg">${SECTORES[2].precio}</span>
+              </button>
+
+              <button
+                onClick={() => setSectorSeleccionado('VIP')}
+                className={`absolute left-[18%] bottom-[21%] rounded-2xl px-5 py-4 font-black text-white shadow-xl transition-transform ${SECTORES[3].color} ${sectorSeleccionado === 'VIP' ? 'ring-4 ring-white scale-105' : 'opacity-90 hover:scale-105'}`}
+              >
+                VIP
+                <span className="block text-lg">${SECTORES[3].precio}</span>
+              </button>
+
+              <button
+                onClick={() => setSectorSeleccionado('Suite')}
+                className={`absolute left-[50%] bottom-[18%] -translate-x-1/2 rounded-2xl px-5 py-4 font-black text-white shadow-xl transition-transform ${SECTORES[4].color} ${sectorSeleccionado === 'Suite' ? 'ring-4 ring-white scale-105' : 'opacity-90 hover:scale-105'}`}
+              >
+                SUITE
+                <span className="block text-lg">${SECTORES[4].precio}</span>
+              </button>
+            </div>
+
+            <div className="absolute left-[14%] top-[49%] text-xs font-black uppercase tracking-[0.3em] text-white/45">
+              Campo
+            </div>
+            <div className="absolute right-[14%] top-[49%] text-xs font-black uppercase tracking-[0.3em] text-white/45">
+              Campo
+            </div>
+
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-center text-[11px] text-cyan-200/80">
+              Haz clic en un sector para seleccionarlo
             </div>
           </div>
         </div>
