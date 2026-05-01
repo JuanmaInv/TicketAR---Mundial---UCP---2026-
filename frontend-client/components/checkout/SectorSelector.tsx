@@ -15,10 +15,10 @@ interface SectorSelectorProps {
 }
 
 const SECTORES: Sector[] = [
-  { nombre: 'Popular', precio: 150, color: 'bg-yellow-400', capacidad: 5000 },
-  { nombre: 'General', precio: 350, color: 'bg-blue-500', capacidad: 3000 },
-  { nombre: 'VIP', precio: 1500, color: 'bg-red-600', capacidad: 1000 },
-  { nombre: 'Prensa', precio: 650, color: 'bg-purple-500', capacidad: 2000 },
+  { nombre: 'Popular', precio: 15, color: 'bg-yellow-400', capacidad: 5000 },
+  { nombre: 'General', precio: 35, color: 'bg-blue-500', capacidad: 3000 },
+  { nombre: 'VIP', precio: 75, color: 'bg-red-600', capacidad: 1000 },
+  { nombre: 'Prensa', precio: 45, color: 'bg-purple-500', capacidad: 2000 },
 ];
 
 export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
