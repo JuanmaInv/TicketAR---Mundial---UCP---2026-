@@ -11,7 +11,7 @@ import { Partido } from "@/types/ticket";
 // 1. LAS 48 SELECCIONES (Para el filtro lateral)
 const SELECCIONES_2026 = [
   "Alemania", "Arabia Saudí", "Argelia", "Argentina", "Australia",
-  "Austria", "Bosnia y Herzegovina", "Brasil", "Bélgica", "Cabo Verde",
+  "Austria", "Bosnia", "Brasil", "Bélgica", "Cabo Verde",
   "Canadá", "Colombia", "Corea del Sur", "Costa de Marfil", "Croacia",
   "Curazao", "Ecuador", "Egipto", "Escocia", "España", "Estados Unidos",
   "Francia", "Ghana", "Haití", "Inglaterra", "Irak", "Irán", "Japón",
