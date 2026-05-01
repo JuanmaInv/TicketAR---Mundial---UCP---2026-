@@ -26,6 +26,8 @@ const TEAM_LABEL_ALIASES: Record<string, string> = {
   "UEFA Playoff B": "Suecia",
   "UEFA Playoff C": "Turquía",
   "UEFA Playoff D": "República Checa",
+  "Intercontinental 1": "RD Congo",
+  "Intercontinental 2": "Irak",
 };
 
 function normalizeTeamLabel(team: string) {
