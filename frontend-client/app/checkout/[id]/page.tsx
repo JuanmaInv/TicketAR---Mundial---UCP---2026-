@@ -2,38 +2,31 @@
 
 import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import BuyerForm from '@/components/checkout/BuyerForm';
-import ResumenCompra from '@/components/checkout/ResumenCompra';
+import { useUser } from '@clerk/nextjs';
+import SectorSelector from '@/components/checkout/SectorSelector';
 import CountdownTimer from '@/components/CountdownTimer';
-import { DatosCompra } from '@/types/ticket';
 import { createTicket } from '@/lib/api';
 
 export default function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { user } = useUser();
   const { id: partidoId } = use(params);
 
-  const [paso, setPaso] = useState(2);
-  const [datosComprador, setDatosComprador] = useState<DatosCompra | null>(null);
   const [procesando, setProcesando] = useState(false);
-  
-  // Timer persistente
   const [fechaExpiracion, setFechaExpiracion] = useState<Date | null>(null);
 
   useEffect(() => {
-    // Intentar recuperar el timer del localStorage
     const storageKey = `checkout_timer_${partidoId}`;
     const guardado = localStorage.getItem(storageKey);
     
     if (guardado) {
       const fechaGuardada = new Date(guardado);
-      // Si ya expiró mientras la página estaba cerrada
       if (fechaGuardada.getTime() <= Date.now()) {
         manejarExpiracion();
       } else {
         setFechaExpiracion(fechaGuardada);
       }
     } else {
-      // Si es la primera vez, creamos uno de 15 minutos y lo guardamos
       const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
       localStorage.setItem(storageKey, nuevaFecha.toISOString());
       setFechaExpiracion(nuevaFecha);
@@ -46,34 +39,31 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
     router.push('/');
   };
 
-  const avanzarAlResumen = (datos: DatosCompra) => {
-    setDatosComprador(datos);
-    setPaso(3);
-  };
+  const handleComprar = async (sector: string, cantidad: number, total: number) => {
+    if (!user?.emailAddresses[0]?.emailAddress) {
+      alert('Por favor inicia sesión para continuar');
+      return;
+    }
 
-  const manejarConfirmacion = async () => {
-    if (!datosComprador) return;
     setProcesando(true);
     try {
       await createTicket({
         partidoId: partidoId,
-        nombre: datosComprador.nombre,
-        apellido: datosComprador.apellido,
-        email: datosComprador.email,
-        documento: datosComprador.documento,
-        telefono: datosComprador.telefono,
-        localidad: datosComprador.localidad,
-        provincia: datosComprador.provincia,
-        cantidad: datosComprador.cantidad,
-        sector: 'PLATEA',
-        precio: 3, 
+        nombre: user.firstName || 'Cliente',
+        apellido: user.lastName || '',
+        email: user.emailAddresses[0].emailAddress,
+        documento: user.username || '',
+        telefono: user.phoneNumbers[0]?.phoneNumber || '',
+        localidad: '',
+        provincia: '',
+        cantidad: cantidad as 1 | 2 | 3 | 4 | 5 | 6,
+        sector: sector,
+        precio: Math.floor(total / cantidad),
         estado: 'vendido',
         fechaCompra: new Date().toISOString()
       });
       
-      // Limpiar el timer al finalizar la compra
       localStorage.removeItem(`checkout_timer_${partidoId}`);
-      
       alert('¡Compra realizada con éxito! Recibirás tus tickets por correo.');
       router.push('/my-tickets');
     } catch (error: any) {
@@ -84,19 +74,25 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-3xl">
+    <div className="container mx-auto px-4 py-12 max-w-3xl min-h-screen flex flex-col">
       <div className="mb-8">
-        <button onClick={() => router.back()} className="text-blue-400 hover:text-blue-300 flex items-center gap-2 transition-colors">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        <button 
+          onClick={() => router.back()} 
+          className="text-blue-400 hover:text-blue-300 flex items-center gap-2 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
           Volver
         </button>
       </div>
 
-      <div className="glass rounded-3xl p-8 shadow-2xl">
-        <div className="flex flex-col md:flex-row md:justify-between gap-6 mb-6">
-          <h1 className="text-3xl font-bold text-white">
-            {paso === 2 ? 'Ingreso de datos (Paso 2)' : 'Resumen (Paso 3)'}
-          </h1>
+      <div className="glass rounded-3xl p-8 shadow-2xl flex-1">
+        <div className="flex flex-col md:flex-row md:justify-between gap-6 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Selecciona tu Entrada</h1>
+            <p className="text-zinc-400">Partido ID: <strong className="text-white">{partidoId}</strong></p>
+          </div>
           <div className="flex-shrink-0">
             {fechaExpiracion && (
               <CountdownTimer 
@@ -106,30 +102,13 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
             )}
           </div>
         </div>
-        <p className="text-zinc-400 mb-6 border-b border-white/10 pb-4">
-          Estás reservando para el partido ID: <strong className="text-white">{partidoId}</strong>.
-        </p>
 
-        {paso === 2 && (
-          <BuyerForm
-            partidoId={partidoId}
-            onValidacionExitosa={avanzarAlResumen}
-          />
-        )}
-
-        {paso === 3 && datosComprador && (
-          <ResumenCompra
-            partidoId={partidoId}
-            datos={datosComprador}
-            onVolver={() => setPaso(2)}
-            onConfirmar={manejarConfirmacion}
-          />
-        )}
+        <SectorSelector onComprar={handleComprar} />
         
         {procesando && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center">
             <div className="text-white font-black text-xl animate-pulse uppercase tracking-[0.5em]">
-              Procesando Pago...
+              Procesando Compra...
             </div>
           </div>
         )}
