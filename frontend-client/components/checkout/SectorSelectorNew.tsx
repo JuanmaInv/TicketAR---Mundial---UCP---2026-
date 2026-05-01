@@ -16,9 +16,8 @@ interface SectorSelectorProps {
 const SECTORES: Sector[] = [
   { nombre: 'Popular', precio: 150, color: 'bg-yellow-400', capacidad: 5000 },
   { nombre: 'General', precio: 350, color: 'bg-blue-500', capacidad: 3000 },
-  { nombre: 'Palco', precio: 650, color: 'bg-purple-500', capacidad: 2000 },
   { nombre: 'VIP', precio: 1500, color: 'bg-red-600', capacidad: 1000 },
-  { nombre: 'Suite', precio: 3000, color: 'bg-orange-600', capacidad: 500 },
+  { nombre: 'Prensa', precio: 650, color: 'bg-purple-500', capacidad: 2000 },
 ];
 
 export default function SectorSelector({ onComprar }: SectorSelectorProps) {
@@ -39,49 +38,42 @@ export default function SectorSelector({ onComprar }: SectorSelectorProps) {
   return (
     <div className="w-full space-y-8">
       {/* Mapa Visual del Estadio */}
-      <div className="bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-2xl p-8">
-        <div className="text-center mb-8">
-          <div className="inline-block bg-green-600 rounded-lg px-12 py-6">
-            <p className="text-white font-bold text-2xl">⚽ CANCHA ⚽</p>
+      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(39,39,42,0.98),rgba(17,17,17,0.98))] p-4 md:p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+        <div className="relative mx-auto aspect-[16/12] w-full max-w-4xl overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.06)_0%,rgba(0,0,0,0)_42%),linear-gradient(180deg,#3f3f46_0%,#1f1f23_100%)]">
+          <div className="absolute inset-3 rounded-[1.5rem] border border-white/10 shadow-inner" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative h-[44%] w-[44%] min-h-[13rem] min-w-[13rem]">
+              <div className="absolute inset-0 rounded-full bg-[#d6a33b] opacity-90" />
+              <div className="absolute inset-[8%] rounded-full bg-[#edbc55]" />
+              <div className="absolute inset-[18%] rounded-full bg-[#df9932]" />
+              <div className="absolute inset-[29%] rounded-full bg-[#b96b18]" />
+              <div className="absolute inset-[40%] rounded-full bg-[#1f9b43] border-[3px] border-white/90" />
+            </div>
           </div>
-        </div>
 
-        {/* Grid de Sectores */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {SECTORES.map(sector => (
-            <button
-              key={sector.nombre}
-              onClick={() => setSectorSeleccionado(sector.nombre)}
-              className={`
-                relative p-6 rounded-xl transition-all transform cursor-pointer
-                ${sectorSeleccionado === sector.nombre 
-                  ? 'ring-4 ring-offset-2 ring-blue-400 shadow-xl scale-105 dark:ring-offset-slate-900' 
-                  : 'opacity-70 hover:opacity-90 hover:scale-102'
-                }
-                ${sector.color}
-              `}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <span className="font-bold text-white text-sm uppercase tracking-wide">
-                  {sector.nombre}
-                </span>
-                <span className="text-white font-bold text-lg">
-                  ${sector.precio}
-                </span>
-                <span className="text-white text-xs opacity-90">
-                  {sector.capacidad} lugares
-                </span>
-              </div>
-              
-              {sectorSeleccionado === sector.nombre && (
-                <div className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
-                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
-            </button>
-          ))}
+          <button onClick={() => setSectorSeleccionado('Popular')} className={`absolute left-1/2 top-[10%] z-10 -translate-x-1/2 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[0].color} ${sectorSeleccionado === 'Popular' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <span className="block text-sm tracking-wide">POPULAR</span>
+            <span className="block text-lg">${SECTORES[0].precio}</span>
+          </button>
+
+          <button onClick={() => setSectorSeleccionado('General')} className={`absolute left-[14%] top-[44%] z-10 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[1].color} ${sectorSeleccionado === 'General' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <span className="block text-sm tracking-wide">GENERAL</span>
+            <span className="block text-lg">${SECTORES[1].precio}</span>
+          </button>
+
+          <button onClick={() => setSectorSeleccionado('Prensa')} className={`absolute right-[13%] top-[44%] z-10 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'Prensa' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <span className="block text-sm tracking-wide">PRENSA</span>
+            <span className="block text-lg">${SECTORES[3].precio}</span>
+          </button>
+
+          <button onClick={() => setSectorSeleccionado('VIP')} className={`absolute left-[18%] bottom-[18%] z-10 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <span className="block text-sm tracking-wide">VIP</span>
+            <span className="block text-lg">${SECTORES[2].precio}</span>
+          </button>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-center text-[11px] text-cyan-100/75">
+            Haz clic en un sector para seleccionarlo
+          </div>
         </div>
       </div>
 

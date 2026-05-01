@@ -17,9 +17,8 @@ interface SectorSelectorProps {
 const SECTORES: Sector[] = [
   { nombre: 'Popular', precio: 150, color: 'bg-yellow-400', capacidad: 5000 },
   { nombre: 'General', precio: 350, color: 'bg-blue-500', capacidad: 3000 },
-  { nombre: 'Palco', precio: 650, color: 'bg-purple-500', capacidad: 2000 },
   { nombre: 'VIP', precio: 1500, color: 'bg-red-600', capacidad: 1000 },
-  { nombre: 'Suite', precio: 3000, color: 'bg-orange-600', capacidad: 500 },
+  { nombre: 'Prensa', precio: 650, color: 'bg-purple-500', capacidad: 2000 },
 ];
 
 export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
@@ -79,27 +78,19 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
           </button>
 
           <button
-            onClick={() => setSectorSeleccionado('Palco')}
-            className={`absolute right-[12%] top-[31%] z-10 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'Palco' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
-          >
-            <span className="block text-sm tracking-wide">PALCO</span>
-            <span className="block text-lg">${SECTORES[2].precio}</span>
-          </button>
-
-          <button
             onClick={() => setSectorSeleccionado('VIP')}
-            className={`absolute left-[15%] bottom-[22%] z-10 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
+                className={`absolute left-[16%] bottom-[22%] z-10 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
           >
             <span className="block text-sm tracking-wide">VIP</span>
-            <span className="block text-lg">${SECTORES[3].precio}</span>
+                <span className="block text-lg">${SECTORES[2].precio}</span>
           </button>
 
           <button
-            onClick={() => setSectorSeleccionado('Suite')}
-            className={`absolute left-1/2 bottom-[18%] z-10 -translate-x-1/2 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[4].color} ${sectorSeleccionado === 'Suite' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
+                onClick={() => setSectorSeleccionado('Prensa')}
+                className={`absolute right-[14%] bottom-[20%] z-10 rounded-[1.2rem] px-5 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'Prensa' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
           >
-            <span className="block text-sm tracking-wide">SUITE</span>
-            <span className="block text-lg">${SECTORES[4].precio}</span>
+                <span className="block text-sm tracking-wide">PRENSA</span>
+                <span className="block text-lg">${SECTORES[3].precio}</span>
           </button>
 
           <div className="absolute left-[13%] top-[51%] text-[11px] font-black uppercase tracking-[0.5em] text-white/35">
