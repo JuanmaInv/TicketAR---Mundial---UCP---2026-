@@ -1,78 +1,160 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getTickets } from '../lib/api';
-import { Ticket } from '../types/ticket';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import ComponenteCalendario from '@/components/calendar/CalendarComponent';
+import WorldCupLoader from '@/components/WorldCupLoader';
+import Bandera from '@/components/Bandera';
 
 export default function Home() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    getTickets().then((data) => {
-      setTickets(data);
-      setLoading(false);
-    });
+    // Simulamos un leve retraso para que se luzca el WorldCupLoader que pediste conservar
+    const timer = setTimeout(() => {
+      setCargando(false);
+    }, 1200);
+    return () => clearTimeout(timer);
   }, []);
 
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="mb-12 text-center">
-        <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-6xl">
-          Próximos <span className="text-blue-500">Partidos</span>
-        </h1>
-        <p className="mx-auto max-w-2xl text-lg text-zinc-400">
-          Reserva tus entradas para la Copa del Mundo 2026. Selección de asientos en tiempo real y confirmación inmediata.
+  if (cargando) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center">
+        <WorldCupLoader />
+        <p className="mt-8 text-slate-500 font-bold tracking-widest uppercase text-sm animate-pulse">
+          Cargando la experiencia...
         </p>
       </div>
+    );
+  }
 
-      {loading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {tickets.map((ticket) => (
-            <div 
-              key={ticket.id} 
-              className="group glass flex flex-col overflow-hidden rounded-2xl p-6 transition-all hover:translate-y-[-4px] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-400">
-                  En Venta
-                </span>
-                <span className="text-2xl font-bold text-white">
-                  ${ticket.price}
-                </span>
+  return (
+    <div className="min-h-screen">
+      {/* 1. HERO SECTION (Marketing y Venta) - Con las banderas anfitrionas arriba */}
+      <section className="relative w-full py-20 lg:py-32 overflow-hidden bg-slate-950 flex flex-col items-center justify-center border-b border-slate-800">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div className="container mx-auto px-4 relative z-10 text-center">
+          
+          {/* Banderas de los anfitriones (Canadá, EEUU, México) */}
+          <div className="flex justify-center gap-6 mb-8 md:mb-12">
+            <div className="flex flex-col items-center gap-2 transform -rotate-6 hover:scale-110 transition-transform">
+              <div className="w-16 h-12 md:w-24 md:h-16 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,0,0,0.5)] border-2 border-slate-800">
+                <Bandera pais="Canadá" fill />
               </div>
-              
-              <h3 className="mb-2 text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
-                {ticket.match}
-              </h3>
-              
-              <div className="mb-6 space-y-2">
-                <div className="flex items-center gap-2 text-sm text-zinc-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {ticket.sector}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-zinc-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Junio 2026
-                </div>
-              </div>
-              
-              <button className="mt-auto w-full rounded-xl bg-white/5 py-3 text-sm font-bold text-white transition-all hover:bg-blue-600">
-                Reservar Ahora
-              </button>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#ce1126]">Canadá</span>
             </div>
-          ))}
+            <div className="flex flex-col items-center gap-2 transform z-10 hover:scale-110 transition-transform">
+              <div className="w-20 h-14 md:w-28 md:h-20 rounded-xl overflow-hidden shadow-[0_0_25px_rgba(0,43,127,0.6)] border-2 border-slate-800">
+                <Bandera pais="Estados Unidos" fill />
+              </div>
+              <span className="text-[12px] font-black uppercase tracking-widest text-slate-200">EE.UU.</span>
+            </div>
+            <div className="flex flex-col items-center gap-2 transform rotate-6 hover:scale-110 transition-transform">
+              <div className="w-16 h-12 md:w-24 md:h-16 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(0,104,71,0.5)] border-2 border-slate-800">
+                <Bandera pais="México" fill />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#006847]">México</span>
+            </div>
+          </div>
+
+          <span className="inline-block py-1 px-4 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-black tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+            Asegura tu lugar en la historia
+          </span>
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6 uppercase italic drop-shadow-2xl">
+            Vive la Pasión del <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Mundial 2026</span>
+          </h1>
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-300 font-medium mb-10 leading-relaxed">
+            TicketAR es la plataforma de tecnología avanzada que te garantiza acceso oficial a todos los estadios. Selecciona tu asiento en tiempo real y obtén tu pase digital de manera instantánea.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="#calendario" className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black tracking-widest uppercase text-sm transition-all transform hover:scale-105 shadow-[0_10px_30px_rgba(37,99,235,0.4)]">
+              Ver Partidos
+            </a>
+            <Link href="/about" className="px-8 py-4 bg-transparent border border-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold tracking-widest uppercase text-sm transition-all">
+              Conoce el Equipo
+            </Link>
+          </div>
         </div>
-      )}
+      </section>
+
+      {/* 2. CALENDARIO DE PARTIDOS */}
+      <section id="calendario" className="py-20 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
+              Próximos <span className="text-blue-600">Encuentros</span>
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">Explora el calendario oficial y asegura tu lugar en los mejores partidos.</p>
+          </div>
+
+          <ComponenteCalendario />
+        </div>
+      </section>
+
+      {/* 3. INSTRUCCIONES DEL FLUJO DE COMPRA */}
+      <section className="py-20 bg-white dark:bg-black border-b border-slate-200 dark:border-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
+              ¿Cómo comprar tu <span className="text-emerald-500">entrada?</span>
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">Un proceso diseñado para ser rápido, transparente y 100% seguro.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { 
+                step: "01",
+                title: "Elige tu Partido", 
+                desc: "Usa el calendario interactivo para encontrar el encuentro que no te quieres perder. Contamos con acceso a todos los grupos y fases finales.",
+                icon: "🗓️"
+              },
+              { 
+                step: "02",
+                title: "Completa tus Datos", 
+                desc: "Crea tu cuenta segura e ingresa tu información. Necesitarás tu correo electrónico para recibir confirmaciones y validar tu identidad.",
+                icon: "📝"
+              },
+              { 
+                step: "03",
+                title: "Pago y Tickets", 
+                desc: "Selecciona el sector, paga en tu moneda local y recibe de inmediato tu ticket digital con código encriptado imposible de falsificar.",
+                icon: "🎟️"
+              }
+            ].map((item, i) => (
+              <div key={i} className="relative p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 hover:border-blue-500/50 transition-colors group">
+                <div className="absolute top-6 right-6 text-5xl font-black text-slate-200 dark:text-slate-800/80 group-hover:text-blue-500/10 transition-colors">
+                  {item.step}
+                </div>
+                <div className="text-4xl mb-6">{item.icon}</div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 relative z-10">{item.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 relative z-10 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. REDIRECCIÓN A SOBRE NOSOTROS */}
+      <section className="py-24 bg-gradient-to-tr from-blue-950 via-slate-900 to-black relative overflow-hidden">
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-600/10 blur-[100px] rounded-full"></div>
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600/10 blur-[100px] rounded-full"></div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white mb-6">
+            La Mejor Experiencia <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Garantizada</span>
+          </h2>
+          <p className="max-w-2xl mx-auto text-slate-300 mb-10 text-lg leading-relaxed">
+            Detrás de TicketAR hay un equipo de expertos obsesionados con la seguridad de tu compra. Conoce a los profesionales que hacen posible que vivas la fiesta más grande del fútbol sin preocupaciones.
+          </p>
+          <Link href="/about" className="inline-block px-8 py-4 bg-white text-slate-900 rounded-xl font-black tracking-widest uppercase text-sm transition-all transform hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+            Descubre Sobre Nosotros
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

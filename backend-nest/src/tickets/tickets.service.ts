@@ -1,0 +1,163 @@
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+} from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { CrearEntradaDto } from './dto/create-ticket.dto';
+import { TicketEntity } from './entities/ticket.entity';
+import { TicketStatus } from '../common/enums/ticket-status.enum';
+import { PaymentsService } from '../payments/payments.service';
+import type { IEntradasRepository } from './repositories/entradas.repository.interface';
+import { TicketStateFactory } from './states/ticket-state.factory';
+
+interface TicketExpirado {
+  id: string;
+  id_partido: string;
+  id_sector: string;
+  estado: TicketStatus;
+}
+
+@Injectable()
+export class EntradasService {
+  constructor(
+    @Inject('IEntradasRepository')
+    private readonly entradasRepository: IEntradasRepository,
+    private readonly ticketStateFactory: TicketStateFactory,
+    private readonly paymentsService: PaymentsService,
+  ) {}
+
+  async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
+    // 1. VALIDACIÓN DE PASAPORTE
+    const tienePasaporte =
+      await this.entradasRepository.validarPasaporteUsuario(
+        crearEntradaDto.idUsuario,
+      );
+    if (!tienePasaporte) {
+      throw new BadRequestException(
+        'El usuario debe tener un pasaporte registrado para comprar.',
+      );
+    }
+
+    // 2. REGLA CRÍTICA: MÁXIMO 1 ENTRADA POR PARTIDO
+    const yaTieneEntrada = await this.entradasRepository.buscarEntradaActiva(
+      crearEntradaDto.idUsuario,
+      crearEntradaDto.idPartido,
+    );
+    if (yaTieneEntrada) {
+      throw new ConflictException(
+        'Ya tienes una reserva activa o pagada para este partido.',
+      );
+    }
+
+    // 3. VERIFICACIÓN DE STOCK
+    const stock = await this.entradasRepository.obtenerStockDisponible(
+      crearEntradaDto.idPartido,
+      crearEntradaDto.idSector,
+    );
+
+    if (stock === null) {
+      throw new NotFoundException(
+        'El sector solicitado no está disponible para este partido.',
+      );
+    }
+
+    if (stock <= 0) {
+      throw new ConflictException(
+        'Lo sentimos, no quedan asientos disponibles en este sector.',
+      );
+    }
+
+    // 4. CREACIÓN DE LA RESERVA
+    const fechaExpiracion = new Date();
+    fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
+
+    return this.entradasRepository.crear({
+      id_usuario: crearEntradaDto.idUsuario,
+      id_partido: crearEntradaDto.idPartido,
+      id_sector: crearEntradaDto.idSector,
+      estado: TicketStatus.RESERVADO,
+      fecha_expiracion_reserva: fechaExpiracion.toISOString(),
+    });
+  }
+
+  async obtenerTodas(): Promise<TicketEntity[]> {
+    return this.entradasRepository.obtenerTodas();
+  }
+
+  async obtenerUna(id: string): Promise<TicketEntity | null> {
+    return this.entradasRepository.obtenerUna(id);
+  }
+
+  async marcarComoPagada(id: string): Promise<TicketEntity> {
+    const ticket = await this.entradasRepository.obtenerUna(id);
+    if (!ticket) {
+      throw new NotFoundException('Reserva no encontrada.');
+    }
+
+    // Aplicar Patrón State Activo para validar transición
+    const estadoActual = this.ticketStateFactory.create(ticket.estado);
+    estadoActual.setContext(ticket);
+    await estadoActual.pagar(this.paymentsService);
+
+    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+  }
+
+  async pagar(id: string): Promise<TicketEntity> {
+    const ticket = await this.entradasRepository.obtenerUna(id);
+    if (!ticket) {
+      throw new NotFoundException(`Ticket ${id} no encontrado.`);
+    }
+
+    const estado = this.ticketStateFactory.create(ticket.estado);
+    estado.setContext(ticket);
+
+    // El estado procesa el pago usando el servicio de pagos (Strategy)
+    await estado.pagar(this.paymentsService);
+
+    // Si llegamos acá, el pago fue exitoso según el estado
+    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async manejarReservasExpiradas() {
+    const ahora = new Date().toISOString();
+    const expiradas = (await this.entradasRepository.obtenerExpiradas(
+      ahora,
+    )) as TicketExpirado[];
+
+    if (expiradas && expiradas.length > 0) {
+      for (const row of expiradas) {
+        try {
+          // Mapeamos a entidad para tener el contexto completo
+          const ticket = await this.entradasRepository.obtenerUna(row.id);
+          if (!ticket) continue;
+
+          // Validar con el patrón State antes de cancelar
+          const estadoActual = this.ticketStateFactory.create(ticket.estado);
+          estadoActual.setContext(ticket);
+          estadoActual.cancelar();
+
+          // Devolvemos el stock
+          await this.entradasRepository.incrementarStock(
+            ticket.idPartido,
+            ticket.idSector,
+          );
+
+          // Marcamos como CANCELADO
+          await this.entradasRepository.actualizarEstado(
+            ticket.id,
+            TicketStatus.CANCELADO,
+          );
+        } catch (err) {
+          console.error(
+            `[Cron] Error procesando ticket ${row.id}:`,
+            (err as Error).message,
+          );
+        }
+      }
+    }
+  }
+}

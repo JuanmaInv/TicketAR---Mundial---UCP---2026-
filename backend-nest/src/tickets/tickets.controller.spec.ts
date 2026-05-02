@@ -1,15 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TicketsController } from './tickets.controller';
+import { EntradasController } from './tickets.controller';
+import { EntradasService } from './tickets.service';
 
-describe('TicketsController', () => {
-  let controller: TicketsController;
+describe('EntradasController', () => {
+  let controller: EntradasController;
+
+  const mockEntradasService = {
+    crear: jest.fn(),
+    obtenerTodas: jest.fn(),
+    obtenerUna: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [TicketsController],
+      controllers: [EntradasController],
+      providers: [
+        {
+          provide: EntradasService,
+          useValue: mockEntradasService,
+        },
+      ],
     }).compile();
 
-    controller = module.get<TicketsController>(TicketsController);
+    controller = module.get<EntradasController>(EntradasController);
   });
 
   it('should be defined', () => {

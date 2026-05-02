@@ -1,7 +1,25 @@
 import { Module } from '@nestjs/common';
-import { TicketsController } from './tickets.controller';
+import { EntradasController } from './tickets.controller';
+import { EntradasService } from './tickets.service';
+import { SupabaseModule } from '../common/supabase/supabase.module';
+import { UsuariosModule } from '../usuarios/usuarios.module';
+import { TicketStateFactory } from './states/ticket-state.factory';
+import { PagosModule } from '../payments/payments.module';
+import { SupabaseEntradasRepository } from './repositories/supabase-entradas.repository';
 
 @Module({
-  controllers: [TicketsController]
+  imports: [SupabaseModule, UsuariosModule, PagosModule],
+  controllers: [EntradasController],
+  providers: [
+    EntradasService,
+    TicketStateFactory,
+    SupabaseEntradasRepository,
+    {
+      provide: 'IEntradasRepository',
+      useClass: SupabaseEntradasRepository,
+    },
+  ],
+  exports: [EntradasService],
 })
-export class TicketsModule {}
+export class EntradasModule {}
+
