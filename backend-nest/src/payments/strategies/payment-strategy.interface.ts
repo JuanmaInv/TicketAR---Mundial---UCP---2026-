@@ -1,6 +1,7 @@
 export interface PaymentResult {
   success: boolean;
   transactionId?: string;
+  paymentUrl?: string;
   error?: string;
 }
 
