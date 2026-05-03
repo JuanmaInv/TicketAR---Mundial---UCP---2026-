@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EntradasService } from './tickets.service';
 import { TicketStateFactory } from './states/ticket-state.factory';
 import { PaymentsService } from '../payments/payments.service';
+import { QrService } from './qr.service';
 
 describe('EntradasService', () => {
   let service: EntradasService;
@@ -33,6 +34,10 @@ describe('EntradasService', () => {
         {
           provide: PaymentsService,
           useValue: { processTicketPayment: jest.fn() },
+        },
+        {
+          provide: QrService,
+          useValue: { generarQrBase64: jest.fn() },
         },
       ],
     }).compile();

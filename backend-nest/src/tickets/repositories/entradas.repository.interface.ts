@@ -4,7 +4,11 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 export interface IEntradasRepository {
   // Consultas de negocio
   validarPasaporteUsuario(idUsuario: string): Promise<boolean>;
-  buscarEntradaActiva(idUsuario: string, idPartido: string): Promise<boolean>;
+  /**
+   * Cuenta cuántas entradas activas (RESERVADO o PAGADO) tiene el usuario en total.
+   * Regla de negocio: Máximo 6 entradas por cuenta.
+   */
+  contarEntradasActivas(idUsuario: string): Promise<number>;
   obtenerStockDisponible(
     idPartido: string,
     idSector: string,

@@ -8,6 +8,8 @@ export class SimulatedPaymentStrategy implements IPaymentStrategy {
   async processPayment(
     amount: number,
     currency: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    metadata?: { ticketId: string },
   ): Promise<PaymentResult> {
     this.logger.log(`Procesando pago simulado de ${amount} ${currency}...`);
 
@@ -18,6 +20,15 @@ export class SimulatedPaymentStrategy implements IPaymentStrategy {
     return {
       success: true,
       transactionId: `SIM-${Math.random().toString(36).substring(2, 11).toUpperCase()}`,
+    };
+  }
+
+  async verifyPayment(transactionId: string): Promise<PaymentResult> {
+    this.logger.log(`Verificando pago simulado ${transactionId}...`);
+    await Promise.resolve();
+    return {
+      success: true,
+      transactionId,
     };
   }
 }
