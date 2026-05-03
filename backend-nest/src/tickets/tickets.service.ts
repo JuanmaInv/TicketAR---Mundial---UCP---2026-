@@ -92,7 +92,9 @@ export class EntradasService {
     return this.entradasRepository.obtenerUna(id);
   }
 
-  async marcarComoPagada(id: string): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
+  async marcarComoPagada(
+    id: string,
+  ): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
     const ticket = await this.entradasRepository.obtenerUna(id);
     if (!ticket) {
       throw new NotFoundException('Reserva no encontrada.');
@@ -103,11 +105,16 @@ export class EntradasService {
     estadoActual.setContext(ticket);
     const paymentResult = await estadoActual.pagar(this.paymentsService);
 
-    const ticketActualizado = await this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    const ticketActualizado = await this.entradasRepository.actualizarEstado(
+      id,
+      TicketStatus.PAGADO,
+    );
     return { ticket: ticketActualizado, paymentResult };
   }
 
-  async pagar(id: string): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
+  async pagar(
+    id: string,
+  ): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
     const ticket = await this.entradasRepository.obtenerUna(id);
     if (!ticket) {
       throw new NotFoundException(`Ticket ${id} no encontrado.`);

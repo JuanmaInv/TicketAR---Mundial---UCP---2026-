@@ -8,7 +8,7 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 export class ReservadoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) { }
+  constructor(private readonly logger: Logger) {}
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -32,7 +32,10 @@ export class ReservadoState implements TicketState {
 
     // Usamos el servicio de pagos (Patrón Strategy)
     // Le pasamos el ID real del ticket para que Mercado Pago lo rastree
-    const resultado = await paymentsService.processTicketPayment(50000, this.ticket.id);
+    const resultado = await paymentsService.processTicketPayment(
+      50000,
+      this.ticket.id,
+    );
 
     if (!resultado.success) {
       this.logger.error(

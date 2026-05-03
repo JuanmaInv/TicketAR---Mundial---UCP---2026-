@@ -22,4 +22,3 @@ import { SupabaseEntradasRepository } from './repositories/supabase-entradas.rep
   exports: [EntradasService],
 })
 export class EntradasModule {}
-

@@ -11,4 +11,4 @@ import { EntradasModule } from '../tickets/tickets.module';
   providers: [PaymentsService, MercadoPagoStrategy, SimulatedPaymentStrategy],
   exports: [PaymentsService],
 })
-export class PagosModule { }
+export class PagosModule {}
