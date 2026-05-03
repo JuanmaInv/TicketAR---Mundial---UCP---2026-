@@ -40,4 +40,12 @@ export class PaymentsService {
     );
     return this.strategy.processPayment(amount, 'ARS', { ticketId });
   }
+
+  /**
+   * Verifica el estado de un pago usando la estrategia configurada.
+   * @param transactionId ID único de la transacción.
+   */
+  async verifyPayment(transactionId: string): Promise<PaymentResult> {
+    return this.strategy.verifyPayment(transactionId);
+  }
 }

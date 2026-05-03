@@ -53,6 +53,21 @@ export class ReservadoState implements TicketState {
     return resultado;
   }
 
+  confirmarPago(): void {
+    const ahora = new Date();
+    if (
+      this.ticket.fechaExpiracionReserva &&
+      ahora > this.ticket.fechaExpiracionReserva
+    ) {
+      throw new BadRequestException(
+        'No se puede confirmar un pago de una reserva expirada.',
+      );
+    }
+    this.logger.log(
+      `Confirmando pago para el ticket ${this.ticket.id}. Transicionando a PAGADO.`,
+    );
+  }
+
   cancelar(): void {
     this.logger.log(`Cancelando reserva del ticket ${this.ticket.id}.`);
   }

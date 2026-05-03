@@ -27,6 +27,12 @@ export class CanceladoState implements TicketState {
     );
   }
 
+  confirmarPago(): void {
+    throw new BadRequestException(
+      'No se puede confirmar el pago de un ticket cancelado.',
+    );
+  }
+
   cancelar(): void {
     throw new BadRequestException('Este ticket ya está cancelado.');
   }

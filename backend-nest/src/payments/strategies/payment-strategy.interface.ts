@@ -11,4 +11,6 @@ export interface IPaymentStrategy {
     currency: string,
     metadata?: { ticketId: string },
   ): Promise<PaymentResult>;
+
+  verifyPayment(transactionId: string): Promise<PaymentResult>;
 }

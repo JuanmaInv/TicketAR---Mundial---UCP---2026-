@@ -22,4 +22,13 @@ export class SimulatedPaymentStrategy implements IPaymentStrategy {
       transactionId: `SIM-${Math.random().toString(36).substring(2, 11).toUpperCase()}`,
     };
   }
+
+  async verifyPayment(transactionId: string): Promise<PaymentResult> {
+    this.logger.log(`Verificando pago simulado ${transactionId}...`);
+    await Promise.resolve();
+    return {
+      success: true,
+      transactionId,
+    };
+  }
 }

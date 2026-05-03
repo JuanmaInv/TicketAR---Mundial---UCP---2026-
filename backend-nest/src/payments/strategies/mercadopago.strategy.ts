@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { IPaymentStrategy, PaymentResult } from './payment-strategy.interface';
 
 @Injectable()
@@ -24,7 +24,13 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
     });
   }
 
-  // Parametros (Crea una preferencia de MP)
+  /**
+   * Genera una preferencia de pago en Mercado Pago (Checkout Pro).
+   * @param amount Monto a cobrar.
+   * @param currency Moneda (ARS/USD).
+   * @param metadata Datos adicionales, incluyendo el ticketId para trazabilidad.
+   * @returns Resultado con la URL de redirección para el usuario.
+   */
   async processPayment(
     amount: number,
     currency: string,
@@ -69,6 +75,39 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
       return {
         success: false,
         error: 'No se pudo inicializar el pago con Mercado Pago',
+      };
+    }
+  }
+
+  /**
+   * Verifica el estado real de un pago contra la API de Mercado Pago.
+   * Este método es utilizado principalmente por el Webhook para confirmar transacciones.
+   * @param transactionId ID de la transacción enviado por el Webhook de MP.
+   */
+  async verifyPayment(transactionId: string): Promise<PaymentResult> {
+    try {
+      this.logger.log(
+        `Verificando estado del pago ${transactionId} en Mercado Pago`,
+      );
+
+      const payment = new Payment(this.client);
+      const response = await payment.get({ id: transactionId });
+
+      const isApproved = response.status === 'approved';
+
+      return {
+        success: isApproved,
+        transactionId: response.id?.toString(),
+        // Importante: Guardamos el ticketId que enviamos en external_reference
+        error: isApproved ? undefined : `Estado del pago: ${response.status}`,
+        // Hack temporal para pasar el ticketId de vuelta al controlador
+        paymentUrl: response.external_reference,
+      };
+    } catch (error) {
+      this.logger.error(`Error al verificar pago ${transactionId}`, error);
+      return {
+        success: false,
+        error: 'No se pudo verificar el pago con Mercado Pago',
       };
     }
   }

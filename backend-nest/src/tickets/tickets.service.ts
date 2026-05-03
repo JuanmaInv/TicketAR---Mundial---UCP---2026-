@@ -92,24 +92,20 @@ export class EntradasService {
     return this.entradasRepository.obtenerUna(id);
   }
 
-  async marcarComoPagada(
-    id: string,
-  ): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
+  async marcarComoPagada(id: string): Promise<TicketEntity> {
     const ticket = await this.entradasRepository.obtenerUna(id);
     if (!ticket) {
       throw new NotFoundException('Reserva no encontrada.');
     }
 
-    // Aplicar Patrón State Activo para validar transición
+    // Aplicar Patrón State para validar transición
     const estadoActual = this.ticketStateFactory.create(ticket.estado);
     estadoActual.setContext(ticket);
-    const paymentResult = await estadoActual.pagar(this.paymentsService);
 
-    const ticketActualizado = await this.entradasRepository.actualizarEstado(
-      id,
-      TicketStatus.PAGADO,
-    );
-    return { ticket: ticketActualizado, paymentResult };
+    // Validamos que el ticket se pueda confirmar (ej: que no esté cancelado o expirado)
+    estadoActual.confirmarPago();
+
+    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
   }
 
   async pagar(
