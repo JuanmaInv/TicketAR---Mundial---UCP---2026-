@@ -3,6 +3,7 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import { TicketState } from './ticket-state.interface';
 import { TicketEntity } from '../entities/ticket.entity';
 import { PaymentsService } from '../../payments/payments.service';
+import { PaymentResult } from '../../payments/strategies/payment-strategy.interface';
 
 export class CanceladoState implements TicketState {
   private ticket: TicketEntity;
@@ -18,11 +19,17 @@ export class CanceladoState implements TicketState {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  pagar(_paymentsService: PaymentsService): Promise<void> {
+  pagar(_paymentsService: PaymentsService): Promise<PaymentResult> {
     return Promise.reject(
       new BadRequestException(
         'No se puede pagar un ticket que ha sido cancelado.',
       ),
+    );
+  }
+
+  confirmarPago(): void {
+    throw new BadRequestException(
+      'No se puede confirmar el pago de un ticket cancelado.',
     );
   }
 

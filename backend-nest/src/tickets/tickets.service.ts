@@ -10,8 +10,10 @@ import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
 import { PaymentsService } from '../payments/payments.service';
+import { PaymentResult } from '../payments/strategies/payment-strategy.interface';
 import type { IEntradasRepository } from './repositories/entradas.repository.interface';
 import { TicketStateFactory } from './states/ticket-state.factory';
+import { QrService } from './qr.service';
 
 interface TicketExpirado {
   id: string;
@@ -27,6 +29,7 @@ export class EntradasService {
     private readonly entradasRepository: IEntradasRepository,
     private readonly ticketStateFactory: TicketStateFactory,
     private readonly paymentsService: PaymentsService,
+    private readonly qrService: QrService,
   ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
@@ -41,14 +44,16 @@ export class EntradasService {
       );
     }
 
-    // 2. REGLA CRÍTICA: MÁXIMO 1 ENTRADA POR PARTIDO
-    const yaTieneEntrada = await this.entradasRepository.buscarEntradaActiva(
+    // 2. REGLA CRÍTICA: MÁXIMO 6 ENTRADAS POR CUENTA DE USUARIO
+    // Un usuario puede comprar hasta 6 entradas en nombre de su cuenta.
+    // Todas las entradas quedan a nombre del titular que presenta su pasaporte en la puerta.
+    const LIMITE_ENTRADAS = 6;
+    const totalActivas = await this.entradasRepository.contarEntradasActivas(
       crearEntradaDto.idUsuario,
-      crearEntradaDto.idPartido,
     );
-    if (yaTieneEntrada) {
+    if (totalActivas >= LIMITE_ENTRADAS) {
       throw new ConflictException(
-        'Ya tienes una reserva activa o pagada para este partido.',
+        `Ya tenés ${totalActivas} entradas activas. El máximo permitido por cuenta es ${LIMITE_ENTRADAS}.`,
       );
     }
 
@@ -97,15 +102,47 @@ export class EntradasService {
       throw new NotFoundException('Reserva no encontrada.');
     }
 
-    // Aplicar Patrón State Activo para validar transición
+    // Aplicar Patrón State para validar transición
     const estadoActual = this.ticketStateFactory.create(ticket.estado);
     estadoActual.setContext(ticket);
-    await estadoActual.pagar(this.paymentsService);
+
+    // Validamos que el ticket se pueda confirmar (ej: que no esté cancelado o expirado)
+    estadoActual.confirmarPago();
 
     return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
   }
 
-  async pagar(id: string): Promise<TicketEntity> {
+  /**
+   * Genera el código QR de una entrada específica.
+   *
+   * Regla de negocio: Solo se puede obtener el QR de una entrada PAGADA.
+   * Si el ticket está RESERVADO o CANCELADO, se rechaza la solicitud.
+   * Esto evita que alguien genere un QR "falso" antes de pagar.
+   *
+   * @returns Un Data URL en Base64 listo para mostrar como <img> en el frontend.
+   */
+  async obtenerQr(
+    id: string,
+  ): Promise<{ ticketId: string; qrDataUrl: string }> {
+    const ticket = await this.entradasRepository.obtenerUna(id);
+    if (!ticket) {
+      throw new NotFoundException(`Entrada ${id} no encontrada.`);
+    }
+
+    // Validación de estado: solo entradas PAGADAS tienen QR
+    if (ticket.estado !== TicketStatus.PAGADO) {
+      throw new BadRequestException(
+        `El QR solo está disponible para entradas pagadas. Estado actual: ${ticket.estado}.`,
+      );
+    }
+
+    const qrDataUrl = await this.qrService.generarQrBase64(ticket.id);
+    return { ticketId: ticket.id, qrDataUrl };
+  }
+
+  async pagar(
+    id: string,
+  ): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
     const ticket = await this.entradasRepository.obtenerUna(id);
     if (!ticket) {
       throw new NotFoundException(`Ticket ${id} no encontrado.`);
@@ -115,10 +152,19 @@ export class EntradasService {
     estado.setContext(ticket);
 
     // El estado procesa el pago usando el servicio de pagos (Strategy)
-    await estado.pagar(this.paymentsService);
+    const paymentResult = await estado.pagar(this.paymentsService);
 
-    // Si llegamos acá, el pago fue exitoso según el estado
-    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    // Si NO hay paymentUrl y el pago fue exitoso, es un pago inmediato (Simulado)
+    if (!paymentResult.paymentUrl && paymentResult.success) {
+      const ticketPagado = await this.entradasRepository.actualizarEstado(
+        id,
+        TicketStatus.PAGADO,
+      );
+      return { ticket: ticketPagado, paymentResult };
+    }
+
+    // Si HAY paymentUrl (Mercado Pago), el ticket sigue RESERVADO hasta que el webhook confirme
+    return { ticket, paymentResult };
   }
 
   @Cron(CronExpression.EVERY_MINUTE)

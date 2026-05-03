@@ -3,6 +3,7 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import { TicketState } from './ticket-state.interface';
 import { TicketEntity } from '../entities/ticket.entity';
 import { PaymentsService } from '../../payments/payments.service';
+import { PaymentResult } from '../../payments/strategies/payment-strategy.interface';
 
 export class ReservadoState implements TicketState {
   private ticket: TicketEntity;
@@ -17,7 +18,7 @@ export class ReservadoState implements TicketState {
     return TicketStatus.RESERVADO;
   }
 
-  async pagar(paymentsService: PaymentsService): Promise<void> {
+  async pagar(paymentsService: PaymentsService): Promise<PaymentResult> {
     const ahora = new Date();
     if (
       this.ticket.fechaExpiracionReserva &&
@@ -29,8 +30,12 @@ export class ReservadoState implements TicketState {
       );
     }
 
-    // Usamos el servicio de pagos (Patrón Strategy) con un precio fijo simulado (ej: 50000)
-    const resultado = await paymentsService.processTicketPayment(50000);
+    // Usamos el servicio de pagos (Patrón Strategy)
+    // Le pasamos el ID real del ticket para que Mercado Pago lo rastree
+    const resultado = await paymentsService.processTicketPayment(
+      50000,
+      this.ticket.id,
+    );
 
     if (!resultado.success) {
       this.logger.error(
@@ -42,7 +47,24 @@ export class ReservadoState implements TicketState {
     }
 
     this.logger.log(
-      `Pago confirmado [${resultado.transactionId}]. Transición exitosa: Ticket ${this.ticket.id} pasando a PAGADO.`,
+      `Pago procesado para ticket ${this.ticket.id}. Resultado: ${resultado.success ? 'EXITO' : 'FALLO'}.`,
+    );
+
+    return resultado;
+  }
+
+  confirmarPago(): void {
+    const ahora = new Date();
+    if (
+      this.ticket.fechaExpiracionReserva &&
+      ahora > this.ticket.fechaExpiracionReserva
+    ) {
+      throw new BadRequestException(
+        'No se puede confirmar un pago de una reserva expirada.',
+      );
+    }
+    this.logger.log(
+      `Confirmando pago para el ticket ${this.ticket.id}. Transicionando a PAGADO.`,
     );
   }
 
