@@ -1,20 +1,25 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
 test.describe('Flujo E2E - Compra de Entradas', () => {
 
   test.describe('Pruebas de Acceso y Seguridad', () => {
     
     test('1 y 2. Entrar a la página, ser redirigido al login y simular login', async ({ page }) => {
-      // 1. Entrar a la página (ruta protegida) y ser redirigido al login
-      await page.goto(BASE_URL);
-      await expect(page).toHaveURL(/.*\/login/);
+      // 1. Entrar a una ruta protegida (checkout) y ser redirigido al login
+      await page.goto(`${BASE_URL}/checkout`);
+      await expect(page).toHaveURL(/.*\/login|.*\/sign-in/);
 
       // 2. Simular login con usuario y contraseña
-      await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-      await page.getByLabel(/contraseña|password/i).fill('password123');
-      await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
+      await page.locator('input[name="identifier"]').fill('test@ticketar.com');
+      // Clerk usa dos pasos: click en Continuar tras el email.
+      await page.getByRole('button', { name: /continue|continuar/i }).first().click();
+      // Esperar a que el campo de password sea interactivo
+      const passwordInput = page.locator('input[name="password"]');
+      await passwordInput.waitFor({ state: 'visible' });
+      await passwordInput.fill('password123');
+      await page.getByRole('button', { name: /continue|iniciar sesión|login/i }).last().click();
 
       // Verificar que el login fue exitoso y redirige al home o calendario
       await expect(page).not.toHaveURL(/.*\/login/);
@@ -24,7 +29,7 @@ test.describe('Flujo E2E - Compra de Entradas', () => {
       // Al ser un nuevo test, el estado del navegador no está autenticado
       await page.goto(`${BASE_URL}/checkout`);
       // Verificar redirección al login
-      await expect(page).toHaveURL(/.*\/login/);
+      await expect(page).toHaveURL(/.*\/login|.*\/sign-in/);
     });
   });
 
@@ -33,9 +38,12 @@ test.describe('Flujo E2E - Compra de Entradas', () => {
     // Autenticación previa para los tests de este bloque
     test.beforeEach(async ({ page }) => {
       await page.goto(`${BASE_URL}/login`);
-      await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-      await page.getByLabel(/contraseña|password/i).fill('password123');
-      await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
+      await page.locator('input[name="identifier"]').fill('test@ticketar.com');
+      await page.getByRole('button', { name: /continue|continuar/i }).first().click();
+      const passwordInput = page.locator('input[name="password"]');
+      await passwordInput.waitFor({ state: 'visible' });
+      await passwordInput.fill('password123');
+      await page.getByRole('button', { name: /continue|iniciar sesión|login/i }).last().click();
       await expect(page).not.toHaveURL(/.*\/login/);
     });
 
@@ -103,9 +111,12 @@ test.describe('Flujo E2E - Compra de Entradas', () => {
     test('8. Calendario responsive, fecha coincide con dispositivo y es previa al partido', async ({ page }) => {
       // Iniciar sesión y navegar al calendario
       await page.goto(`${BASE_URL}/login`);
-      await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-      await page.getByLabel(/contraseña|password/i).fill('password123');
-      await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
+      await page.locator('input[name="identifier"]').fill('test@ticketar.com');
+      await page.getByRole('button', { name: /continue|continuar/i }).first().click();
+      const passwordInput = page.locator('input[name="password"]');
+      await passwordInput.waitFor({ state: 'visible' });
+      await passwordInput.fill('password123');
+      await page.getByRole('button', { name: /continue|iniciar sesión|login/i }).last().click();
       await page.goto(`${BASE_URL}/calendario`);
 
       // Verificar que un elemento específico de móvil sea visible (ej. menú hamburguesa o cambio de layout)
