@@ -7,6 +7,7 @@ import { TicketStateFactory } from './states/ticket-state.factory';
 import { PagosModule } from '../payments/payments.module';
 import { SupabaseEntradasRepository } from './repositories/supabase-entradas.repository';
 import { ReservasExpiradasService } from './reservas-expiradas.service';
+import { QrService } from './qr.service';
 
 @Module({
   imports: [SupabaseModule, UsuariosModule, forwardRef(() => PagosModule)],
@@ -14,6 +15,8 @@ import { ReservasExpiradasService } from './reservas-expiradas.service';
   providers: [
     EntradasService,
     TicketStateFactory,
+    // Servicio de generación de códigos QR para entradas pagadas
+    QrService,
     SupabaseEntradasRepository,
     {
       provide: 'IEntradasRepository',

@@ -13,6 +13,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { PaymentResult } from '../payments/strategies/payment-strategy.interface';
 import type { IEntradasRepository } from './repositories/entradas.repository.interface';
 import { TicketStateFactory } from './states/ticket-state.factory';
+import { QrService } from './qr.service';
 
 interface TicketExpirado {
   id: string;
@@ -28,6 +29,7 @@ export class EntradasService {
     private readonly entradasRepository: IEntradasRepository,
     private readonly ticketStateFactory: TicketStateFactory,
     private readonly paymentsService: PaymentsService,
+    private readonly qrService: QrService,
   ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
@@ -108,6 +110,34 @@ export class EntradasService {
     estadoActual.confirmarPago();
 
     return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+  }
+
+  /**
+   * Genera el código QR de una entrada específica.
+   *
+   * Regla de negocio: Solo se puede obtener el QR de una entrada PAGADA.
+   * Si el ticket está RESERVADO o CANCELADO, se rechaza la solicitud.
+   * Esto evita que alguien genere un QR "falso" antes de pagar.
+   *
+   * @returns Un Data URL en Base64 listo para mostrar como <img> en el frontend.
+   */
+  async obtenerQr(
+    id: string,
+  ): Promise<{ ticketId: string; qrDataUrl: string }> {
+    const ticket = await this.entradasRepository.obtenerUna(id);
+    if (!ticket) {
+      throw new NotFoundException(`Entrada ${id} no encontrada.`);
+    }
+
+    // Validación de estado: solo entradas PAGADAS tienen QR
+    if (ticket.estado !== TicketStatus.PAGADO) {
+      throw new BadRequestException(
+        `El QR solo está disponible para entradas pagadas. Estado actual: ${ticket.estado}.`,
+      );
+    }
+
+    const qrDataUrl = await this.qrService.generarQrBase64(ticket.id);
+    return { ticketId: ticket.id, qrDataUrl };
   }
 
   async pagar(
