@@ -7,6 +7,19 @@ import { Partido } from '@/types/ticket';
 import Bandera from '@/components/Bandera';
 import { useUser } from '@clerk/nextjs';
 
+const TEAM_LABEL_ALIASES: Record<string, string> = {
+  "UEFA Playoff A": "Bosnia",
+  "UEFA Playoff B": "Suecia",
+  "UEFA Playoff C": "Turquía",
+  "UEFA Playoff D": "República Checa",
+  "Intercontinental 1": "RD Congo",
+  "Intercontinental 2": "Irak",
+};
+
+function normalizeTeamLabel(team: string) {
+  return TEAM_LABEL_ALIASES[team] ?? team;
+}
+
 export default function ComponenteCalendario() {
   const { isSignedIn, isLoaded } = useUser();
   const [partidos, setPartidos] = useState<Partido[]>([]);
@@ -61,13 +74,16 @@ export default function ComponenteCalendario() {
               const destino = isSignedIn 
                 ? `/profile?redirect=/checkout/${partido.id}` 
                 : `/login?redirect=/profile?redirect=/checkout/${partido.id}`;
+              
+              const localTeam = normalizeTeamLabel(partido.equipo_local);
+              const awayTeam = normalizeTeamLabel(partido.equipo_visitante);
 
               return (
                 <Link
                   key={partido.id}
                   href={destino}
                   className="block p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shrink-0 hover:border-blue-500 hover:shadow-md transition-all shadow-sm"
-                  title={`${partido.equipo_local} vs ${partido.equipo_visitante} - ${partido.nombre_estadio}`}
+                  title={`${localTeam} vs ${awayTeam} - ${partido.nombre_estadio}`}
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-[9px] font-black uppercase text-slate-400 bg-slate-100 dark:bg-slate-700 px-1 rounded">{partido.fase}</span>
@@ -77,13 +93,13 @@ export default function ComponenteCalendario() {
                   </div>
                   <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1 w-2/5">
-                      <Bandera pais={partido.equipo_local} />
-                      <span className="text-[10px] font-bold truncate">{partido.equipo_local.substring(0, 3).toUpperCase()}</span>
+                      <Bandera pais={localTeam} />
+                      <span className="text-[10px] font-bold truncate">{localTeam.substring(0, 3).toUpperCase()}</span>
                     </div>
                     <span className="text-[8px] font-black text-slate-300 dark:text-slate-500 italic">VS</span>
                     <div className="flex items-center gap-1 w-2/5 justify-end">
-                      <span className="text-[10px] font-bold truncate">{partido.equipo_visitante.substring(0, 3).toUpperCase()}</span>
-                      <Bandera pais={partido.equipo_visitante} />
+                      <span className="text-[10px] font-bold truncate">{awayTeam.substring(0, 3).toUpperCase()}</span>
+                      <Bandera pais={awayTeam} />
                     </div>
                   </div>
                   {/* Etiqueta de precio ARS */}

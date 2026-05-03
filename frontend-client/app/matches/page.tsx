@@ -11,7 +11,7 @@ import { Partido } from "@/types/ticket";
 // 1. LAS 48 SELECCIONES (Para el filtro lateral)
 const SELECCIONES_2026 = [
   "Alemania", "Arabia Saudí", "Argelia", "Argentina", "Australia",
-  "Austria", "Bosnia y Herzegovina", "Brasil", "Bélgica", "Cabo Verde",
+  "Austria", "Bosnia", "Brasil", "Bélgica", "Cabo Verde",
   "Canadá", "Colombia", "Corea del Sur", "Costa de Marfil", "Croacia",
   "Curazao", "Ecuador", "Egipto", "Escocia", "España", "Estados Unidos",
   "Francia", "Ghana", "Haití", "Inglaterra", "Irak", "Irán", "Japón",
@@ -20,6 +20,19 @@ const SELECCIONES_2026 = [
   "República Checa", "Senegal", "Sudáfrica", "Suecia", "Suiza",
   "Turquía", "Túnez", "Uruguay", "Uzbekistán"
 ];
+
+const TEAM_LABEL_ALIASES: Record<string, string> = {
+  "UEFA Playoff A": "Bosnia",
+  "UEFA Playoff B": "Suecia",
+  "UEFA Playoff C": "Turquía",
+  "UEFA Playoff D": "República Checa",
+  "Intercontinental 1": "RD Congo",
+  "Intercontinental 2": "Irak",
+};
+
+function normalizeTeamLabel(team: string) {
+  return TEAM_LABEL_ALIASES[team] ?? team;
+}
 
 // 2. MOCK DE PARTIDOS (ELIMINADO - AHORA USAMOS LA API)
 
@@ -54,7 +67,9 @@ export default function MatchesPage() {
 
   // FILTRADO DINÁMICO (Usando los campos en español y snake_case)
   const filteredMatches = partidos.filter((match) => {
-    const matchTeam = selectedTeam === "Todos" || match.equipo_local === selectedTeam || match.equipo_visitante === selectedTeam;
+    const localTeam = normalizeTeamLabel(match.equipo_local);
+    const awayTeam = normalizeTeamLabel(match.equipo_visitante);
+    const matchTeam = selectedTeam === "Todos" || localTeam === selectedTeam || awayTeam === selectedTeam;
     const matchPhase = selectedPhase === "Todas" || match.fase === selectedPhase;
     return matchTeam && matchPhase;
   });
@@ -132,10 +147,10 @@ export default function MatchesPage() {
                 {/* ANIMATED HOVER BACKGROUND FLAGS */}
                 <div className="absolute inset-0 z-0 flex opacity-0 group-hover:opacity-60 transition-all duration-700 pointer-events-none scale-110 group-hover:scale-100">
                   <div className="w-1/2 h-full">
-                    <Bandera pais={match.equipo_local} fill />
+                    <Bandera pais={normalizeTeamLabel(match.equipo_local)} fill />
                   </div>
                   <div className="w-1/2 h-full">
-                    <Bandera pais={match.equipo_visitante} fill />
+                    <Bandera pais={normalizeTeamLabel(match.equipo_visitante)} fill />
                   </div>
                   {/* Gradient overlays to smooth the flags and keep text readable */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -153,13 +168,13 @@ export default function MatchesPage() {
                   <div className="flex flex-col gap-1 mb-8">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                       <div className="flex items-center gap-3">
-                        <Bandera pais={match.equipo_local} />
-                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.equipo_local}</h3>
+                        <Bandera pais={normalizeTeamLabel(match.equipo_local)} />
+                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{normalizeTeamLabel(match.equipo_local)}</h3>
                       </div>
                       <span className="text-blue-600 text-lg lg:text-xl font-black italic leading-none">VS</span>
                       <div className="flex items-center gap-3">
-                        <Bandera pais={match.equipo_visitante} />
-                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{match.equipo_visitante}</h3>
+                        <Bandera pais={normalizeTeamLabel(match.equipo_visitante)} />
+                        <h3 className="text-xl lg:text-2xl font-black tracking-tighter uppercase leading-none">{normalizeTeamLabel(match.equipo_visitante)}</h3>
                       </div>
                     </div>
 

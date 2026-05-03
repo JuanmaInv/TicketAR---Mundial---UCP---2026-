@@ -27,6 +27,7 @@ export default function Bandera({ pais, fill = false }: BanderaProps) {
     "Australia": "au",
     "Austria": "at",
     "Bélgica": "be",
+    "Bosnia": "ba",
     "Bosnia y Herzegovina": "ba",
     "Brasil": "br",
     "Cabo Verde": "cv",
