@@ -11,14 +11,14 @@ test.describe('Flujo E2E - Compra de Entradas', () => {
       await page.goto(`${BASE_URL}/checkout`);
       await expect(page).toHaveURL(/.*\/login|.*\/sign-in/);
 
-      // 2. Simular login con usuario y contraseña
-      await page.locator('input[name="identifier"]').fill('test+clerk_test@ticketar.com');
+      // 2. Simular login con usuario y contraseña (usando variables de entorno por seguridad)
+      await page.locator('input[name="identifier"]').fill(process.env.E2E_TEST_EMAIL || 'test@ticketar.com');
       // Clerk usa dos pasos: click en Continuar tras el email. (Usamos regex exacto para evitar "Continue with Google")
       await page.getByRole('button', { name: /^Continue$|^Continuar$/i }).click();
       // Esperar a que el campo de password sea interactivo
       const passwordInput = page.locator('input[name="password"]');
       await passwordInput.waitFor({ state: 'visible' });
-      await passwordInput.fill('IngSoftware2026');
+      await passwordInput.fill(process.env.E2E_TEST_PASSWORD || 'password123');
       await page.getByRole('button', { name: /^Continue$|^Continuar$|^Sign In$|^Iniciar sesi[óo]n$/i }).click();
 
       // Verificar que el login fue exitoso y redirige al home, calendario o al menos avanzó al factor-two
@@ -39,11 +39,11 @@ test.describe('Flujo E2E - Compra de Entradas', () => {
     // Autenticación previa para los tests de este bloque
     test.beforeEach(async ({ page }) => {
       await page.goto(`${BASE_URL}/login`);
-      await page.locator('input[name="identifier"]').fill('test+clerk_test@ticketar.com');
+      await page.locator('input[name="identifier"]').fill(process.env.E2E_TEST_EMAIL || 'test@ticketar.com');
       await page.locator('.cl-formButtonPrimary').first().click();
       const passwordInput = page.locator('input[name="password"]');
       await passwordInput.waitFor({ state: 'visible' });
-      await passwordInput.fill('IngSoftware2026');
+      await passwordInput.fill(process.env.E2E_TEST_PASSWORD || 'password123');
       await page.locator('.cl-formButtonPrimary').last().click();
       await expect(page).not.toHaveURL(/.*\/login/);
     });
@@ -113,11 +113,11 @@ test.describe('Flujo E2E - Compra de Entradas', () => {
     test('8. Calendario responsive, fecha coincide con dispositivo y es previa al partido', async ({ page }) => {
       // Iniciar sesión y navegar al calendario
       await page.goto(`${BASE_URL}/login`);
-      await page.locator('input[name="identifier"]').fill('test+clerk_test@ticketar.com');
+      await page.locator('input[name="identifier"]').fill(process.env.E2E_TEST_EMAIL || 'test@ticketar.com');
       await page.locator('.cl-formButtonPrimary').first().click();
       const passwordInput = page.locator('input[name="password"]');
       await passwordInput.waitFor({ state: 'visible' });
-      await passwordInput.fill('IngSoftware2026');
+      await passwordInput.fill(process.env.E2E_TEST_PASSWORD || 'password123');
       await page.locator('.cl-formButtonPrimary').last().click();
       await page.goto(`${BASE_URL}/calendario`);
 
