@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   IPaymentStrategy,
   PaymentResult,
@@ -14,9 +15,11 @@ export class PaymentsService {
   constructor(
     private readonly simulatedStrategy: SimulatedPaymentStrategy,
     private readonly mercadopagoStrategy: MercadoPagoStrategy,
+    private readonly configService: ConfigService,
   ) {
-    // Por defecto usamos la simulada
-    this.strategy = simulatedStrategy;
+    const useMp = this.configService.get<string>('MP_ACCESS_TOKEN');
+    // Si tenemos token de MP, usamos la estrategia real, sino la simulada
+    this.strategy = useMp ? this.mercadopagoStrategy : this.simulatedStrategy;
   }
 
   /**

@@ -56,14 +56,14 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
           ],
           external_reference: metadata?.ticketId,
           notification_url: this.configService.get<string>('MP_WEBHOOK_URL'), // URL que recibirá los avisos
-          back_urls: {
-            success: `${this.configService.get<string>('FRONTEND_URL')}/pago-exitoso`,
-            failure: `${this.configService.get<string>('FRONTEND_URL')}/pago-fallido`,
-            pending: `${this.configService.get<string>('FRONTEND_URL')}/pago-pendiente`,
-          },
-          auto_return: 'approved',
+          // En desarrollo usamos la URL base del webhook (ngrok) para back_urls
+          // ya que MP exige HTTPS para auto_return
+          ...this.buildBackUrls(),
         },
       });
+
+      this.logger.log(`✅ Preferencia creada exitosamente. ID: ${response.id}`);
+      this.logger.log(`🔗 LINK DE PAGO: ${response.init_point}`);
 
       return {
         success: true,
@@ -110,5 +110,45 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
         error: 'No se pudo verificar el pago con Mercado Pago',
       };
     }
+  }
+
+  /**
+   * Construye las back_urls y auto_return para la preferencia de MP.
+   * Si FRONTEND_URL es HTTPS (producción), la usa directamente.
+   * Si no (localhost/dev), usa la base del webhook (ngrok) como fallback.
+   */
+  private buildBackUrls(): Record<string, unknown> {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || '';
+    const webhookUrl = this.configService.get<string>('MP_WEBHOOK_URL') || '';
+
+    let baseUrl: string;
+
+    if (frontendUrl.startsWith('https://')) {
+      baseUrl = frontendUrl;
+    } else if (webhookUrl) {
+      // Extraer base del webhook: https://xxx.ngrok-free.dev
+      try {
+        const parsed = new URL(webhookUrl);
+        baseUrl = `${parsed.protocol}//${parsed.host}`;
+      } catch {
+        baseUrl = '';
+      }
+    } else {
+      baseUrl = '';
+    }
+
+    if (!baseUrl) {
+      // Sin URLs válidas, no incluimos back_urls ni auto_return
+      return {};
+    }
+
+    return {
+      back_urls: {
+        success: `${baseUrl}/pago-exitoso`,
+        failure: `${baseUrl}/pago-fallido`,
+        pending: `${baseUrl}/pago-pendiente`,
+      },
+      auto_return: 'approved',
+    };
   }
 }

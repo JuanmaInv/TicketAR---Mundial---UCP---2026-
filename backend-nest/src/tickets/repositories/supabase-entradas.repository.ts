@@ -65,9 +65,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   }
 
   async obtenerTodas(): Promise<TicketEntity[]> {
-    const { data, error } = await this.supabase
-      .from('entradas')
-      .select('*, partidos(*), sectores_estadio(*)');
+    const { data, error } = await this.supabase.from('entradas').select('*');
 
     if (error) throw error;
     return data.map((item) => this.mapearTicket(item));
@@ -76,7 +74,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   async obtenerUna(id: string): Promise<TicketEntity | null> {
     const { data, error } = (await this.supabase
       .from('entradas')
-      .select('*, partidos(*), sectores_estadio(*)')
+      .select('*')
       .eq('id', id)
       .maybeSingle()) as { data: unknown; error: Error | null };
 
