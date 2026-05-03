@@ -6,16 +6,50 @@
 
 # Test info
 
-- Name: e2e.spec.ts >> Flujo E2E - Compra de Entradas >> Pruebas de Acceso y Seguridad >> 1 y 2. Entrar a la página, ser redirigido al login y simular login
-- Location: tests\e2e.spec.ts:9:9
+- Name: e2e.spec.ts >> Flujo E2E - Compra de Entradas >> Pruebas de Acceso y Seguridad >> 7. Intentar entrar al checkout sin estar logeado y verificar que redirige al login
+- Location: tests\e2e.spec.ts:23:9
 
 # Error details
 
 ```
-Error: page.goto: Could not connect to server
-Call log:
-  - navigating to "http://localhost:3000/", waiting until "load"
+Error: expect(page).toHaveURL(expected) failed
 
+Expected pattern: /.*\/login/
+Received string:  "http://localhost:3000/checkout"
+Timeout: 5000ms
+
+Call log:
+  - Expect "toHaveURL" with timeout 5000ms
+    8 × unexpected value "http://localhost:3000/checkout"
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "TicketARMUNDIAL" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: TicketARMUNDIAL
+      - generic [ref=e6]:
+        - link "Inicio" [ref=e7] [cursor=pointer]:
+          - /url: /
+        - link "Partidos" [ref=e8] [cursor=pointer]:
+          - /url: /matches
+        - link "Sobre Nosotros" [ref=e9] [cursor=pointer]:
+          - /url: /about
+        - link "Mis Entradas" [ref=e10] [cursor=pointer]:
+          - /url: /my-tickets
+      - button "Iniciar Sesión" [ref=e12]
+  - main [ref=e13]:
+    - generic [ref=e15]:
+      - heading "404" [level=1] [ref=e16]
+      - heading "This page could not be found." [level=2] [ref=e18]
+  - button "Open Next.js Dev Tools" [ref=e24] [cursor=pointer]:
+    - img [ref=e25]
+  - alert [ref=e28]
 ```
 
 # Test source
@@ -31,8 +65,7 @@ Call log:
   8   |     
   9   |     test('1 y 2. Entrar a la página, ser redirigido al login y simular login', async ({ page }) => {
   10  |       // 1. Entrar a la página (ruta protegida) y ser redirigido al login
-> 11  |       await page.goto(BASE_URL);
-      |                  ^ Error: page.goto: Could not connect to server
+  11  |       await page.goto(BASE_URL);
   12  |       await expect(page).toHaveURL(/.*\/login/);
   13  | 
   14  |       // 2. Simular login con usuario y contraseña
@@ -48,7 +81,8 @@ Call log:
   24  |       // Al ser un nuevo test, el estado del navegador no está autenticado
   25  |       await page.goto(`${BASE_URL}/checkout`);
   26  |       // Verificar redirección al login
-  27  |       await expect(page).toHaveURL(/.*\/login/);
+> 27  |       await expect(page).toHaveURL(/.*\/login/);
+      |                          ^ Error: expect(page).toHaveURL(expected) failed
   28  |     });
   29  |   });
   30  | 
@@ -133,4 +167,20 @@ Call log:
   109 |       await page.goto(`${BASE_URL}/calendario`);
   110 | 
   111 |       // Verificar que un elemento específico de móvil sea visible (ej. menú hamburguesa o cambio de layout)
+  112 |       // o simplemente comprobar que el contenedor principal se ajusta al tamaño
+  113 |       const calendario = page.locator('.calendario-container, [data-testid="calendario"]');
+  114 |       await expect(calendario).toBeVisible();
+  115 | 
+  116 |       // Obtener la fecha del dispositivo (fecha de ejecución del test)
+  117 |       const fechaDispositivo = new Date();
+  118 |       const diaDispositivo = fechaDispositivo.getDate().toString();
+  119 | 
+  120 |       // Validar que la UI muestra/resalta la fecha actual que coincide con el dispositivo
+  121 |       const diaActualUI = page.locator('.dia-actual, [data-testid="today-date"]');
+  122 |       if (await diaActualUI.count() > 0) {
+  123 |         const textoDia = await diaActualUI.textContent();
+  124 |         expect(textoDia).toContain(diaDispositivo);
+  125 |       }
+  126 | 
+  127 |       // Validar que la fecha del dispositivo es previa a la del partido seleccionado
 ```

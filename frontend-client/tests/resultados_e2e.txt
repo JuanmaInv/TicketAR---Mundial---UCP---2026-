@@ -1,145 +1,31 @@
+====================================================
+RESULTADOS DE PRUEBAS E2E - PLAYWRIGHT
+Fecha: 03 de Mayo de 2026
+Rama actual: 274
+Proyecto: TicketAR 2026
+====================================================
 
-Running 5 tests using 5 workers
+RESUMEN DE EJECUCIÓN:
+- Servidores: Frontend (Next.js - Puerto 3000) y Backend (NestJS - Puerto 3001) iniciados correctamente.
+- Total de tests ejecutados: 18
+- Tests Exitosos (Passed): 3
+- Tests Fallidos (Failed): 15
+- Tiempo de ejecución: ~1.1 minutos
 
-[1A[2K[1/5] [chromium] › tests\e2e.spec.ts:23:9 › Flujo E2E - Compra de Entradas › Pruebas de Acceso y Seguridad › 7. Intentar entrar al checkout sin estar logeado y verificar que redirige al login
-[1A[2K[2/5] [chromium] › tests\e2e.spec.ts:63:9 › Flujo E2E - Compra de Entradas › Flujo de Compra de Entradas (Usuario Logeado) › 6. Capturar el cronómetro de 15 minutos en checkout y persistencia al refrescar
-[1A[2K[3/5] [chromium] › tests\e2e.spec.ts:9:9 › Flujo E2E - Compra de Entradas › Pruebas de Acceso y Seguridad › 1 y 2. Entrar a la página, ser redirigido al login y simular login
-[1A[2K[4/5] [chromium] › tests\e2e.spec.ts:103:9 › Flujo E2E - Compra de Entradas › Responsiveness y Validaciones (Mobile) › 8. Calendario responsive, fecha coincide con dispositivo y es previa al partido
-[1A[2K[5/5] [chromium] › tests\e2e.spec.ts:42:9 › Flujo E2E - Compra de Entradas › Flujo de Compra de Entradas (Usuario Logeado) › 3, 4 y 5. Navegar al calendario, seleccionar partido, llenar datos y redirigir a checkout con ID
-[1A[2K  1) [chromium] › tests\e2e.spec.ts:23:9 › Flujo E2E - Compra de Entradas › Pruebas de Acceso y Seguridad › 7. Intentar entrar al checkout sin estar logeado y verificar que redirige al login 
+DETALLE DE LOS FALLOS PRINCIPALES:
 
-    Error: [2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
+1. Timeout en el Formulario de Login:
+   - Error: `locator.fill: Test timeout of 30000ms exceeded. waiting for getByLabel(/usuario|email/i)`
+   - Causa Probable: El test intenta llenar los campos de "Usuario" o "Email" usando el texto de sus etiquetas (labels). Sin embargo, Playwright no logra encontrar ningún elemento en la pantalla con esos nombres durante los 30 segundos de espera.
+   - Solución Recomendada: Verificar que la página de `/login` esté renderizando correctamente los `label` o atributos `aria-label` esperados ("usuario", "email", etc.).
 
-    Expected pattern: [32m/.*\/login/[39m
-    Received string:  [31m"http://localhost:3000/checkout"[39m
-    Timeout: 5000ms
+2. Falla de Redirección en Rutas Protegidas:
+   - Error: `expect(page).toHaveURL(expected) failed`
+     Expected pattern: `/.*\/login/`
+     Received string: `"http://localhost:3000/checkout"`
+   - Causa Probable: Se esperaba que al entrar a `/checkout` sin estar logeado (autenticado), la aplicación automáticamente redirigiera al usuario a la página de `/login`. Sin embargo, el navegador se quedó en `/checkout`.
+   - Solución Recomendada: Revisar la lógica de protección de rutas (ej. middleware de Next.js o Auth Guards) para asegurar que un usuario sin sesión activa sea redirigido inmediatamente.
 
-    Call log:
-    [2m  - Expect "toHaveURL" with timeout 5000ms[22m
-    [2m    8 × unexpected value "http://localhost:3000/checkout"[22m
-
-
-      25 |       await page.goto(`${BASE_URL}/checkout`);
-      26 |       // Verificar redirección al login
-    > 27 |       await expect(page).toHaveURL(/.*\/login/);
-         |                          ^
-      28 |     });
-      29 |   });
-      30 |
-        at C:\Users\HP\TicketAR---Mundial---UCP---2026--1\frontend-client\tests\e2e.spec.ts:27:26
-
-    Error Context: test-results\e2e-Flujo-E2E---Compra-de--8e115-ficar-que-redirige-al-login-chromium\error-context.md
-
-
-[1A[2K  2) [chromium] › tests\e2e.spec.ts:9:9 › Flujo E2E - Compra de Entradas › Pruebas de Acceso y Seguridad › 1 y 2. Entrar a la página, ser redirigido al login y simular login 
-
-    Error: [2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
-
-    Expected pattern: [32m/.*\/login/[39m
-    Received string:  [31m"http://localhost:3000/"[39m
-    Timeout: 5000ms
-
-    Call log:
-    [2m  - Expect "toHaveURL" with timeout 5000ms[22m
-    [2m    8 × unexpected value "http://localhost:3000/"[22m
-
-
-      10 |       // 1. Entrar a la página (ruta protegida) y ser redirigido al login
-      11 |       await page.goto(BASE_URL);
-    > 12 |       await expect(page).toHaveURL(/.*\/login/);
-         |                          ^
-      13 |
-      14 |       // 2. Simular login con usuario y contraseña
-      15 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-        at C:\Users\HP\TicketAR---Mundial---UCP---2026--1\frontend-client\tests\e2e.spec.ts:12:26
-
-    Error Context: test-results\e2e-Flujo-E2E---Compra-de--a11d4-do-al-login-y-simular-login-chromium\error-context.md
-
-
-[1A[2K  3) [chromium] › tests\e2e.spec.ts:42:9 › Flujo E2E - Compra de Entradas › Flujo de Compra de Entradas (Usuario Logeado) › 3, 4 y 5. Navegar al calendario, seleccionar partido, llenar datos y redirigir a checkout con ID 
-
-    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
-
-      32 |     
-      33 |     // Autenticación previa para los tests de este bloque
-    > 34 |     test.beforeEach(async ({ page }) => {
-         |          ^
-      35 |       await page.goto(`${BASE_URL}/login`);
-      36 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-      37 |       await page.getByLabel(/contraseña|password/i).fill('password123');
-        at C:\Users\HP\TicketAR---Mundial---UCP---2026--1\frontend-client\tests\e2e.spec.ts:34:10
-
-    Error: locator.fill: Test timeout of 30000ms exceeded.
-    Call log:
-    [2m  - waiting for getByLabel(/usuario|email/i)[22m
-
-
-      34 |     test.beforeEach(async ({ page }) => {
-      35 |       await page.goto(`${BASE_URL}/login`);
-    > 36 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-         |                                               ^
-      37 |       await page.getByLabel(/contraseña|password/i).fill('password123');
-      38 |       await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
-      39 |       await expect(page).not.toHaveURL(/.*\/login/);
-        at C:\Users\HP\TicketAR---Mundial---UCP---2026--1\frontend-client\tests\e2e.spec.ts:36:47
-
-    Error Context: test-results\e2e-Flujo-E2E---Compra-de--0566c-redirigir-a-checkout-con-ID-chromium\error-context.md
-
-
-[1A[2K  4) [chromium] › tests\e2e.spec.ts:103:9 › Flujo E2E - Compra de Entradas › Responsiveness y Validaciones (Mobile) › 8. Calendario responsive, fecha coincide con dispositivo y es previa al partido 
-
-    [31mTest timeout of 30000ms exceeded.[39m
-
-    Error: locator.fill: Test timeout of 30000ms exceeded.
-    Call log:
-    [2m  - waiting for getByLabel(/usuario|email/i)[22m
-
-
-      104 |       // Iniciar sesión y navegar al calendario
-      105 |       await page.goto(`${BASE_URL}/login`);
-    > 106 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-          |                                               ^
-      107 |       await page.getByLabel(/contraseña|password/i).fill('password123');
-      108 |       await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
-      109 |       await page.goto(`${BASE_URL}/calendario`);
-        at C:\Users\HP\TicketAR---Mundial---UCP---2026--1\frontend-client\tests\e2e.spec.ts:106:47
-
-    Error Context: test-results\e2e-Flujo-E2E---Compra-de--e30fe-tivo-y-es-previa-al-partido-chromium\error-context.md
-
-
-[1A[2K  5) [chromium] › tests\e2e.spec.ts:63:9 › Flujo E2E - Compra de Entradas › Flujo de Compra de Entradas (Usuario Logeado) › 6. Capturar el cronómetro de 15 minutos en checkout y persistencia al refrescar 
-
-    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
-
-      32 |     
-      33 |     // Autenticación previa para los tests de este bloque
-    > 34 |     test.beforeEach(async ({ page }) => {
-         |          ^
-      35 |       await page.goto(`${BASE_URL}/login`);
-      36 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-      37 |       await page.getByLabel(/contraseña|password/i).fill('password123');
-        at C:\Users\HP\TicketAR---Mundial---UCP---2026--1\frontend-client\tests\e2e.spec.ts:34:10
-
-    Error: locator.fill: Test timeout of 30000ms exceeded.
-    Call log:
-    [2m  - waiting for getByLabel(/usuario|email/i)[22m
-
-
-      34 |     test.beforeEach(async ({ page }) => {
-      35 |       await page.goto(`${BASE_URL}/login`);
-    > 36 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
-         |                                               ^
-      37 |       await page.getByLabel(/contraseña|password/i).fill('password123');
-      38 |       await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
-      39 |       await expect(page).not.toHaveURL(/.*\/login/);
-        at C:\Users\HP\TicketAR---Mundial---UCP---2026--1\frontend-client\tests\e2e.spec.ts:36:47
-
-    Error Context: test-results\e2e-Flujo-E2E---Compra-de--c80d9-y-persistencia-al-refrescar-chromium\error-context.md
-
-
-[1A[2K  5 failed
-    [chromium] › tests\e2e.spec.ts:9:9 › Flujo E2E - Compra de Entradas › Pruebas de Acceso y Seguridad › 1 y 2. Entrar a la página, ser redirigido al login y simular login 
-    [chromium] › tests\e2e.spec.ts:23:9 › Flujo E2E - Compra de Entradas › Pruebas de Acceso y Seguridad › 7. Intentar entrar al checkout sin estar logeado y verificar que redirige al login 
-    [chromium] › tests\e2e.spec.ts:42:9 › Flujo E2E - Compra de Entradas › Flujo de Compra de Entradas (Usuario Logeado) › 3, 4 y 5. Navegar al calendario, seleccionar partido, llenar datos y redirigir a checkout con ID 
-    [chromium] › tests\e2e.spec.ts:63:9 › Flujo E2E - Compra de Entradas › Flujo de Compra de Entradas (Usuario Logeado) › 6. Capturar el cronómetro de 15 minutos en checkout y persistencia al refrescar 
-    [chromium] › tests\e2e.spec.ts:103:9 › Flujo E2E - Compra de Entradas › Responsiveness y Validaciones (Mobile) › 8. Calendario responsive, fecha coincide con dispositivo y es previa al partido 
+PRÓXIMOS PASOS RECOMENDADOS:
+- Ajustar los selectores (`getByLabel`, `getByRole`) en los archivos `e2e.spec.ts` y `ticketar-flow.spec.ts` para que coincidan exactamente con la estructura actual del HTML.
+- Verificar si la conexión entre el Frontend y el Backend está funcionando (puede haber errores de CORS o de base de datos impidiendo que la página cargue los elementos).

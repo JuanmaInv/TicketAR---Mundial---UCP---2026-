@@ -6,26 +6,44 @@
 
 # Test info
 
-- Name: e2e.spec.ts >> Flujo E2E - Compra de Entradas >> Flujo de Compra de Entradas (Usuario Logeado) >> 6. Capturar el cronómetro de 15 minutos en checkout y persistencia al refrescar
-- Location: tests\e2e.spec.ts:63:9
+- Name: e2e.spec.ts >> Flujo E2E - Compra de Entradas >> Responsiveness y Validaciones (Mobile) >> 8. Calendario responsive, fecha coincide con dispositivo y es previa al partido
+- Location: tests\e2e.spec.ts:103:9
 
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
-Call log:
-  - navigating to "http://localhost:3000/login", waiting until "load"
+Test timeout of 30000ms exceeded.
+```
 
+```
+Error: locator.fill: Test timeout of 30000ms exceeded.
+Call log:
+  - waiting for getByLabel(/usuario|email/i)
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "TicketARMUNDIAL" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: TicketARMUNDIAL
+      - button "Iniciar Sesión" [ref=e7]
+  - main [ref=e8]:
+    - generic [ref=e10]:
+      - heading "404" [level=1] [ref=e11]
+      - heading "This page could not be found." [level=2] [ref=e13]
+  - button "Open Next.js Dev Tools" [ref=e19] [cursor=pointer]:
+    - img [ref=e20]
+  - alert [ref=e24]
 ```
 
 # Test source
 
 ```ts
-  1   | import { test, expect } from '@playwright/test';
-  2   | 
-  3   | const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-  4   | 
-  5   | test.describe('Flujo E2E - Compra de Entradas', () => {
   6   | 
   7   |   test.describe('Pruebas de Acceso y Seguridad', () => {
   8   |     
@@ -55,8 +73,7 @@ Call log:
   32  |     
   33  |     // Autenticación previa para los tests de este bloque
   34  |     test.beforeEach(async ({ page }) => {
-> 35  |       await page.goto(`${BASE_URL}/login`);
-      |                  ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+  35  |       await page.goto(`${BASE_URL}/login`);
   36  |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
   37  |       await page.getByLabel(/contraseña|password/i).fill('password123');
   38  |       await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
@@ -127,7 +144,8 @@ Call log:
   103 |     test('8. Calendario responsive, fecha coincide con dispositivo y es previa al partido', async ({ page }) => {
   104 |       // Iniciar sesión y navegar al calendario
   105 |       await page.goto(`${BASE_URL}/login`);
-  106 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
+> 106 |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
+      |                                               ^ Error: locator.fill: Test timeout of 30000ms exceeded.
   107 |       await page.getByLabel(/contraseña|password/i).fill('password123');
   108 |       await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
   109 |       await page.goto(`${BASE_URL}/calendario`);
@@ -157,4 +175,11 @@ Call log:
   133 |         
   134 |         // Verificar que la fecha de hoy es anterior a la del partido
   135 |         // (Nota: Si el textoFechaPartido no es Date-parseable directamente, requerirá ajuste)
+  136 |         expect(fechaDispositivo.getTime()).toBeLessThan(fechaPartido.getTime());
+  137 |       }
+  138 |     });
+  139 |   });
+  140 | 
+  141 | });
+  142 | 
 ```

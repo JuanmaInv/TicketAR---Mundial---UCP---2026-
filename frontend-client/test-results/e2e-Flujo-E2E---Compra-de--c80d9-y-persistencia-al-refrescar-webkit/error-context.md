@@ -6,31 +6,48 @@
 
 # Test info
 
-- Name: e2e.spec.ts >> Flujo E2E - Compra de Entradas >> Pruebas de Acceso y Seguridad >> 7. Intentar entrar al checkout sin estar logeado y verificar que redirige al login
-- Location: tests\e2e.spec.ts:23:9
+- Name: e2e.spec.ts >> Flujo E2E - Compra de Entradas >> Flujo de Compra de Entradas (Usuario Logeado) >> 6. Capturar el cronómetro de 15 minutos en checkout y persistencia al refrescar
+- Location: tests\e2e.spec.ts:63:9
 
 # Error details
 
 ```
-Error: page.goto: NS_ERROR_CONNECTION_REFUSED
+Test timeout of 30000ms exceeded while running "beforeEach" hook.
+```
+
+```
+Error: locator.fill: Test timeout of 30000ms exceeded.
 Call log:
-  - navigating to "http://localhost:3000/checkout", waiting until "load"
+  - waiting for getByLabel(/usuario|email/i)
 
 ```
 
 # Page snapshot
 
 ```yaml
-- generic [ref=e2]:
-  - generic [ref=e3]:
-    - heading "Unable to connect" [level=1] [ref=e5]
-    - paragraph [ref=e6]: Firefox can’t establish a connection to the server at localhost:3000.
-    - paragraph
-    - list [ref=e8]:
-      - listitem [ref=e9]: The site could be temporarily unavailable or too busy. Try again in a few moments.
-      - listitem [ref=e10]: If you are unable to load any pages, check your computer’s network connection.
-      - listitem [ref=e11]: If your computer or network is protected by a firewall or proxy, make sure that Nightly is permitted to access the web.
-  - button "Try Again" [active] [ref=e13]
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "TicketARMUNDIAL" [ref=e4]:
+        - /url: /
+        - generic [ref=e5]: TicketARMUNDIAL
+      - generic [ref=e6]:
+        - link "Inicio" [ref=e7]:
+          - /url: /
+        - link "Partidos" [ref=e8]:
+          - /url: /matches
+        - link "Sobre Nosotros" [ref=e9]:
+          - /url: /about
+        - link "Mis Entradas" [ref=e10]:
+          - /url: /my-tickets
+      - button "Iniciar Sesión" [ref=e12]
+  - main [ref=e13]:
+    - generic [ref=e15]:
+      - heading "404" [level=1] [ref=e16]
+      - heading "This page could not be found." [level=2] [ref=e18]
+  - button "Open Next.js Dev Tools" [ref=e24] [cursor=pointer]:
+    - img [ref=e25]
+  - alert [ref=e30]
 ```
 
 # Test source
@@ -60,8 +77,7 @@ Call log:
   22  | 
   23  |     test('7. Intentar entrar al checkout sin estar logeado y verificar que redirige al login', async ({ page }) => {
   24  |       // Al ser un nuevo test, el estado del navegador no está autenticado
-> 25  |       await page.goto(`${BASE_URL}/checkout`);
-      |                  ^ Error: page.goto: NS_ERROR_CONNECTION_REFUSED
+  25  |       await page.goto(`${BASE_URL}/checkout`);
   26  |       // Verificar redirección al login
   27  |       await expect(page).toHaveURL(/.*\/login/);
   28  |     });
@@ -72,7 +88,8 @@ Call log:
   33  |     // Autenticación previa para los tests de este bloque
   34  |     test.beforeEach(async ({ page }) => {
   35  |       await page.goto(`${BASE_URL}/login`);
-  36  |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
+> 36  |       await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
+      |                                               ^ Error: locator.fill: Test timeout of 30000ms exceeded.
   37  |       await page.getByLabel(/contraseña|password/i).fill('password123');
   38  |       await page.getByRole('button', { name: /iniciar sesión|login/i }).click();
   39  |       await expect(page).not.toHaveURL(/.*\/login/);
@@ -162,4 +179,15 @@ Call log:
   123 |         const textoDia = await diaActualUI.textContent();
   124 |         expect(textoDia).toContain(diaDispositivo);
   125 |       }
+  126 | 
+  127 |       // Validar que la fecha del dispositivo es previa a la del partido seleccionado
+  128 |       const fechaPartidoUI = page.locator('.fecha-partido, [data-testid="match-date"]').first();
+  129 |       if (await fechaPartidoUI.count() > 0) {
+  130 |         const textoFechaPartido = await fechaPartidoUI.textContent() || '';
+  131 |         // Asumiendo un formato parseable como YYYY-MM-DD o parseo personalizado según la app
+  132 |         const fechaPartido = new Date(textoFechaPartido); 
+  133 |         
+  134 |         // Verificar que la fecha de hoy es anterior a la del partido
+  135 |         // (Nota: Si el textoFechaPartido no es Date-parseable directamente, requerirá ajuste)
+  136 |         expect(fechaDispositivo.getTime()).toBeLessThan(fechaPartido.getTime());
 ```
