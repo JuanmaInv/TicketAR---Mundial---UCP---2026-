@@ -1,0 +1,79 @@
+Reporte de Fallos Playwright – tests\e2e.spec.ts
+
+1. Prueba de Acceso y Seguridad – Intentar entrar al checkout sin login
+
+Ubicación: línea 27
+
+Error:
+
+await expect(page).toHaveURL(/.*\/login/);
+
+Recibido: http://localhost:3000/checkoutEsperado: /login
+
+Explicación: El sistema permitió acceder al checkout sin autenticación.
+
+Acción correctiva: Revisar middleware de protección de rutas; asegurar que /checkout redirija a /login si no hay sesión.
+
+2. Prueba de Acceso y Seguridad – Entrar a la página y ser redirigido al login
+
+Ubicación: línea 12
+
+Error:
+
+await expect(page).toHaveURL(/.*\/login/);
+
+Recibido: http://localhost:3000/Esperado: /login
+
+Explicación: La ruta principal no redirige al login como se esperaba.
+
+Acción correctiva: Validar configuración de rutas protegidas; revisar lógica de redirección inicial.
+
+3. Flujo de Compra – Navegar al calendario, llenar datos y redirigir a checkout con ID
+
+Ubicación: línea 34 (hook beforeEach)
+
+Error: Timeout de 30s al intentar llenar el campo usuario/email.
+
+await page.getByLabel(/usuario|email/i).fill('test@ticketar.com');
+
+Explicación: El selector getByLabel(/usuario|email/i) no encontró el campo en el DOM.
+
+Acción correctiva: Confirmar que los labels en el formulario coincidan con los regex; revisar tiempos de carga del login.
+
+4. Responsiveness – Calendario responsive y validación de fecha
+
+Ubicación: línea 106
+
+Error: Timeout de 30s al intentar llenar el campo usuario/email.
+
+Explicación: Igual que el caso anterior: el campo de login no fue localizado.
+
+Acción correctiva: Revisar consistencia de labels en login; considerar getByRole o locator('#id') más robusto.
+
+5. Flujo de Compra – Capturar cronómetro de 15 minutos y persistencia al refrescar
+
+Ubicación: línea 36 (hook beforeEach)
+
+Error: Timeout de 30s al intentar llenar el campo usuario/email.
+
+Explicación: El login previo al test no se completó, bloqueando la validación del cronómetro.
+
+Acción correctiva: Igual que en los casos anteriores: revisar selectors y tiempos de carga.
+
+📌 Conclusiones
+
+Fallos críticos:
+
+La autenticación no está protegiendo correctamente las rutas (/checkout accesible sin login).
+
+Los tests de login fallan por selectors inconsistentes o tiempos de carga.
+
+Impacto: Ninguna prueba pudo validar el cronómetro ni el calendario porque el login previo no se completó.
+
+Recomendación:
+
+Revisar labels y roles en el formulario de login.
+
+Implementar await page.waitForSelector(...) antes de fill.
+
+Asegurar middleware de autenticación en rutas críticas.
