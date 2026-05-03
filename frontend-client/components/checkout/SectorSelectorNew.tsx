@@ -86,16 +86,16 @@ export default function SectorSelector({ onComprar }: SectorSelectorProps) {
         <div className="flex items-center gap-6">
           <button
             onClick={() => setCantidad(Math.max(1, cantidad - 1))}
-            className="bg-zinc-700 hover:bg-zinc-600 text-white px-6 py-3 rounded-lg font-bold text-xl transition-colors"
+            className="bg-gradient-to-br from-slate-600 to-slate-800 hover:from-slate-500 hover:to-slate-700 text-white px-6 py-3 rounded-lg font-bold text-xl transition-all duration-200 transform hover:scale-110 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 border border-slate-500/30 hover:border-blue-400/60"
           >
             −
           </button>
-          <div className="text-5xl font-black text-white min-w-20 text-center bg-zinc-900 py-2 px-6 rounded-lg">
+          <div className="text-5xl font-black text-white min-w-20 text-center bg-gradient-to-b from-slate-800 to-slate-900 py-2 px-6 rounded-lg border border-slate-600/50 shadow-inner">
             {cantidad}
           </div>
           <button
             onClick={() => setCantidad(Math.min(6, cantidad + 1))}
-            className="bg-zinc-700 hover:bg-zinc-600 text-white px-6 py-3 rounded-lg font-bold text-xl transition-colors"
+            className="bg-gradient-to-br from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-bold text-xl transition-all duration-200 transform hover:scale-110 hover:shadow-lg hover:shadow-emerald-500/40 active:scale-95 border border-emerald-500/30 hover:border-emerald-300/60"
           >
             +
           </button>
