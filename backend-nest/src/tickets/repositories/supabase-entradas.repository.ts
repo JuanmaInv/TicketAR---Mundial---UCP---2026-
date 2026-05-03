@@ -23,19 +23,19 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return true;
   }
 
-  async buscarEntradaActiva(
-    idUsuario: string,
-    idPartido: string,
-  ): Promise<boolean> {
-    const { data } = await this.supabase
+  /**
+   * Cuenta todas las entradas activas (RESERVADO o PAGADO) de un usuario.
+   * Un usuario puede tener hasta 6 entradas en total entre todos los partidos.
+   */
+  async contarEntradasActivas(idUsuario: string): Promise<number> {
+    const { count, error } = await this.supabase
       .from('entradas')
-      .select('id')
+      .select('id', { count: 'exact', head: true })
       .eq('id_usuario', idUsuario)
-      .eq('id_partido', idPartido)
-      .neq('estado', TicketStatus.CANCELADO)
-      .maybeSingle();
+      .neq('estado', TicketStatus.CANCELADO);
 
-    return !!data;
+    if (error || count === null) return 0;
+    return count;
   }
 
   async obtenerStockDisponible(

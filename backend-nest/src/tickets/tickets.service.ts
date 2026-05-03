@@ -42,14 +42,16 @@ export class EntradasService {
       );
     }
 
-    // 2. REGLA CRÍTICA: MÁXIMO 1 ENTRADA POR PARTIDO
-    const yaTieneEntrada = await this.entradasRepository.buscarEntradaActiva(
+    // 2. REGLA CRÍTICA: MÁXIMO 6 ENTRADAS POR CUENTA DE USUARIO
+    // Un usuario puede comprar hasta 6 entradas en nombre de su cuenta.
+    // Todas las entradas quedan a nombre del titular que presenta su pasaporte en la puerta.
+    const LIMITE_ENTRADAS = 6;
+    const totalActivas = await this.entradasRepository.contarEntradasActivas(
       crearEntradaDto.idUsuario,
-      crearEntradaDto.idPartido,
     );
-    if (yaTieneEntrada) {
+    if (totalActivas >= LIMITE_ENTRADAS) {
       throw new ConflictException(
-        'Ya tienes una reserva activa o pagada para este partido.',
+        `Ya tenés ${totalActivas} entradas activas. El máximo permitido por cuenta es ${LIMITE_ENTRADAS}.`,
       );
     }
 
