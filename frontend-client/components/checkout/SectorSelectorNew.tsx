@@ -17,7 +17,7 @@ const SECTORES: Sector[] = [
   { nombre: 'Popular', precio: 15, color: 'bg-yellow-400', capacidad: 5000 },
   { nombre: 'General', precio: 35, color: 'bg-blue-500', capacidad: 3000 },
   { nombre: 'VIP', precio: 75, color: 'bg-red-600', capacidad: 1000 },
-  { nombre: 'Prensa', precio: 45, color: 'bg-purple-500', capacidad: 2000 },
+  { nombre: 'Prensa', precio: 45, color: 'bg-green-500', capacidad: 2000 },
 ];
 
 export default function SectorSelector({ onComprar }: SectorSelectorProps) {
@@ -39,37 +39,29 @@ export default function SectorSelector({ onComprar }: SectorSelectorProps) {
     <div className="w-full space-y-8">
       {/* Mapa Visual del Estadio */}
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(27,27,31,0.98),rgba(14,14,16,0.98))] p-4 md:p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-        <div className="relative mx-auto aspect-[16/12] w-full max-w-4xl overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.08)_0%,rgba(0,0,0,0)_44%),linear-gradient(180deg,#3f3f46_0%,#1f1f23_100%)]">
-          <div className="absolute inset-3 rounded-[1.5rem] border border-white/10 shadow-inner" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative h-[48%] w-[48%] min-h-[14rem] min-w-[14rem]">
-              <div className="absolute inset-0 rounded-full bg-[#d8aa46] opacity-95 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]" />
-              <div className="absolute inset-[8%] rounded-full bg-[#f1c35c] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]" />
-              <div className="absolute inset-[18%] rounded-full bg-[#e3a63a] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)]" />
-              <div className="absolute inset-[29%] rounded-full bg-[#b96b18] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]" />
-              <div className="absolute inset-[39%] rounded-full bg-[#25a047] border-[3px] border-white/90 shadow-[0_0_0_3px_rgba(0,0,0,0.14)]" />
-              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/55" />
-              <div className="absolute left-1/2 top-1/2 h-[44%] w-[44%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/65" />
-              <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/75" />
-            </div>
-          </div>
+        <div
+          className="relative mx-auto aspect-[16/12] w-full max-w-4xl overflow-hidden rounded-[1.75rem] border border-white/10 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url("/images/stadiums/metlife.png")' }}
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.06)_0%,rgba(0,0,0,0.26)_58%,rgba(0,0,0,0.48)_100%)]" />
+          <div className="absolute inset-3 rounded-[1.5rem] border border-white/12 shadow-inner" />
 
-          <button onClick={() => setSectorSeleccionado('Popular')} className={`absolute left-1/2 top-[9%] z-10 -translate-x-1/2 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[0].color} ${sectorSeleccionado === 'Popular' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+          <button onClick={() => setSectorSeleccionado('Popular')} className={`absolute left-1/2 top-[6%] z-10 -translate-x-1/2 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[0].color} ${sectorSeleccionado === 'Popular' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
             <span className="block text-sm tracking-wide">POPULAR</span>
             <span className="block text-lg">${SECTORES[0].precio}</span>
           </button>
 
-          <button onClick={() => setSectorSeleccionado('General')} className={`absolute left-[16%] top-[43%] z-10 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[1].color} ${sectorSeleccionado === 'General' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+          <button onClick={() => setSectorSeleccionado('General')} className={`absolute left-[10%] top-[40%] z-10 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[1].color} ${sectorSeleccionado === 'General' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
             <span className="block text-sm tracking-wide">GENERAL</span>
             <span className="block text-lg">${SECTORES[1].precio}</span>
           </button>
 
-          <button onClick={() => setSectorSeleccionado('Prensa')} className={`absolute right-[16%] top-[43%] z-10 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'Prensa' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+          <button onClick={() => setSectorSeleccionado('Prensa')} className={`absolute right-[10%] top-[40%] z-10 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'Prensa' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
             <span className="block text-sm tracking-wide">PRENSA</span>
             <span className="block text-lg">${SECTORES[3].precio}</span>
           </button>
 
-          <button onClick={() => setSectorSeleccionado('VIP')} className={`absolute left-[16%] bottom-[18%] z-10 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+          <button onClick={() => setSectorSeleccionado('VIP')} className={`absolute left-[12%] bottom-[15%] z-10 rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
             <span className="block text-sm tracking-wide">VIP</span>
             <span className="block text-lg">${SECTORES[2].precio}</span>
           </button>
