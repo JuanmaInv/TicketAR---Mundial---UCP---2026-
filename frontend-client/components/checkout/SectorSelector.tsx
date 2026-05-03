@@ -48,7 +48,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
         <div className="flex flex-col md:flex-row gap-6 items-stretch">
           {/* Imagen del Estadio */}
           <div
-            className="w-full md:w-2/3 aspect-[16/12] md:aspect-auto rounded-[1.75rem] border border-white/10 bg-cover bg-center bg-no-repeat"
+            className="relative w-full md:w-2/3 aspect-[16/12] md:aspect-auto rounded-[1.75rem] border border-white/10 bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: 'url("/images/stadiums/metlife.png")' }}
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.06)_0%,rgba(0,0,0,0.26)_58%,rgba(0,0,0,0.48)_100%)] rounded-[1.75rem]" />
