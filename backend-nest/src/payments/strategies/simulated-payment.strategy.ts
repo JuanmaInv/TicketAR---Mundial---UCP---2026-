@@ -8,6 +8,7 @@ export class SimulatedPaymentStrategy implements IPaymentStrategy {
   async processPayment(
     amount: number,
     currency: string,
+    metadata?: { ticketId: string },
   ): Promise<PaymentResult> {
     this.logger.log(`Procesando pago simulado de ${amount} ${currency}...`);
 

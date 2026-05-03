@@ -6,5 +6,9 @@ export interface PaymentResult {
 }
 
 export interface IPaymentStrategy {
-  processPayment(amount: number, currency: string): Promise<PaymentResult>;
+  processPayment(
+    amount: number,
+    currency: string,
+    metadata?: { ticketId: string },
+  ): Promise<PaymentResult>;
 }

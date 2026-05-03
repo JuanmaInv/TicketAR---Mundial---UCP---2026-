@@ -3,6 +3,7 @@ import {
   IPaymentStrategy,
   PaymentResult,
 } from './strategies/payment-strategy.interface';
+import { MercadoPagoStrategy } from './strategies/mercadopago.strategy';
 import { SimulatedPaymentStrategy } from './strategies/simulated-payment.strategy';
 
 @Injectable()
@@ -10,17 +11,33 @@ export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private strategy: IPaymentStrategy;
 
-  constructor(private readonly simulatedStrategy: SimulatedPaymentStrategy) {
+  constructor(
+    private readonly simulatedStrategy: SimulatedPaymentStrategy,
+    private readonly mercadopagoStrategy: MercadoPagoStrategy,
+  ) {
     // Por defecto usamos la simulada
     this.strategy = simulatedStrategy;
   }
 
-  setStrategy(strategy: IPaymentStrategy) {
-    this.strategy = strategy;
+  /**
+   * Cambia la estrategia de pago dinámicamente
+   * @param provider - 'simulated' o 'mercadopago'
+   */
+  useProvider(provider: 'simulated' | 'mercadopago') {
+    if (provider === 'mercadopago') {
+      this.strategy = this.mercadopagoStrategy;
+    } else {
+      this.strategy = this.simulatedStrategy;
+    }
   }
 
-  async processTicketPayment(amount: number): Promise<PaymentResult> {
-    this.logger.log(`Iniciando procesamiento de pago por valor de ${amount}`);
-    return this.strategy.processPayment(amount, 'ARS');
+  async processTicketPayment(
+    amount: number,
+    ticketId: string,
+  ): Promise<PaymentResult> {
+    this.logger.log(
+      `Iniciando procesamiento de pago por ${amount} ARS (Ticket: ${ticketId})`,
+    );
+    return this.strategy.processPayment(amount, 'ARS', { ticketId });
   }
 }

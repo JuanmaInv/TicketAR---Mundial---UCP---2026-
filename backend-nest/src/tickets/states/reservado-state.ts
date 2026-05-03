@@ -3,11 +3,12 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import { TicketState } from './ticket-state.interface';
 import { TicketEntity } from '../entities/ticket.entity';
 import { PaymentsService } from '../../payments/payments.service';
+import { PaymentResult } from '../../payments/strategies/payment-strategy.interface';
 
 export class ReservadoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger) { }
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -17,7 +18,7 @@ export class ReservadoState implements TicketState {
     return TicketStatus.RESERVADO;
   }
 
-  async pagar(paymentsService: PaymentsService): Promise<void> {
+  async pagar(paymentsService: PaymentsService): Promise<PaymentResult> {
     const ahora = new Date();
     if (
       this.ticket.fechaExpiracionReserva &&
@@ -29,8 +30,9 @@ export class ReservadoState implements TicketState {
       );
     }
 
-    // Usamos el servicio de pagos (Patrón Strategy) con un precio fijo simulado (ej: 50000)
-    const resultado = await paymentsService.processTicketPayment(50000);
+    // Usamos el servicio de pagos (Patrón Strategy)
+    // Le pasamos el ID real del ticket para que Mercado Pago lo rastree
+    const resultado = await paymentsService.processTicketPayment(50000, this.ticket.id);
 
     if (!resultado.success) {
       this.logger.error(
@@ -42,8 +44,10 @@ export class ReservadoState implements TicketState {
     }
 
     this.logger.log(
-      `Pago confirmado [${resultado.transactionId}]. Transición exitosa: Ticket ${this.ticket.id} pasando a PAGADO.`,
+      `Pago procesado para ticket ${this.ticket.id}. Resultado: ${resultado.success ? 'EXITO' : 'FALLO'}.`,
     );
+
+    return resultado;
   }
 
   cancelar(): void {

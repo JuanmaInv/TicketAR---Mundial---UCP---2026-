@@ -10,6 +10,7 @@ import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
 import { PaymentsService } from '../payments/payments.service';
+import { PaymentResult } from '../payments/strategies/payment-strategy.interface';
 import type { IEntradasRepository } from './repositories/entradas.repository.interface';
 import { TicketStateFactory } from './states/ticket-state.factory';
 
@@ -91,7 +92,7 @@ export class EntradasService {
     return this.entradasRepository.obtenerUna(id);
   }
 
-  async marcarComoPagada(id: string): Promise<TicketEntity> {
+  async marcarComoPagada(id: string): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
     const ticket = await this.entradasRepository.obtenerUna(id);
     if (!ticket) {
       throw new NotFoundException('Reserva no encontrada.');
@@ -100,12 +101,13 @@ export class EntradasService {
     // Aplicar Patrón State Activo para validar transición
     const estadoActual = this.ticketStateFactory.create(ticket.estado);
     estadoActual.setContext(ticket);
-    await estadoActual.pagar(this.paymentsService);
+    const paymentResult = await estadoActual.pagar(this.paymentsService);
 
-    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    const ticketActualizado = await this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    return { ticket: ticketActualizado, paymentResult };
   }
 
-  async pagar(id: string): Promise<TicketEntity> {
+  async pagar(id: string): Promise<{ ticket: TicketEntity; paymentResult: PaymentResult }> {
     const ticket = await this.entradasRepository.obtenerUna(id);
     if (!ticket) {
       throw new NotFoundException(`Ticket ${id} no encontrado.`);
@@ -115,10 +117,19 @@ export class EntradasService {
     estado.setContext(ticket);
 
     // El estado procesa el pago usando el servicio de pagos (Strategy)
-    await estado.pagar(this.paymentsService);
+    const paymentResult = await estado.pagar(this.paymentsService);
 
-    // Si llegamos acá, el pago fue exitoso según el estado
-    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    // Si NO hay paymentUrl y el pago fue exitoso, es un pago inmediato (Simulado)
+    if (!paymentResult.paymentUrl && paymentResult.success) {
+      const ticketPagado = await this.entradasRepository.actualizarEstado(
+        id,
+        TicketStatus.PAGADO,
+      );
+      return { ticket: ticketPagado, paymentResult };
+    }
+
+    // Si HAY paymentUrl (Mercado Pago), el ticket sigue RESERVADO hasta que el webhook confirme
+    return { ticket, paymentResult };
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
