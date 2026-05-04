@@ -1,32 +1,49 @@
 'use client';
 
-import { useState } from 'react';
-
-interface Sector {
-  nombre: string;
-  precio: number;
-  color: string;
-  capacidad: number;
-}
+import { useState, useEffect } from 'react';
+import { getSectores, Sector, formatPrice } from '@/lib/api';
 
 interface SectorSelectorProps {
   partidoId: string;
-  onComprar: (sector: string, cantidad: number, total: number) => void;
+  onComprar: (sectorId: string, cantidad: number, total: number) => void;
 }
 
-const SECTORES: Sector[] = [
-  { nombre: 'Popular', precio: 15, color: 'bg-yellow-400', capacidad: 5000 },
-  { nombre: 'General', precio: 35, color: 'bg-blue-500', capacidad: 3000 },
-  { nombre: 'VIP', precio: 75, color: 'bg-red-600', capacidad: 1000 },
-  { nombre: 'Prensa', precio: 45, color: 'bg-green-500', capacidad: 2000 },
-];
-
 export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
-  const [sectorSeleccionado, setSectorSeleccionado] = useState<string>('General');
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sectorSeleccionado, setSectorSeleccionado] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
+  const [cargando, setCargando] = useState(true);
 
-  const sectorActual = SECTORES.find(s => s.nombre === sectorSeleccionado);
+  useEffect(() => {
+    getSectores()
+      .then(datos => {
+        // FILTRAR SOLO PALCO, PLATEA Y POPULAR (Ignorar Prensa y otros)
+        const sectoresFiltrados = datos.filter(s => {
+          const n = s.nombre.toLowerCase();
+          return n.includes('palco') || n.includes('platea') || n.includes('popular');
+        });
+        
+        setSectores(sectoresFiltrados);
+        if (sectoresFiltrados.length > 0) setSectorSeleccionado(sectoresFiltrados[0].id);
+        setCargando(false);
+      })
+      .catch(err => {
+        console.error('Error cargando sectores:', err);
+        setCargando(false);
+      });
+  }, []);
+
+  const sectorActual = sectores.find(s => s.id === sectorSeleccionado);
   const precioTotal = sectorActual ? sectorActual.precio * cantidad : 0;
+
+  // Lógica de colores simplificada a los 3 sectores solicitados
+  const getSectorColor = (nombre: string) => {
+    const n = nombre.toLowerCase();
+    if (n.includes('palco')) return 'bg-purple-600 shadow-purple-900/40'; // Púrpura/Magenta
+    if (n.includes('platea')) return 'bg-blue-600 shadow-blue-900/40'; // Azul
+    if (n.includes('popular')) return 'bg-amber-500 shadow-amber-900/40'; // Amarillo/Oro
+    return 'bg-zinc-600 shadow-black';
+  };
 
   const handleComprar = () => {
     if (!sectorSeleccionado) {
@@ -36,122 +53,98 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
     onComprar(sectorSeleccionado, cantidad, precioTotal);
   };
 
+  if (cargando) {
+    return <div className="text-white text-center py-10 animate-pulse font-black uppercase tracking-widest text-xs">Cargando mapa oficial...</div>;
+  }
+
   return (
     <div className="w-full space-y-8">
-      {/* Info del Partido */}
-      <div className="text-zinc-400 mb-4">
-        <p className="text-sm">Partido ID: <span className="text-white font-bold">{partidoId}</span></p>
-      </div>
+      {/* Visualización del Estadio Simplificada */}
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-amber-600 rounded-[2.5rem] blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <div className="relative rounded-[2rem] border border-white/10 bg-zinc-950 p-6 shadow-2xl">
+          <div className="flex flex-col md:flex-row gap-8 items-center">
+            {/* Mapa del Estadio (3 Colores) */}
+            <div className="w-full md:w-3/5 aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black relative">
+              <img 
+                src="/stadium_3_sectors_2026_1777906767323.png" 
+                alt="Mapa del Estadio" 
+                className="w-full h-full object-cover opacity-90"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            </div>
 
-      {/* Visualización del Estadio */}
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(27,27,31,0.98),rgba(14,14,16,0.98))] p-4 md:p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-        <div className="flex flex-col md:flex-row gap-6 items-stretch">
-          {/* Imagen del Estadio */}
-          <div
-            className="relative w-full md:w-2/3 aspect-[16/12] md:aspect-auto rounded-[1.75rem] border border-white/10 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: 'url("/images/stadiums/metlife.png")' }}
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.06)_0%,rgba(0,0,0,0.26)_58%,rgba(0,0,0,0.48)_100%)] rounded-[1.75rem]" />
-            <div className="absolute inset-3 rounded-[1.5rem] border border-white/12 shadow-inner" />
-          </div>
-
-          {/* Botones de Sectores a un lado */}
-          <div className="w-full md:w-1/3 flex flex-col justify-center gap-4">
-            <button
-              onClick={() => setSectorSeleccionado('Popular')}
-              className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[0].color} ${sectorSeleccionado === 'Popular' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
-            >
-              <span className="block text-sm tracking-wide">POPULAR</span>
-              <span className="block text-lg">${SECTORES[0].precio}</span>
-            </button>
-
-            <button
-              onClick={() => setSectorSeleccionado('General')}
-              className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[1].color} ${sectorSeleccionado === 'General' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
-            >
-              <span className="block text-sm tracking-wide">GENERAL</span>
-              <span className="block text-lg">${SECTORES[1].precio}</span>
-            </button>
-
-            <button
-              onClick={() => setSectorSeleccionado('Prensa')}
-              className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'Prensa' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
-            >
-              <span className="block text-sm tracking-wide">PRENSA</span>
-              <span className="block text-lg">${SECTORES[3].precio}</span>
-            </button>
-
-            <button
-              onClick={() => setSectorSeleccionado('VIP')}
-              className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}
-            >
-              <span className="block text-sm tracking-wide">VIP</span>
-              <span className="block text-lg">${SECTORES[2].precio}</span>
-            </button>
-
-            <p className="text-center text-[11px] text-cyan-100/75 mt-2">
-              Haz clic en un sector para seleccionarlo
-            </p>
+            {/* Selector de Sectores */}
+            <div className="w-full md:w-2/5 flex flex-col gap-4">
+              <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-2">Selecciona tu ubicación</h3>
+              <div className="grid grid-cols-1 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                {sectores.map((sector) => {
+                  const agotado = sector.capacidadDisponible <= 0;
+                  return (
+                    <button
+                      key={sector.id}
+                      disabled={agotado}
+                      onClick={() => !agotado && setSectorSeleccionado(sector.id)}
+                      className={`relative rounded-2xl px-5 py-4 text-left transition-all duration-300 border ${
+                        sectorSeleccionado === sector.id 
+                          ? 'border-white/40 scale-[1.02] shadow-2xl' 
+                          : 'border-white/5 opacity-60 hover:opacity-100'
+                      } ${getSectorColor(sector.nombre)} ${agotado ? 'grayscale opacity-30 cursor-not-allowed' : 'hover:border-white/10'}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="block text-[10px] font-black text-white/90 uppercase tracking-widest mb-1">{sector.nombre}</span>
+                          <span className="block text-2xl font-black text-white tracking-tighter">{formatPrice(sector.precio)}</span>
+                        </div>
+                        {agotado && (
+                          <span className="bg-red-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">Agotado</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Selector de Cantidad */}
-      <div className="bg-zinc-800/40 rounded-xl p-6 border border-zinc-700">
-        <label className="text-white font-bold text-lg mb-4 block">
-          Cantidad de Entradas
-        </label>
-        <div className="flex items-center gap-6">
-          <button
-            onClick={() => setCantidad(Math.max(1, cantidad - 1))}
-            className="bg-gradient-to-br from-slate-600 to-slate-800 hover:from-slate-500 hover:to-slate-700 text-white px-6 py-3 rounded-lg font-bold text-xl transition-all duration-200 transform hover:scale-110 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 border border-slate-500/30 hover:border-blue-400/60"
-          >
-            −
-          </button>
-          <div className="text-5xl font-black text-white min-w-20 text-center bg-gradient-to-b from-slate-800 to-slate-900 py-2 px-6 rounded-lg border border-slate-600/50 shadow-inner">
-            {cantidad}
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex-1 bg-zinc-900/40 rounded-2xl p-6 border border-white/5 flex items-center justify-between">
+          <div>
+            <label className="text-zinc-500 font-black text-[10px] uppercase tracking-widest mb-2 block">
+              Cantidad de Entradas
+            </label>
+            <div className="flex items-center gap-6">
+              <button onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="text-2xl font-bold text-white hover:text-blue-500 transition-colors">−</button>
+              <span className="text-4xl font-black text-white w-12 text-center">{cantidad}</span>
+              <button onClick={() => setCantidad(Math.min(6, cantidad + 1))} className="text-2xl font-bold text-white hover:text-emerald-500 transition-colors">+</button>
+            </div>
           </div>
-          <button
-            onClick={() => setCantidad(Math.min(6, cantidad + 1))}
-            className="bg-gradient-to-br from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-bold text-xl transition-all duration-200 transform hover:scale-110 hover:shadow-lg hover:shadow-emerald-500/40 active:scale-95 border border-emerald-500/30 hover:border-emerald-300/60"
-          >
-            +
-          </button>
         </div>
-        <p className="text-zinc-400 text-sm mt-3">Máximo 6 entradas por compra</p>
-      </div>
 
-      {/* Resumen de Precio */}
-      {sectorActual && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 shadow-lg">
-          <div className="flex items-end justify-between">
+        {/* Resumen Final y Botón de Compra */}
+        {sectorActual && (
+          <div className="flex-1 bg-white p-6 rounded-2xl flex items-center justify-between shadow-2xl shadow-blue-500/10">
             <div>
-              <p className="text-blue-100 text-sm uppercase tracking-wide font-semibold">
-                Sector: {sectorSeleccionado}
-              </p>
-              <p className="text-blue-100 text-sm mt-1">
-                ${sectorActual.precio} × {cantidad} entrada{cantidad > 1 ? 's' : ''}
-              </p>
+              <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mb-1">Total Confirmado</p>
+              <p className="text-4xl font-black text-black tracking-tighter italic">{formatPrice(precioTotal)}</p>
             </div>
-            <div className="text-right">
-              <p className="text-blue-100 text-sm mb-1 uppercase tracking-wide font-semibold">
-                Total
-              </p>
-              <p className="text-5xl font-black text-white">
-                ${precioTotal.toLocaleString()}
-              </p>
-            </div>
+            <button
+              disabled={sectorActual.capacidadDisponible <= 0}
+              onClick={handleComprar}
+              className={`px-8 py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all transform ${
+                sectorActual.capacidadDisponible <= 0 
+                ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30'
+              }`}
+            >
+              {sectorActual.capacidadDisponible <= 0 ? 'AGOTADO' : 'COMPRAR AHORA →'}
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Botón Comprar */}
-      <button
-        onClick={handleComprar}
-        className="w-full py-5 rounded-xl font-bold text-xl transition-all transform bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:scale-105 shadow-lg active:scale-95"
-      >
-        Comprar {cantidad} Entrada{cantidad > 1 ? 's' : ''} → ${precioTotal.toLocaleString()}
-      </button>
+        )}
+      </div>
     </div>
   );
 }
