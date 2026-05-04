@@ -1,53 +1,37 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
-import { StadiumSectorEntity } from './entities/stadium-sector.entity';
+import type { ISectoresRepository } from './repositories/stadium-sectors.repository.interface';
+import { SectorEstadioEntidad } from './entities/stadium-sector.entity';
 
 @Injectable()
 export class SectoresService {
-  private baseDeDatosSimulada: StadiumSectorEntity[] = [
-    {
-      id: 'popular-norte',
-      name: 'POPULAR',
-      capacity: 10000,
-      availableSeats: 10000,
-      price: 50000, // ARS
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'platea-este',
-      name: 'PLATEA',
-      capacity: 5000,
-      availableSeats: 5000,
-      price: 150000, // ARS
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  constructor(
+    @Inject('ISectoresRepository')
+    private readonly sectoresRepository: ISectoresRepository,
+  ) {}
 
-  obtenerTodos() {
-    return this.baseDeDatosSimulada;
-  }
-
-  obtenerUno(id: string) {
-    const sector = this.baseDeDatosSimulada.find((s) => s.id === id);
-    if (!sector) {
-      throw new NotFoundException('Sector de estadio no encontrado');
+  async crear(crearSectorDto: CrearSectorDto): Promise<SectorEstadioEntidad> {
+    try {
+      return await this.sectoresRepository.crear(crearSectorDto);
+    } catch (error) {
+      throw new Error('Error al crear el sector: ' + (error as Error).message);
     }
-    return sector;
   }
 
-  crear(dto: CrearSectorDto) {
-    const nuevoSector: StadiumSectorEntity = {
-      id: crypto.randomUUID(),
-      name: dto.nombre,
-      capacity: dto.capacidad,
-      availableSeats: dto.capacidad,
-      price: dto.precio,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.baseDeDatosSimulada.push(nuevoSector);
-    return nuevoSector;
+  async obtenerTodos(): Promise<SectorEstadioEntidad[]> {
+    return await this.sectoresRepository.obtenerTodos();
+  }
+
+  async obtenerUno(id: string): Promise<SectorEstadioEntidad> {
+    try {
+      const sector = await this.sectoresRepository.obtenerUno(id);
+      if (!sector) {
+        throw new NotFoundException('Sector de estadio no encontrado');
+      }
+      return sector;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new NotFoundException((error as Error).message);
+    }
   }
 }

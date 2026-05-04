@@ -1,134 +1,102 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { getPartidos } from '@/lib/api';
+import Bandera from '../Bandera';
+import { getPartidos, getSectores, formatPrice, Sector } from '@/lib/api';
 import { Partido } from '@/types/ticket';
-import Bandera from '@/components/Bandera';
-import { useUser } from '@clerk/nextjs';
+import Link from 'next/link';
 
-export default function ComponenteCalendario() {
-  const { isSignedIn, isLoaded } = useUser();
+export default function CalendarComponent() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
-  const [fechaActual, setFechaActual] = useState(new Date(2026, 5, 1));
-  const [cargando, setCargando] = useState(true);
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getPartidos()
-      .then(datos => {
-        setPartidos(datos);
-        setCargando(false);
-      })
-      .catch(error => {
-        console.error(error);
-        setCargando(false);
-      });
+    async function loadData() {
+      try {
+        const [p, s] = await Promise.all([getPartidos(), getSectores()]);
+        setPartidos(p);
+        setSectores(s);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
   }, []);
 
-  const cambiarMes = (desplazamiento: number) => {
-    setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + desplazamiento, 1));
+  const getPrecioReal = (matchId: string, precioBase: number) => {
+    const sectoresValidos = sectores.filter(s => {
+      const n = s.nombre.toLowerCase();
+      return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
+    });
+    if (sectoresValidos.length > 0) {
+      const precios = sectoresValidos.map(s => s.precio);
+      return Math.min(...precios);
+    }
+    return precioBase;
   };
 
-  const diasEnMes = (anio: number, mes: number) => new Date(anio, mes + 1, 0).getDate();
-  const primerDiaDelMes = (anio: number, mes: number) => new Date(anio, mes, 1).getDay();
+  const normalizeTeamLabel = (label: string) => {
+    if (!label) return "TBD";
+    return label.replace(/_/g, " ").toUpperCase();
+  };
 
-  const nombreMes = fechaActual.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
-  const totalDias = diasEnMes(fechaActual.getFullYear(), fechaActual.getMonth());
-  const diaInicio = primerDiaDelMes(fechaActual.getFullYear(), fechaActual.getMonth());
-
-  const dias = [];
-
-  for (let i = 0; i < diaInicio; i++) {
-    dias.push(
-      <div key={`vacio-${i}`} className="min-h-[140px] border border-slate-100 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-900/10"></div>
-    );
-  }
-
-  for (let dia = 1; dia <= totalDias; dia++) {
-    const cadenaFecha = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-    const partidosDelDia = partidos.filter(p => p.fecha_partido.startsWith(cadenaFecha));
-
-    dias.push(
-      <div key={dia} className="min-h-[140px] border border-slate-200 dark:border-slate-700/60 p-2 flex flex-col hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-        <span className="text-sm font-bold text-slate-500 dark:text-slate-400 group-hover:text-blue-500 transition-colors">{dia}</span>
-
-        <div className="mt-2 space-y-2 flex-grow overflow-y-auto custom-scrollbar">
-          {cargando ? (
-            <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></div>
-          ) : partidosDelDia.length > 0 ? (
-            partidosDelDia.map(partido => {
-              // Forzamos el paso por "Mis Datos" antes de comprar
-              const destino = isSignedIn 
-                ? `/profile?redirect=/checkout/${partido.id}` 
-                : `/login?redirect=/profile?redirect=/checkout/${partido.id}`;
-
-              return (
-                <Link
-                  key={partido.id}
-                  href={destino}
-                  className="block p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shrink-0 hover:border-blue-500 hover:shadow-md transition-all shadow-sm"
-                  title={`${partido.equipo_local} vs ${partido.equipo_visitante} - ${partido.nombre_estadio}`}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[9px] font-black uppercase text-slate-400 bg-slate-100 dark:bg-slate-700 px-1 rounded">{partido.fase}</span>
-                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
-                      {new Date(partido.fecha_partido).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1 w-2/5">
-                      <Bandera pais={partido.equipo_local} />
-                      <span className="text-[10px] font-bold truncate">{partido.equipo_local.substring(0, 3).toUpperCase()}</span>
-                    </div>
-                    <span className="text-[8px] font-black text-slate-300 dark:text-slate-500 italic">VS</span>
-                    <div className="flex items-center gap-1 w-2/5 justify-end">
-                      <span className="text-[10px] font-bold truncate">{partido.equipo_visitante.substring(0, 3).toUpperCase()}</span>
-                      <Bandera pais={partido.equipo_visitante} />
-                    </div>
-                  </div>
-                  {/* Etiqueta de precio ARS */}
-                  <div className="mt-2 text-[9px] font-bold text-green-600 dark:text-green-400 text-center border-t border-slate-100 dark:border-slate-700 pt-1">
-                    DESDE ARS $1
-                  </div>
-                </Link>
-              );
-            })
-          ) : (
-            <div className="text-[10px] text-slate-400 italic text-center mt-4 opacity-0 group-hover:opacity-100 transition-opacity">Sin partidos</div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-slate-700 shadow-xl">
-      <div className="p-6 bg-slate-950 text-white flex flex-col sm:flex-row justify-between items-center bg-gradient-to-r from-slate-900 to-slate-800 gap-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter">
-            Calendario <span className="text-blue-500">Mundial 2026</span>
-          </h2>
-          <p className="text-xs text-slate-400 font-medium">
-            {isSignedIn ? 'Selecciona tu partido y reserva en pesos' : 'Inicia sesión para ver precios y reservar'}
-          </p>
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-2xl transition-colors duration-700">
+      {Array.from({ length: 28 }).map((_, i) => {
+        const dia = i + 1;
+        
+        // Filtrar partidos por el día de la fecha_partido
+        const partidosDelDia = partidos.filter(p => {
+          if (!p.fecha_partido) return false;
+          try {
+            const fecha = new Date(p.fecha_partido);
+            // Si la fecha es válida, comparamos el día
+            // (Asumimos que el calendario es para el mes actual de los partidos)
+            return fecha.getDate() === dia;
+          } catch (e) {
+            return false;
+          }
+        });
 
-        <div className="flex items-center gap-4 bg-slate-950/50 p-2 rounded-full border border-white/10">
-          <button onClick={() => cambiarMes(-1)} className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors font-bold">←</button>
-          <span className="font-bold uppercase tracking-widest text-sm min-w-[120px] text-center">{nombreMes}</span>
-          <button onClick={() => cambiarMes(1)} className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors font-bold">→</button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-7 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-        {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(diaSemana => (
-          <div key={diaSemana} className="py-4 text-center text-xs font-black uppercase tracking-widest text-slate-500">{diaSemana}</div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7">
-        {dias}
-      </div>
+        return (
+          <div key={i} className="min-h-[200px] bg-white dark:bg-slate-900/60 p-4 transition-all duration-500 hover:bg-slate-50 dark:hover:bg-slate-800/80 border-r border-b border-slate-100 dark:border-white/5">
+            <span className="text-xl font-black text-blue-600 dark:text-blue-400 italic">
+              {dia}
+            </span>
+            
+            <div className="mt-4 space-y-3">
+              {partidosDelDia.map(partido => {
+                const precio = getPrecioReal(partido.id, partido.precio_base);
+                return (
+                  <Link 
+                    key={partido.id}
+                    href={`/checkout/${partido.id}`}
+                    className="block bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-xl p-3 shadow-sm hover:scale-105 transition-transform"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                       <span className="text-[7px] font-black uppercase text-slate-400">Grupos</span>
+                       <span className="text-[7px] font-bold text-blue-500">21:00</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-1 mb-2">
+                      <Bandera pais={normalizeTeamLabel(partido.equipo_local)} className="w-6 h-4" />
+                      <span className="text-[8px] font-black text-slate-400">VS</span>
+                      <Bandera pais={normalizeTeamLabel(partido.equipo_visitante)} className="w-6 h-4" />
+                    </div>
+                    <p className="text-[8px] font-black text-blue-600 dark:text-blue-400 text-center uppercase tracking-tighter">
+                      Desde {formatPrice(precio)}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

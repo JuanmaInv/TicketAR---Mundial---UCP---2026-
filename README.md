@@ -1,82 +1,65 @@
-# TicketAR Mundial
+# TicketAR - Sistema de Venta de Entradas Mundial 2026
 
-## Instalacion y ejecucion del backend con pnpm
+TicketAR es una Plataforma (Web App) de Gestión y Compra de entradas para el Mundial 2026, desarrollada con tecnologías de Backend, Frontend, Testing, ademas de aplicar patrones de diseño de software y conceptos dados de POO.
 
-`pnpm` debe instalarse primero de forma global en tu computadora para que el comando exista en la terminal. Despues, debes entrar en la carpeta del proyecto que quieras usar e instalar ahi sus dependencias. `pnpm` no se instala por carpeta: lo que se instala en cada carpeta son las librerias del proyecto.
+## Arquitectura del Proyecto
 
-¿Por que es necesario?
-PNPM es una gestor de paquetes para proyectos de `Node. js`
+El proyecto está dividido en dos partes principales:
+- **`backend-nest`**: API construida con NestJS que gestiona la lógica de negocio, estados de tickets, métodos de pago y persistencia.
+- **`frontend-client`**: Aplicación web construida con Next.js 15+ (App Router), Tailwind CSS, TypeScript (.tsx, .ts) y JavaScript (.jsx, .js).
 
-### 1. Verificar que pnpm este instalado globalmente
+## Patrones de Diseño Aplicados
 
-```powershell
-pnpm --version
-```
+Para cumplir con los estándares de ingeniería de software, se han implementado los siguientes patrones de diseño:
 
-Si devuelve una version, entonces `pnpm` ya esta disponible en tu entorno.
+1.  **State Pattern**: Gestiona y define los diferentes estados de los tickets.
+2.  **Strategy Pattern**: Define los diferentes métodos de pago (y otras funcionalidades que requieran distintos comportamientos).
+3.  **Repository Pattern**: Realiza las operaciones (CRUD) sobre la Base de Datos (a través de Supabase).
+4.  **Factory Pattern**: Centraliza y parametrisa la creación de objetos.
 
-### 2. Abrir la terminal en la carpeta del backend
+## Instalación y Ejecución
 
+### Requisitos Previos
+- Node.js v20+
+- `pnpm` instalado globalmente (`npm install -g pnpm`)
+
+### Configuración del Entorno
+1. Clona el repositorio.
+2. Crea tus archivos de entorno (`.env` para backend, `.env.local` para frontend) basándote en los archivos `.env.example` de sus respectivas carpetas.
+
+### Backend
 ```powershell
 cd backend-nest
-```
-
-Este paso es importante porque ahi se encuentra el `package.json` del backend.
-
-### 3. Instalar las dependencias del backend
-
-```powershell
 pnpm install
-```
-
-Esto descarga las librerias necesarias para esa carpeta y utiliza el archivo `pnpm-lock.yaml`.
-
-### 4. Compilar el proyecto
-
-```powershell
-pnpm run build
-```
-
-Este comando sirve para verificar que el proyecto compile correctamente.
-
-### 5. Levantar el backend en desarrollo
-
-```powershell
 pnpm run start:dev
 ```
 
-### 6. Probarlo en el navegador
-
-Abre:
-
-```text
-http://localhost:3000
-```
-
-Si el backend esta funcionando, deberias ver la respuesta inicial de NestJS.
-
-### Flujo completo
-
+### Frontend
 ```powershell
-pnpm --version
-cd backend-nest
+cd frontend-client
 pnpm install
-pnpm run build
-pnpm run start:dev
+pnpm run dev
+```
+La aplicación estará disponible en `http://localhost:3001`.
+
+## Testing
+
+### Backend (Unit Tests)
+```powershell
+cd backend-nest
+pnpm run test
 ```
 
- COMMITS
-feat: (Feature): Cuando agregan una funcionalidad nueva.
-  Ejemplo: feat: agregar pasarela de pagos de Mercado Pago
+### E2E / Integración (Playwright)
+```powershell
+cd frontend-client
+pnpm exec playwright test
+```
 
-fix:: Cuando arreglan un bug o error en el sistema.
-  Ejemplo: fix: corregir error que dejaba comprar sin stock
+## Convenciones de Commits
+- `feat:`: Funcionalidades nuevas.
+- `fix:`: Corrección de errores.
+- `docs:`: Cambios en documentación.
+- `refactor:`: Mejoras en el código sin cambiar funcionalidad.
+- `chore:`: Tareas de mantenimiento o configuración.
 
-docs:: Cuando solo modifican texto, diagramas o el README.
-  Ejemplo: docs: subir diccionario de datos SQL
-
-refactor:: Cuando mejoran el codigo escrito sin cambiar lo que hace (optimizacion).
-  Ejemplo: refactor: limpiar funciones sin usar en el controlador de partidos
-
-chore: cambio que no agrega una funcionalidad nueva para el usuario ni arregla un error en el codigo, sino que es una tarea interna de configuracion, infraestructura o mantenimiento del proyecto.
-  Ejemplo: chore: archivo ".gitignore" modificado

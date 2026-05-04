@@ -1,14 +1,45 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntradasService } from './tickets.service';
-
-// SPEC: Specification - se crean automáticamente con el comando npx nest g y sirven para escribir tests unitarios
+import { TicketStateFactory } from './states/ticket-state.factory';
+import { PaymentsService } from '../payments/payments.service';
+import { QrService } from './qr.service';
 
 describe('EntradasService', () => {
   let service: EntradasService;
 
+  const mockEntradasRepository = {
+    validarPasaporteUsuario: jest.fn(),
+    buscarEntradaActiva: jest.fn(),
+    obtenerStockDisponible: jest.fn(),
+    crear: jest.fn(),
+    obtenerTodas: jest.fn(),
+    obtenerUna: jest.fn(),
+    actualizarEstado: jest.fn(),
+    obtenerExpiradas: jest.fn(),
+    incrementarStock: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [EntradasService],
+      providers: [
+        EntradasService,
+        {
+          provide: 'IEntradasRepository',
+          useValue: mockEntradasRepository,
+        },
+        {
+          provide: TicketStateFactory,
+          useValue: { create: jest.fn() },
+        },
+        {
+          provide: PaymentsService,
+          useValue: { processTicketPayment: jest.fn() },
+        },
+        {
+          provide: QrService,
+          useValue: { generarQrBase64: jest.fn() },
+        },
+      ],
     }).compile();
 
     service = module.get<EntradasService>(EntradasService);

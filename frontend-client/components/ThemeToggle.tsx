@@ -5,28 +5,36 @@ import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
+  // Evitamos errores de hidratación
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return <div className="w-9 h-9" />; // Placeholder
+    return <div className="w-10 h-10" />; 
   }
+
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="p-2 rounded-full border border-gray-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-[var(--usa-blue)] dark:hover:text-[var(--usa-blue)] transition-all"
-      aria-label="Toggle Dark Mode"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="relative p-2.5 rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900 shadow-sm transition-all hover:scale-110 active:scale-95 group"
+      aria-label="Cambiar tema"
     >
-      {theme === "dark" ? (
-        <Sun className="h-5 w-5" />
+      {isDark ? (
+        <Sun className="h-5 w-5 text-yellow-500 transition-all group-hover:rotate-45" />
       ) : (
-        <Moon className="h-5 w-5" />
+        <Moon className="h-5 w-5 text-blue-600 transition-all group-hover:-rotate-12" />
       )}
+      
+      {/* Tooltip sutil */}
+      <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase font-black">
+        {isDark ? 'Light' : 'Dark'}
+      </span>
     </button>
   );
 }

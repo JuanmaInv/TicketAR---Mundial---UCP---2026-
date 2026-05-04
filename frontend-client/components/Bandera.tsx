@@ -3,94 +3,103 @@ import React from 'react';
 interface BanderaProps {
   pais: string;
   fill?: boolean;
+  className?: string;
 }
 
-export default function Bandera({ pais, fill = false }: BanderaProps) {
-  // Diccionario básico de códigos ISO para FlagCDN
-  // Agregué los países que vi en tu mock-tickets.ts
-  const codigos: Record<string, string> = {
-    "Alemania": "de",
-    "Arabia Saudí": "sa",
-    "Argelia": "dz",
-    "Argentina": "ar",
-    "Australia": "au",
-    "Austria": "at",
-    "Bélgica": "be",
-    "Bosnia y Herzegovina": "ba",
-    "Brasil": "br",
-    "Cabo Verde": "cv",
-    "Canadá": "ca",
-    "Colombia": "co",
-    "Corea del Sur": "kr",
-    "Costa de Marfil": "ci",
-    "Croacia": "hr",
-    "Curazao": "cw",
-    "Ecuador": "ec",
-    "Egipto": "eg",
-    "Escocia": "gb-sct",
-    "España": "es",
-    "Estados Unidos": "us",
-    "Francia": "fr",
-    "Ghana": "gh",
-    "Haití": "ht",
-    "Inglaterra": "gb-eng",
-    "Irak": "iq",
-    "Irán": "ir",
-    "Japón": "jp",
-    "Jordania": "jo",
-    "Marruecos": "ma",
-    "México": "mx",
-    "Noruega": "no",
-    "Nueva Zelanda": "nz",
-    "Países Bajos": "nl",
-    "Panamá": "pa",
-    "Paraguay": "py",
-    "Portugal": "pt",
-    "Qatar": "qa",
-    "RD Congo": "cd",
-    "República Checa": "cz",
-    "Senegal": "sn",
-    "Sudáfrica": "za",
-    "Suecia": "se",
-    "Suiza": "ch",
-    "Túnez": "tn",
-    "Turquía": "tr",
-    "Uruguay": "uy",
-    "Uzbekistán": "uz",
-  };
-
-  const codigo = codigos[pais.trim()];
-
-  // Si no encuentra el país en el diccionario, mostramos un planeta de emoji como resguardo
-  if (!codigo) {
+export default function Bandera({ pais, fill = false, className = "" }: BanderaProps) {
+  if (!pais) {
     return (
-      <div
-        className={`${fill ? 'w-full h-full' : 'text-2xl w-[44px] h-[32px]'} flex items-center justify-center bg-zinc-800 rounded-sm border border-zinc-700`}
-        title={pais}
-      >
+      <div className={`${fill ? 'w-full h-full' : 'w-[44px] h-[32px]'} flex items-center justify-center bg-zinc-800 rounded-sm border border-zinc-700 ${className}`}>
         🌍
       </div>
     );
   }
 
-  if (fill) {
+  // DICCIONARIO MAESTRO AMPLIADO
+  const codigos: Record<string, string> = {
+    "suiza": "ch",
+    "túnez": "tn",
+    "tunez": "tn",
+    "austria": "at",
+    "irán": "ir",
+    "iran": "ir",
+    "uzbekistán": "uz",
+    "uzbekistan": "uz",
+    "ghana": "gh",
+    "sudáfrica": "za",
+    "sudafrica": "za",
+    "haití": "ht",
+    "haiti": "ht",
+    "curazao": "cw",
+    "cabo verde": "cv",
+    "jordania": "jo",
+    "argentina": "ar",
+    "brasil": "br",
+    "uruguay": "uy",
+    "colombia": "co",
+    "ecuador": "ec",
+    "chile": "cl",
+    "paraguay": "py",
+    "perú": "pe",
+    "peru": "pe",
+    "francia": "fr",
+    "españa": "es",
+    "espana": "es",
+    "alemania": "de",
+    "inglaterra": "gb-eng",
+    "escocia": "gb-sct",
+    "italia": "it",
+    "portugal": "pt",
+    "países bajos": "nl",
+    "holanda": "nl",
+    "bélgica": "be",
+    "belgica": "be",
+    "croacia": "hr",
+    "canadá": "ca",
+    "canada": "ca",
+    "usa": "us",
+    "estados unidos": "us",
+    "méxico": "mx",
+    "mexico": "mx",
+    "panamá": "pa",
+    "panama": "pa",
+    "costa rica": "cr",
+    "marruecos": "ma",
+    "senegal": "sn",
+    "nigeria": "ng",
+    "egipto": "eg",
+    "argelia": "dz",
+    "japón": "jp",
+    "japon": "jp",
+    "corea del sur": "kr",
+    "australia": "au",
+    "arabia saudí": "sa",
+    "arabia saudi": "sa",
+    "qatar": "qa",
+    "nueva zelanda": "nz",
+    "costa de marfil": "ci",
+    "noruega": "no",
+  };
+
+  const nombreNormalizado = pais.toLowerCase().trim();
+  const codigo = codigos[nombreNormalizado];
+
+  if (!codigo) {
     return (
-      <img
-        src={`https://flagcdn.com/w320/${codigo}.png`}
-        alt={`Bandera de ${pais}`}
-        className="w-full h-full object-cover"
-      />
+      <div className={`${fill ? 'w-full h-full' : 'w-[44px] h-[32px]'} flex items-center justify-center bg-zinc-800 rounded-sm border border-zinc-700 ${className}`}>
+        🌍
+      </div>
     );
   }
 
-  // Renderizamos la imagen optimizada que viene de los servidores perimetrales de la CDN
+  const resolucion = fill ? 'w640' : 'w80';
+  const size = fill ? 'w-full h-full' : 'w-[44px] h-[32px]';
+
   return (
     <img
-      src={`https://flagcdn.com/w80/${codigo}.png`}
-      width={44}
-      height={32}
+      src={`https://flagcdn.com/${resolucion}/${codigo}.png`}
       alt={`Bandera de ${pais}`}
-      className="rounded-sm border border-zinc-700 shadow-sm object-cover"
+      className={`${size} rounded-sm shadow-sm object-cover ${className}`}
     />
   );
 }

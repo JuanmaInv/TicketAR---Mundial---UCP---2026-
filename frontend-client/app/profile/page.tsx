@@ -9,7 +9,8 @@ function FormularioPerfil() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/";
+  const matchId = searchParams.get("matchId");
+  const redirectUrl = matchId ? `/checkout/${matchId}?step=2` : (searchParams.get("redirect") || "/");
 
   const [datos, setDatos] = useState({
     nombre: "",
@@ -100,67 +101,151 @@ function FormularioPerfil() {
       setEnviando(false);
     }
   };
-
-  if (!isLoaded) return <div className="text-center py-10">Conectando con Clerk...</div>;
-
+  if (!isLoaded) return <div className="text-center py-10 text-foreground">Conectando con Clerk...</div>;
   return (
-    <form className="mt-8 space-y-6 relative z-10" onSubmit={guardarDatos}>
-      {exito && (
-        <div className="bg-green-500/10 border border-green-500 text-green-500 p-4 rounded-2xl text-center font-bold animate-pulse">
-          ¡Datos guardados con éxito!
+    <main className="min-h-screen bg-background py-16 px-4 transition-colors duration-500 flex flex-col items-center justify-center">
+      <div className="w-full max-w-3xl">
+        
+        {/* TÍTULO Y HEADER */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl font-black italic tracking-tighter uppercase mb-2">
+            <span className="text-foreground">MI</span> <span className="text-blue-600">PERFIL</span>
+          </h1>
+          <p className="text-muted-foreground text-xs md:text-sm font-bold uppercase tracking-[0.2em]">
+            Verifica tu identidad para emitir tus tickets
+          </p>
         </div>
-      )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Nombre</label>
-          <input type="text" name="nombre" className="w-full px-5 py-4 border border-slate-200 rounded-2xl dark:bg-slate-800 text-slate-900 dark:text-white" value={datos.nombre} onChange={manejarCambio} required />
-        </div>
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Apellido</label>
-          <input type="text" name="apellido" className="w-full px-5 py-4 border border-slate-200 rounded-2xl dark:bg-slate-800 text-slate-900 dark:text-white" value={datos.apellido} onChange={manejarCambio} required />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Correo Electrónico (Vínculo Clerk)</label>
-          <input type="email" readOnly className="w-full px-5 py-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 rounded-2xl text-slate-500 cursor-not-allowed font-bold" value={datos.email} />
-        </div>
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">DNI / Documento</label>
-          <input type="text" name="documentacion" className="w-full px-5 py-4 border border-slate-200 rounded-2xl dark:bg-slate-800 text-slate-900 dark:text-white" value={datos.documentacion} onChange={manejarCambio} required />
-        </div>
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Teléfono</label>
-          <input type="tel" name="telefono" className="w-full px-5 py-4 border border-slate-200 rounded-2xl dark:bg-slate-800 text-slate-900 dark:text-white" value={datos.telefono} onChange={manejarCambio} required />
-        </div>
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Provincia</label>
-          <input type="text" name="provincia" className="w-full px-5 py-4 border border-slate-200 rounded-2xl dark:bg-slate-800 text-slate-900 dark:text-white" value={datos.provincia} onChange={manejarCambio} required />
-        </div>
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Localidad</label>
-          <input type="text" name="localidad" className="w-full px-5 py-4 border border-slate-200 rounded-2xl dark:bg-slate-800 text-slate-900 dark:text-white" value={datos.localidad} onChange={manejarCambio} required />
-        </div>
-      </div>
 
-      <div className="pt-6">
-        <button type="submit" disabled={enviando} className={`w-full text-white font-black uppercase tracking-widest text-[10px] py-5 rounded-2xl shadow-xl transition-all ${enviando ? 'bg-slate-400' : 'bg-green-600 hover:bg-green-500'}`}>
-          {enviando ? "Guardando..." : "Confirmar Datos y Continuar"}
-        </button>
+        <form className="space-y-8" onSubmit={guardarDatos}>
+          {exito && (
+            <div className="bg-emerald-500/10 border border-emerald-500 text-emerald-500 p-6 rounded-2xl text-center font-black animate-bounce">
+              ¡DATOS GUARDADOS CON ÉXITO!
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* NOMBRE */}
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Nombre</label>
+              <input 
+                type="text" 
+                name="nombre" 
+                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                value={datos.nombre} 
+                onChange={manejarCambio} 
+                required 
+              />
+            </div>
+            
+            {/* APELLIDO */}
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Apellido</label>
+              <input 
+                type="text" 
+                name="apellido" 
+                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                value={datos.apellido} 
+                onChange={manejarCambio} 
+                required 
+              />
+            </div>
+          </div>
+
+          {/* EMAIL (FULL WIDTH) */}
+          <div className="space-y-3">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Correo Electrónico (Vínculo Clerk)</label>
+            <input 
+              type="email" 
+              className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold opacity-70 cursor-not-allowed text-lg" 
+              value={datos.email} 
+              readOnly 
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* DNI */}
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">DNI / Documento</label>
+              <input 
+                type="text" 
+                name="documentacion" 
+                placeholder="Ej: 44196097"
+                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                value={datos.documentacion} 
+                onChange={manejarCambio} 
+                required 
+              />
+            </div>
+
+            {/* TELÉFONO */}
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Teléfono</label>
+              <input 
+                type="tel" 
+                name="telefono" 
+                placeholder="Ej: 3794613813"
+                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                value={datos.telefono} 
+                onChange={manejarCambio} 
+                required 
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* PROVINCIA */}
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Provincia</label>
+              <input 
+                type="text" 
+                name="provincia" 
+                placeholder="Ej: Corrientes"
+                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                value={datos.provincia} 
+                onChange={manejarCambio} 
+                required 
+              />
+            </div>
+
+            {/* LOCALIDAD */}
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Localidad</label>
+              <input 
+                type="text" 
+                name="localidad" 
+                placeholder="Ej: Ciudad de Corrientes"
+                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                value={datos.localidad} 
+                onChange={manejarCambio} 
+                required 
+              />
+            </div>
+          </div>
+
+          {/* BOTÓN DE ACCIÓN DINÁMICO */}
+          <button 
+            type="submit" 
+            disabled={enviando}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-950/20 text-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-12"
+          >
+            {enviando ? 'GUARDANDO...' : (matchId ? 'CONFIRMAR Y ELEGIR UBICACIÓN →' : 'GUARDAR CAMBIOS')}
+          </button>
+        </form>
       </div>
-    </form>
+    </main>
   );
 }
 
 export default function ProfilePage() {
   return (
-    <div className="min-h-screen py-20 px-4 bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-      <div className="w-full max-w-2xl bg-white dark:bg-slate-900 p-10 rounded-[3rem] shadow-2l border border-slate-100 dark:border-white/5 relative overflow-hidden">
+    <div className="min-h-screen py-20 px-4 bg-background transition-colors duration-500 flex items-center justify-center">
+      <div className="w-full max-w-2xl bg-card p-10 rounded-[3rem] shadow-2xl border border-border relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none"></div>
         <div className="relative z-10 text-center mb-10">
-          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">MI <span className="text-blue-600">PERFIL</span></h2>
-          <p className="mt-3 text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-widest">Verifica tu identidad para emitir tus tickets</p>
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-foreground">MI <span className="text-blue-600">PERFIL</span></h2>
+          <p className="mt-3 text-muted-foreground font-medium text-xs uppercase tracking-widest">Verifica tu identidad para emitir tus tickets</p>
         </div>
-        <Suspense fallback={<div className="text-center">Cargando datos...</div>}>
+        <Suspense fallback={<div className="text-center text-foreground">Cargando datos...</div>}>
           <FormularioPerfil />
         </Suspense>
       </div>
