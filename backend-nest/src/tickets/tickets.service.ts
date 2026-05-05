@@ -30,7 +30,7 @@ export class EntradasService {
     private readonly ticketStateFactory: TicketStateFactory,
     private readonly paymentsService: PaymentsService,
     private readonly qrService: QrService,
-  ) {}
+  ) { }
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
     // 1. VALIDACIÓN DE PASAPORTE
@@ -44,16 +44,17 @@ export class EntradasService {
       );
     }
 
-    // 2. REGLA CRÍTICA: MÁXIMO 6 ENTRADAS POR CUENTA DE USUARIO
-    // Un usuario puede comprar hasta 6 entradas en nombre de su cuenta.
+    // 2. REGLA CRÍTICA: MÁXIMO 6 ENTRADAS POR CUENTA DE USUARIO POR PARTIDO
+    // Un usuario puede comprar hasta 6 entradas en nombre de su cuenta para un mismo partido.
     // Todas las entradas quedan a nombre del titular que presenta su pasaporte en la puerta.
     const LIMITE_ENTRADAS = 6;
     const totalActivas = await this.entradasRepository.contarEntradasActivas(
       crearEntradaDto.idUsuario,
+      crearEntradaDto.idPartido,
     );
     if (totalActivas >= LIMITE_ENTRADAS) {
       throw new ConflictException(
-        `Ya tenés ${totalActivas} entradas activas. El máximo permitido por cuenta es ${LIMITE_ENTRADAS}.`,
+        `Ya tenés ${totalActivas} entradas activas para este partido. El máximo permitido por cuenta es ${LIMITE_ENTRADAS} por partido.`,
       );
     }
 

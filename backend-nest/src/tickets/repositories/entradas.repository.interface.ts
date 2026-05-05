@@ -5,10 +5,10 @@ export interface IEntradasRepository {
   // Consultas de negocio
   validarPasaporteUsuario(idUsuario: string): Promise<boolean>;
   /**
-   * Cuenta cuántas entradas activas (RESERVADO o PAGADO) tiene el usuario en total.
-   * Regla de negocio: Máximo 6 entradas por cuenta.
+   * Cuenta cuántas entradas activas (RESERVADO o PAGADO) tiene el usuario para un partido específico.
+   * Regla de negocio: Máximo 6 entradas por cuenta por partido.
    */
-  contarEntradasActivas(idUsuario: string): Promise<number>;
+  contarEntradasActivas(idUsuario: string, idPartido: string): Promise<number>;
   obtenerStockDisponible(
     idPartido: string,
     idSector: string,

@@ -28,9 +28,9 @@ export class PaymentsService {
    */
   useProvider(provider: 'simulated' | 'mercadopago') {
     if (provider === 'mercadopago') {
-      this.strategy = this.mercadopagoStrategy;
+      this.strategy = this.mercadopagoStrategy; //conecta con los servidores de mercadoPago
     } else {
-      this.strategy = this.simulatedStrategy;
+      this.strategy = this.simulatedStrategy; //solo devuelve un success:true para simular
     }
   }
 

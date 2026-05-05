@@ -8,7 +8,7 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 export class ReservadoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger) { }
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -68,6 +68,7 @@ export class ReservadoState implements TicketState {
     );
   }
 
+  //Metodo cancelar funciona ya que es legal cancelar una reserva antes de que expire
   cancelar(): void {
     this.logger.log(`Cancelando reserva del ticket ${this.ticket.id}.`);
   }
