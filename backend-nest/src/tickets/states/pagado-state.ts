@@ -8,7 +8,7 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 export class PagadoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger) { }
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -29,6 +29,7 @@ export class PagadoState implements TicketState {
     throw new BadRequestException('El ticket ya se encuentra pagado.');
   }
 
+  //Metodo cancelar tira una excepcion ya que el ticket esta pagado
   cancelar(): void {
     throw new BadRequestException(
       'No se puede cancelar una entrada que ya ha sido pagada.',

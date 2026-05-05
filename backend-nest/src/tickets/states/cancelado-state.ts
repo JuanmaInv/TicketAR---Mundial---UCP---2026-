@@ -8,7 +8,7 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 export class CanceladoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger) { }
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -27,12 +27,14 @@ export class CanceladoState implements TicketState {
     );
   }
 
+  //Metodo confirmarPago tira una excepcion ya que el ticket esta cancelado
   confirmarPago(): void {
     throw new BadRequestException(
       'No se puede confirmar el pago de un ticket cancelado.',
     );
   }
 
+  //Metodo cancelar tira una excepcion ya que el ticket esta cancelado
   cancelar(): void {
     throw new BadRequestException('Este ticket ya está cancelado.');
   }

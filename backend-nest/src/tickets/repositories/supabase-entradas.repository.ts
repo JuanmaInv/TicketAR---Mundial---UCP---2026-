@@ -6,7 +6,7 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 
 @Injectable()
 export class SupabaseEntradasRepository implements IEntradasRepository {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private readonly supabaseService: SupabaseService) { }
 
   private get supabase() {
     return this.supabaseService.getClient();
@@ -24,14 +24,15 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   }
 
   /**
-   * Cuenta todas las entradas activas (RESERVADO o PAGADO) de un usuario.
-   * Un usuario puede tener hasta 6 entradas en total entre todos los partidos.
+   * Cuenta todas las entradas activas (RESERVADO o PAGADO) de un usuario para un partido específico.
+   * Un usuario puede tener hasta 6 entradas por partido.
    */
-  async contarEntradasActivas(idUsuario: string): Promise<number> {
+  async contarEntradasActivas(idUsuario: string, idPartido: string): Promise<number> {
     const { count, error } = await this.supabase
       .from('entradas')
       .select('id', { count: 'exact', head: true })
       .eq('id_usuario', idUsuario)
+      .eq('id_partido', idPartido)
       .neq('estado', TicketStatus.CANCELADO);
 
     if (error || count === null) return 0;
