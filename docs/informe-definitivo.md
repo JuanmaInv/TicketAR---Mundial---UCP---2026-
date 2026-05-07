@@ -148,18 +148,20 @@ HTTP Request
      ↓
 [ DTO ]          ← Valida los datos de entrada (escudo protector)
      ↓
-[ Controller ]   ← Enruta la petición al servicio correcto (solo delega)
+[ Controller ]   ← Enruta la petición al servicio correcto (Mozo)
      ↓
-[ Service ]      ← Aplica la lógica de negocio (el cerebro)
+[ Service ]      ← Aplica la lógica de negocio (Cocinero)
      ↓
-[ Database ]     ← Persiste los datos (Supabase)
+[ Interface ]    ← Contrato universal (IEntradasRepository)
+     ↓
+[ Repository ]   ← Implementación técnica (Supabase/Postgres)
 ```
 
 ### 1. DTOs (Data Transfer Objects)
 Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript que validan los datos que entran a la API (usando `class-validator`). 
 - *Misión:* Actúan como un "escudo" de seguridad. Implementan el principio de **Zero Trust**: el servidor solo acepta los campos definidos (ej. `userId`, `partidoId`, `sectorId`) e ignora el resto (ej. `status`, `qrCode`).
 - *Validación Estricta:* Se utiliza `@IsUUID('4')` para prevenir inyecciones y asegurar que los identificadores sigan el estándar de Supabase.
-- *Configuración Global:* Se utiliza el `ValidationPipe` en `main.ts` con `whitelist: true` para limpiar automáticamente cualquier campo no deseado enviado por el cliente.
+- *Configuración Global:* Se utiliza el `ValidationPipe` en `main.ts` with `whitelist: true` para limpiar automáticamente cualquier campo no deseado enviado por el cliente.
 
 ### 2. Roles de cada capa
 
@@ -178,9 +180,10 @@ Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript 
 Para que el sistema se banque el tráfico del Mundial y no se nos rompa todo cuando querramos escalar, armamos una arquitectura bien profesional con NestJS. La idea es que cada parte del código haga una sola cosa y que sea fácil de probar.
 
 ### 1. Patrón Repositorio (Repository Pattern)
-Es el puente entre el servicio y la base de datos (Supabase).
-- **Contrato:** Usamos interfaces para que al servicio no le importe de dónde vienen los datos.
-- **Independencia:** Si cambiamos de DB, solo tocamos el repositorio.
+Es el puente entre el servicio y la base de datos.
+- **Herramienta Universal (Contrato):** Usamos interfaces (`IEntradasRepository`) para que al servicio no le importe de dónde vienen los datos.
+- **Inversión de Control:** El servicio recibe su repositorio por inyección de dependencias (`@Inject`). Esto permite que podamos cambiar de Supabase a una base de datos local en 5 minutos solo tocando el `TicketsModule`, sin romper el `TicketsService`.
+- **Independencia:** Si cambiamos de DB, solo creamos una nueva implementación de la interfaz.
 
 ### 2. Patrón State (Estado Activo)
 Manejamos el ciclo de vida del ticket con objetos inteligentes en lugar de simples strings.
@@ -270,9 +273,9 @@ El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones d
 
 ---
 
-## 🤖 Protocolo Erwin (IA Tutor)
+## 🤖 Protocolo Erwin (Cultura de Equipo)
 
-- **Método Socrático:** No dar código completo. Proporcionar pistas, teoría y fragmentos educativos.
-- **Foco Backend:** Priorizar lógica de servicios, DTOs y seguridad en NestJS.
-- **Contexto:** Si falta información, preguntar antes de asumir.
-- **Visión Fullstack:** Explicar siempre cómo los endpoints serán consumidos desde el Frontend (Next.js/TypeScript) mediante DTOs e interfaces tipadas.
+El proyecto TicketAR no solo se trata de código, sino de un proceso de aprendizaje continuo.
+- **Método Socrático:** La IA actúa como un mentor que guía al desarrollador mediante analogías y preguntas, asegurando que la arquitectura se entienda antes de implementarse.
+- **Foco en Patrones:** Priorizamos el "Por Qué" sobre el "Cómo". Si una lógica es compleja, se encapsula en un Patrón (State, Strategy, Adapter).
+- **Abstracción sobre Implementación:** "Programar para interfaces, no para implementaciones". Esta es la regla de oro que permite que TicketAR sea un sistema profesional y escalable para el Mundial 2026.

@@ -6,11 +6,11 @@ Esta documentación detalla la implementación del sistema de pagos y validació
 
 El sistema sigue un patrón de estados (State Pattern) para garantizar la seguridad:
 
-1.  **Reserva:** El usuario elige un asiento y se crea un ticket en estado `RESERVADO`.
-2.  **Pago:** Se genera una preferencia de Mercado Pago (Checkout Pro). El ticket queda bloqueado por 15 minutos (configurable).
+1.  **Reserva:** El usuario elige un asiento y se crea un ticket en estado `RESERVADO`. El `EntradasService` valida la regla de 6 tickets y el stock.
+2.  **Pago (Estrategia):** Dependiendo de la configuración, se usa una `IPaymentStrategy`. Si es Mercado Pago, se genera un link de pago.
 3.  **Confirmación (Webhook):** Mercado Pago notifica a nuestro servidor (vía Ngrok en desarrollo) cuando el pago es aprobado.
-4.  **Liberación:** El sistema cambia el estado a `PAGADO` y habilita la generación del código QR.
-5.  **Acceso:** El usuario puede visualizar su QR en la plataforma para ingresar al estadio.
+4.  **Transición de Estado (State Pattern):** El objeto `ReservadoState` recibe la confirmación, valida que la reserva no haya expirado y transiciona el ticket a `PAGADO`.
+5.  **Acceso:** Una vez en estado `PAGADO`, el sistema habilita la generación del código QR único.
 
 ## 🔄 Ciclo de Vida del Ticket (Base de Datos)
 
@@ -40,18 +40,22 @@ Asegurarse de tener configurado:
 - **Comprador:** Cuenta `TESTUSER...` creada en la sección de "Cuentas de prueba" de Mercado Pago Developers. 
 - **Importante:** Siempre loguearse como el comprador en una ventana limpia/incógnito antes de usar el link de pago.
 
-## 🧪 Herramientas de Prueba
+## 🌐 El Rol de Ngrok (¿Por qué lo usamos?)
 
-### Script de Prueba Integral (`test-sandbox.js`)
-Hemos creado un script que automatiza todo el proceso de reserva y generación de link para evitar errores manuales:
-```bash
-node backend-nest/test-sandbox.js
-```
-**¿Qué hace este script?**
-- Busca automáticamente un usuario con pasaporte en tu base de datos.
-- Busca un partido y un sector disponible.
-- Crea la reserva vía API.
-- Genera y muestra el **Link de Pago** real en la terminal.
+Durante el desarrollo, nuestro servidor NestJS corre de forma privada en la computadora (`http://localhost:3000`). Cuando un pago se aprueba, **Mercado Pago necesita enviar una notificación (Webhook)** a nuestro servidor para avisar que la compra fue exitosa. 
+
+Como Mercado Pago está en Internet, no puede enviar datos a `localhost`. 
+
+**Ngrok** soluciona esto actuando como un puente o "túnel reverso". Nos proporciona una URL pública (ejemplo: `https://4a3b-200.ngrok-free.app`) que redirige todo el tráfico directamente a nuestro `localhost:3000`.
+- Esta es la URL que debemos configurar en el panel de Mercado Pago.
+- Gracias a Ngrok, nuestro servidor local puede recibir el evento "Payment Success" y actualizar el estado de la entrada a `PAGADO`.
+
+### 2. El Ciclo de Retroalimentación (Webhook + Ngrok)
+Como `localhost` es invisible para Internet, Mercado Pago no puede avisarnos directamente. Ngrok actúa como un "túnel" que expone nuestro puerto 3000.
+1. Mercado Pago envía un POST a la URL de Ngrok.
+2. Ngrok redirige ese POST a nuestro `PaymentsController`.
+3. El controlador delega la verificación a la estrategia activa.
+4. Si la estrategia confirma el éxito, el ticket cambia de estado.
 
 ### Verificación de QR
 Una vez que un ticket está en estado `PAGADO`, el backend habilita el endpoint:
@@ -59,6 +63,11 @@ Una vez que un ticket está en estado `PAGADO`, el backend habilita el endpoint:
 Este devuelve la imagen en formato Base64 lista para ser mostrada en el frontend.
 
 ## 📝 Decisiones Arquitectónicas
-- **Strategy Pattern:** Permite cambiar entre Mercado Pago, Stripe o un Simulador solo cambiando una variable de entorno.
-- **State Pattern:** El ticket "sabe" qué acciones permite (ej: no se puede generar QR si está reservado).
+
+- **Strategy Pattern:** Implementado en `PaymentsService`. Permite alternar entre `MercadoPagoStrategy` (Real) y `SimulatedPaymentStrategy` (Mock) sin cambiar el código del servicio. La elección es automática basada en la presencia del `MP_ACCESS_TOKEN`.
+- **State Pattern:** Implementado en `src/tickets/states`. Desacopla la lógica de validación de transiciones del `EntradasService`. Cada estado (`ReservadoState`, `PagadoState`, `CanceladoState`) es responsable de permitir o denegar acciones (como cancelar o pagar), protegiendo la integridad del negocio.
+- **Layered Architecture:** 
+    - **Controller:** Maneja el tráfico HTTP (Mozo).
+    - **Service:** Orquesta la lógica de negocio (Cocinero).
+    - **Repository:** Abstrae la persistencia de datos (Despensa).
 - **Webhooks:** Se procesan en `PaymentsController` para asegurar que la actualización de stock y estado sea asíncrona y confiable.

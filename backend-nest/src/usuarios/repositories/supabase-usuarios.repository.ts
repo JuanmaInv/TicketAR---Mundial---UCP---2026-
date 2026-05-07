@@ -16,7 +16,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       .from('usuarios')
       .insert([
         {
-          correo: crearUsuarioDto.email,
+          email: crearUsuarioDto.email,
           nombre: crearUsuarioDto.nombre,
           apellido: crearUsuarioDto.apellido,
           numero_pasaporte: crearUsuarioDto.numeroPasaporte,
@@ -38,7 +38,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       .getClient()
       .from('usuarios')
       .select('*')
-      .eq('correo', correo)
+      .eq('email', correo)
       .maybeSingle()) as { data: unknown; error: Error | null };
 
     if (error || !data) return null;
@@ -61,7 +61,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
         provincia: datos.provincia,
         fecha_actualizacion: new Date(),
       })
-      .eq('correo', correo)
+      .eq('email', correo)
       .select()
       .single()) as { data: unknown; error: Error | null };
 
@@ -82,7 +82,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
   private mapearEntidad(data: unknown): UsuarioEntidad {
     const d = data as {
       id: string;
-      correo: string;
+      email: string;
       nombre: string;
       apellido: string;
       numero_pasaporte: string;
@@ -95,7 +95,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
 
     return {
       id: d.id,
-      email: d.correo,
+      email: d.email,
       nombre: d.nombre,
       apellido: d.apellido,
       numeroPasaporte: d.numero_pasaporte,
