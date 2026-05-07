@@ -101,4 +101,34 @@ test.describe('Integración: Flujo de Compra de Entradas', () => {
     console.log('Generación de QR validada con Base64.');
   });
 
+  // 5. TEST DE REGLA CRÍTICA (LÍMITE DE 6)
+  test('Paso 5: Debería fallar si un usuario intenta superar el límite de 6 entradas', async ({ request }) => {
+    console.log('Verificando límite de 6 entradas...');
+
+    // Ya tenemos 1 entrada del Paso 1. Creamos 5 más para llegar al límite.
+    for (let i = 0; i < 5; i++) {
+      await request.post('/entradas', {
+        data: {
+          idUsuario: DATOS_PRUEBA.usuarioId,
+          idPartido: DATOS_PRUEBA.partidoId,
+          idSector: DATOS_PRUEBA.sectorId
+        }
+      });
+    }
+
+    // El intento número 7 (1 inicial + 5 extras + este) debería fallar
+    const response = await request.post('/entradas', {
+      data: {
+        idUsuario: DATOS_PRUEBA.usuarioId,
+        idPartido: DATOS_PRUEBA.partidoId,
+        idSector: DATOS_PRUEBA.sectorId
+      }
+    });
+
+    expect(response.status()).toBe(409); // Conflict
+    const body = await response.json();
+    expect(body.message).toContain('máximo permitido por cuenta es 6');
+    console.log('Regla de límite de 6 entradas validada correctamente.');
+  });
+
 });
