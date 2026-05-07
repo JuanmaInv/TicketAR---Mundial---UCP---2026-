@@ -83,4 +83,22 @@ test.describe('Integración: Flujo de Compra de Entradas', () => {
     console.log('Pago confirmado (simulado).');
   });
 
+  // 4. TEST DE GENERACIÓN DE QR
+  test('Paso 4: Debería generar el QR exitosamente después del pago', async ({ request }) => {
+    // Esperamos un momento para que la DB procese el update del paso anterior
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const response = await request.get(`/entradas/${ticketId}/qr`);
+
+    if (response.status() !== 200) {
+      const errorBody = await response.json();
+      console.error('Error en Paso 4:', errorBody);
+    }
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.qrDataUrl).toContain('data:image/png;base64');
+    console.log('Generación de QR validada con Base64.');
+  });
+
 });
