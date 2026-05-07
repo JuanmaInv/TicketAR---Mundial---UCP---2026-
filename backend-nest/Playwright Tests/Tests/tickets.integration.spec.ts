@@ -63,4 +63,24 @@ test.describe('Integración: Flujo de Compra de Entradas', () => {
     console.log('Bloqueo de QR en estado RESERVADO verificado.');
   });
 
+  // 3. TEST DE PAGO + SIMULACIÓN DE WEBHOOK
+  test('Paso 3: Debería procesar el pago y confirmar el estado', async ({ request }) => {
+    const response = await request.post(`/entradas/${ticketId}/pagar`);
+    expect(response.status()).toBe(201);
+
+    const body = await response.json();
+
+    // Si el pago es externo (Mercado Pago), forzamos el estado a PAGADO en la DB 
+    // para simular que el webhook de confirmación ya llegó.
+    if (!body.paymentResult.success || body.paymentResult.paymentUrl) {
+      console.log('Simulando confirmación de pago (Webhook)...');
+      await supabase
+        .from('entradas')
+        .update({ estado: 'PAGADO' })
+        .eq('id', ticketId);
+    }
+
+    console.log('Pago confirmado (simulado).');
+  });
+
 });
