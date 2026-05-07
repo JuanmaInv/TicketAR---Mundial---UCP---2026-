@@ -56,4 +56,11 @@ test.describe('Integración: Flujo de Compra de Entradas', () => {
     console.log(`Reserva creada con ID: ${ticketId}`);
   });
 
+  // 2. TEST DE SEGURIDAD (QR)
+  test('Paso 2: No debería permitir obtener el QR si el ticket no está PAGADO', async ({ request }) => {
+    const response = await request.get(`/entradas/${ticketId}/qr`);
+    expect(response.status()).toBe(400);
+    console.log('Bloqueo de QR en estado RESERVADO verificado.');
+  });
+
 });
