@@ -220,6 +220,83 @@ Resolver las 3 observaciones críticas del segundo ciclo de PR review sobre la e
 
 ---
 
+## 🗓️ Sesión 7 — 08 de Mayo de 2026
+
+### Objetivo
+Corregir los 3 tests unitarios que fallaron en el pipeline de Codacy debido a un error de **mock hoisting** en Jest.
+
+**Rama:** `fix/unit-tests-mock-hoisting`
+
+### Error reportado por Codacy CI
+
+```
+FAIL src/payments/strategies/mercadopago.strategy.spec.ts
+
+  ● PROD: E2E_BYPASS=true + API "rejected" → mockPaymentGet.toHaveBeenCalledTimes(1)
+    Expected: 1 — Received: 0
+
+  ● PROD: sin bypass + API "approved" → result.success.toBe(true)
+    Expected: true — Received: false
+
+  ● DEV: E2E_BYPASS=false → mockPaymentGet.toHaveBeenCalledTimes(1)
+    Expected: 1 — Received: 0
+
+Tests: 3 failed, 10 passed, 13 total
+```
+
+Los logs también mostraban errores `401 Unauthorized` de la API real de Mercado Pago, lo que confirmó que el mock nunca se había aplicado.
+
+### Causa raíz — Jest Hoisting
+
+Jest tiene un mecanismo interno que **hoistea** (mueve al inicio del archivo) todas las llamadas a `jest.mock()` antes de que se resuelvan los `import`. Este hoisting **solo ocurre cuando `jest.mock()` está en el nivel raíz del módulo**. Si se coloca dentro de una función como `beforeEach()`, Jest no puede hoistearlo y el módulo real se carga en su lugar.
+
+```
+// ❌ ANTES — dentro de beforeEach(): Jest NO puede hoistearlo
+beforeEach(() => {
+  jest.mock('mercadopago', () => ({ ... }));
+  // → El SDK real de MP se cargó antes de llegar aquí → 401 en todos los tests
+});
+
+// ✅ AHORA — en el nivel raíz: Jest lo mueve automáticamente antes de los imports
+jest.mock('mercadopago', () => ({
+  MercadoPagoConfig: jest.fn(() => ({})),
+  Preference: jest.fn(),
+  Payment: jest.fn(),   // el comportamiento de .get() se configura en beforeEach
+}));
+
+// En beforeEach() solo configuramos el spy por cada test:
+beforeEach(() => {
+  mockPaymentGet = jest.fn();
+  (Payment as jest.Mock).mockImplementation(() => ({ get: mockPaymentGet }));
+});
+```
+
+### Cambios aplicados
+
+| Cambio | Detalle |
+|--------|---------|
+| `jest.mock('mercadopago')` movido a nivel raíz | Permite que Jest hoistee el mock antes de resolver los imports |
+| `Payment.mockImplementation()` en `beforeEach` | Cada test recibe su propio `mockPaymentGet` aislado |
+| Import de `Payment` desde `mercadopago` | Necesario para poder llamar a `(Payment as jest.Mock).mockImplementation()` |
+
+### Resultado tras la corrección
+
+```
+PASS src/payments/strategies/mercadopago.strategy.spec.ts
+  MercadoPagoStrategy — verifyPayment()
+    ✅ PROD: E2E_BYPASS=true + API "rejected" → success false, API invocada
+    ✅ DEV: E2E_BYPASS=true → success true, API NOT invocada
+    ✅ PROD: sin bypass + API "approved" → success true
+    ✅ DEV: E2E_BYPASS=false → flujo normal, API invocada
+    ✅ ERROR: fallo de red → success false con mensaje
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Time:        ~1.2s
+```
+
+---
+
 ## 📊 Resumen General de Cobertura (Actualizado)
 
 | Suite | Archivo | Técnica | Tests totales | ✅ Passed | ❌ Failed |
@@ -281,4 +358,4 @@ npx playwright test --ui
 ---
 
 *Documento generado en base al historial de sesiones de trabajo con IA (Gemini Antigravity) — TicketAR 2026.*  
-*Última actualización: 08 de Mayo de 2026 — Sesión 6 (unit tests + fix bypass)*
+*Última actualización: 08 de Mayo de 2026 — Sesión 7 (fix jest.mock() hoisting en unit tests)*
