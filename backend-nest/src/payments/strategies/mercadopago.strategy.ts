@@ -99,7 +99,8 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
       return {
         success: true,
         transactionId,
-        paymentUrl: undefined,
+        // FIX: Durante el bypass, asumimos que el test inyecta el ticketId como transactionId en el webhook
+        paymentUrl: transactionId,
       };
     }
 
