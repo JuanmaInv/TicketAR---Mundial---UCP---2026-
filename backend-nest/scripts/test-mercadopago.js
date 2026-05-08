@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
