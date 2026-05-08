@@ -4,18 +4,20 @@ import { Payment } from 'mercadopago';
 import { MercadoPagoStrategy } from './mercadopago.strategy';
 
 /**
- * FIX: jest.mock() DEBE estar en el nivel raíz del módulo.
- * Jest lo hoistea automáticamente al inicio del archivo antes de cualquier
- * import. Si se coloca dentro de beforeEach(), el mock nunca se aplica
- * y los tests llaman a la API real de Mercado Pago (error 401).
+ * jest.mock() en el nivel raíz del módulo para que Jest lo hoistee
+ * correctamente antes de que se resuelvan los imports.
  */
 jest.mock('mercadopago', () => ({
   MercadoPagoConfig: jest.fn(() => ({})),
   Preference: jest.fn(),
-  // Payment se mockea como constructor que devuelve un objeto con .get()
-  // El mock de .get() se reemplaza en cada test con mockImplementation()
   Payment: jest.fn(),
 }));
+
+/** Helper: resetea variables de entorno sin usar `delete` (evita @typescript-eslint/no-dynamic-delete) */
+function resetEnv(): void {
+  process.env.E2E_BYPASS = undefined;
+  process.env.NODE_ENV = undefined;
+}
 
 describe('MercadoPagoStrategy — verifyPayment()', () => {
   let strategy: MercadoPagoStrategy;
@@ -23,14 +25,9 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    delete process.env.E2E_BYPASS;
-    delete process.env.NODE_ENV;
+    resetEnv();
 
-    // Creamos un nuevo mock de .get() por cada test para evitar contaminación
     mockPaymentGet = jest.fn();
-
-    // Le decimos a la clase Payment (ya mockeada a nivel módulo) que cuando
-    // se instancie con `new Payment(...)` devuelva { get: mockPaymentGet }
     (Payment as jest.Mock).mockImplementation(() => ({
       get: mockPaymentGet,
     }));
@@ -41,7 +38,7 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn((key: string) => {
+            get: jest.fn((key: string): string | undefined => {
               const config: Record<string, string> = {
                 MP_ACCESS_TOKEN: 'TEST_TOKEN_FAKE',
                 MP_WEBHOOK_URL: 'https://fake-ngrok.io/webhook',
@@ -58,28 +55,26 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
   });
 
   afterEach(() => {
-    delete process.env.E2E_BYPASS;
-    delete process.env.NODE_ENV;
+    resetEnv();
   });
 
   // ─────────────────────────────────────────────────────────────────────────
   // TEST 1: En PRODUCCIÓN, E2E_BYPASS=true NO debe activarse.
-  // El flujo real debe ejecutarse: la API es llamada y devuelve "rejected".
   // ─────────────────────────────────────────────────────────────────────────
   it('PROD: E2E_BYPASS=true + API "rejected" → success false, API invocada', async () => {
     process.env.NODE_ENV = 'production';
     process.env.E2E_BYPASS = 'true';
 
+    // Tipado explícito del mock para evitar @typescript-eslint/no-unsafe-member-access
     mockPaymentGet.mockResolvedValueOnce({
-      status: 'rejected',
-      id: 12345,
-      external_reference: 'TICKET-001',
+      status: 'rejected' as string,
+      id: 12345 as number,
+      external_reference: 'TICKET-001' as string,
     });
 
     const result = await strategy.verifyPayment('12345');
 
     expect(result.success).toBe(false);
-    // En producción el bypass no aplica → la API DEBE haber sido llamada
     expect(mockPaymentGet).toHaveBeenCalledTimes(1);
   });
 
@@ -94,7 +89,6 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
 
     expect(result.success).toBe(true);
     expect(result.transactionId).toBe('fake-transaction-id');
-    // La clave del fix: el SDK NO debe haberse llamado
     expect(mockPaymentGet).not.toHaveBeenCalled();
   });
 
@@ -103,12 +97,12 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
   // ─────────────────────────────────────────────────────────────────────────
   it('PROD: sin bypass + API "approved" → success true', async () => {
     process.env.NODE_ENV = 'production';
-    delete process.env.E2E_BYPASS;
+    process.env.E2E_BYPASS = undefined;
 
     mockPaymentGet.mockResolvedValueOnce({
-      status: 'approved',
-      id: 99999,
-      external_reference: 'TICKET-XYZ',
+      status: 'approved' as string,
+      id: 99999 as number,
+      external_reference: 'TICKET-XYZ' as string,
     });
 
     const result = await strategy.verifyPayment('99999');
@@ -126,9 +120,9 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
     process.env.E2E_BYPASS = 'false';
 
     mockPaymentGet.mockResolvedValueOnce({
-      status: 'pending',
-      id: 77777,
-      external_reference: 'TICKET-ABC',
+      status: 'pending' as string,
+      id: 77777 as number,
+      external_reference: 'TICKET-ABC' as string,
     });
 
     const result = await strategy.verifyPayment('77777');
@@ -142,7 +136,7 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
   // ─────────────────────────────────────────────────────────────────────────
   it('ERROR: fallo de red en Payment.get() → success false con mensaje', async () => {
     process.env.NODE_ENV = 'production';
-    delete process.env.E2E_BYPASS;
+    process.env.E2E_BYPASS = undefined;
 
     mockPaymentGet.mockRejectedValueOnce(new Error('Network timeout'));
 
