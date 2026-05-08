@@ -79,7 +79,8 @@ export default function Navbar() {
 
           {/* BOTÓN MENÚ MÓVIL */}
           <button 
-            onClick={() => setMenuAbierto(!menuAbierto)}
+            type="button"
+            onClick={() => { setMenuAbierto(!menuAbierto); }}
             className="md:hidden text-white p-2 focus:outline-none"
           >
             <div className="space-y-1.5">
@@ -94,7 +95,8 @@ export default function Navbar() {
       {/* MENÚ MÓVIL (Overlay) */}
       <div className={`fixed inset-0 bg-black/95 z-[60] flex flex-col items-center justify-center transition-all duration-500 ${menuAbierto ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
         <button 
-          onClick={() => setMenuAbierto(false)}
+          type="button"
+          onClick={() => { setMenuAbierto(false); }}
           className="absolute top-8 right-8 text-white text-4xl font-light hover:rotate-90 transition-transform"
         >
           ✕
@@ -104,7 +106,7 @@ export default function Navbar() {
             <Link
               key={link.name}
               href={link.href}
-              onClick={() => setMenuAbierto(false)}
+              onClick={() => { setMenuAbierto(false); }}
               className={`text-4xl font-black italic tracking-tighter text-white hover:text-blue-500 transition-all ${link.color || 'text-white'}`}
             >
               {link.name}
@@ -114,7 +116,7 @@ export default function Navbar() {
              {isLoaded && !isSignedIn && (
                <Link 
                  href="/login" 
-                 onClick={() => setMenuAbierto(false)}
+                 onClick={() => { setMenuAbierto(false); }}
                  className="bg-white text-black px-12 py-4 rounded-xl text-xl font-black italic tracking-tighter shadow-2xl"
                >
                  INGRESAR

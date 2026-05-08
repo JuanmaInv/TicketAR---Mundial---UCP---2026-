@@ -56,11 +56,19 @@ export default function FAQPage() {
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <div
-              key={index}
-              className={`bg-card border rounded-3xl overflow-hidden transition-all duration-300 shadow-sm cursor-pointer ${
+              key={faq.pregunta}
+              role="button"
+              tabIndex={0}
+              className={`bg-card border rounded-3xl overflow-hidden transition-all duration-300 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 abierto === index ? 'border-blue-500 shadow-blue-500/10 shadow-xl' : 'border-border hover:border-blue-500/40'
               }`}
-              onClick={() => setAbierto(abierto === index ? null : index)}
+              onClick={() => { setAbierto(abierto === index ? null : index); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setAbierto(abierto === index ? null : index);
+                }
+              }}
             >
               <div className="flex items-center justify-between p-6 md:p-8">
                 <div className="flex items-center gap-4">

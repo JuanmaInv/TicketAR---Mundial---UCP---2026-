@@ -27,33 +27,34 @@ export default function CalendarComponent() {
     loadData();
   }, []);
 
-  const getMinPrecio = () => {
+  function getMinPrecio() {
     const validos = sectores.filter(s => {
       const n = s.nombre.toLowerCase();
       return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
     });
     return validos.length > 0 ? Math.min(...validos.map(s => s.precio)) : 0;
-  };
+  }
 
-  const normalizeTeamLabel = (label: string) => {
+  function normalizeTeamLabel(label: string) {
     if (!label) return 'TBD';
     return label.replace(/_/g, ' ');
-  };
+  }
 
   // Agrupar por fecha
-  const porFecha = partidos.reduce<Record<string, Partido[]>>((acc, p) => {
+  const gruposFechaMap = new Map<string, Partido[]>();
+  partidos.forEach(p => {
     const fecha = p.fechaPartido ? new Date(p.fechaPartido).toLocaleDateString('es-AR', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     }) : 'Fecha por confirmar';
-    if (!acc[fecha]) acc[fecha] = [];
-    acc[fecha].push(p);
-    return acc;
-  }, {});
+    if (!gruposFechaMap.has(fecha)) gruposFechaMap.set(fecha, []);
+    gruposFechaMap.get(fecha)!.push(p);
+  });
 
-  const fechas = Object.keys(porFecha);
+  const gruposFecha = Array.from(gruposFechaMap.entries()).map(([fecha, lista]) => ({ fecha, lista }));
+  const fechas = gruposFecha.map(g => g.fecha);
   const MESES_POR_PAGINA = 3;
   const inicio = mesActual * MESES_POR_PAGINA;
-  const fechasVisibles = fechas.slice(inicio, inicio + MESES_POR_PAGINA);
+  const gruposVisibles = gruposFecha.slice(inicio, inicio + MESES_POR_PAGINA);
   const minPrecio = getMinPrecio();
 
   if (loading) return (
@@ -73,7 +74,8 @@ export default function CalendarComponent() {
       {/* Navegación */}
       <div className="flex justify-between items-center">
         <button
-          onClick={() => setMesActual(Math.max(0, mesActual - 1))}
+          type="button"
+          onClick={() => { setMesActual(Math.max(0, mesActual - 1)); }}
           disabled={mesActual === 0}
           className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl font-black text-xs uppercase tracking-widest text-foreground hover:border-blue-500 transition-all disabled:opacity-30"
         >
@@ -83,7 +85,8 @@ export default function CalendarComponent() {
           {inicio + 1}–{Math.min(inicio + MESES_POR_PAGINA, fechas.length)} de {fechas.length} fechas
         </p>
         <button
-          onClick={() => setMesActual(mesActual + 1)}
+          type="button"
+          onClick={() => { setMesActual(mesActual + 1); }}
           disabled={inicio + MESES_POR_PAGINA >= fechas.length}
           className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl font-black text-xs uppercase tracking-widest text-foreground hover:border-blue-500 transition-all disabled:opacity-30"
         >
@@ -92,20 +95,20 @@ export default function CalendarComponent() {
       </div>
 
       {/* Lista de fechas */}
-      {fechasVisibles.map((fecha) => (
-        <div key={fecha} className="space-y-3">
+      {gruposVisibles.map((grupo) => (
+        <div key={grupo.fecha} className="space-y-3">
           {/* Cabecera de fecha */}
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-border" />
             <span className="bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest capitalize">
-              📅 {fecha}
+              📅 {grupo.fecha}
             </span>
             <div className="h-px flex-1 bg-border" />
           </div>
 
           {/* Partidos del día */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {porFecha[fecha].map((partido) => (
+            {grupo.lista.map((partido) => (
               <Link
                 key={partido.id}
                 href={`/checkout/${partido.id}`}

@@ -87,12 +87,13 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     localStorage.setItem(`checkout_step_${partidoId}`, paso.toString());
   }, [paso, partidoId]);
 
-  const perfilIncompleto = !datosUsuario?.nombre || 
-                           !datosUsuario?.apellido || 
-                           !datosUsuario?.numeroPasaporte || 
-                           !datosUsuario?.telefono || 
-                           !datosUsuario?.provincia || 
-                           !datosUsuario?.localidad;
+  const perfilIncompleto = !datosUsuario || 
+                           !datosUsuario.nombre || 
+                           !datosUsuario.apellido || 
+                           !datosUsuario.numeroPasaporte || 
+                           !datosUsuario.telefono || 
+                           !datosUsuario.provincia || 
+                           !datosUsuario.localidad;
 
   // Bloqueo de seguridad
   useEffect(() => {
@@ -101,7 +102,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
   }, [paso, perfilIncompleto, cargandoUsuario, router, partidoId]);
 
-  const handleComprar = async (sectorId: string) => {
+  async function handleComprar(sectorId: string) {
     if (!datosUsuario) return;
     setProcesando(true);
     try {
@@ -124,7 +125,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       console.error("Error en compra:", error);
       let mensajeAmigable = "Hubo un problema al procesar tu solicitud. Por favor intenta de nuevo.";
       
-      const msg = error.message?.toLowerCase() || '';
+      const msg = error.message ? error.message.toLowerCase() : '';
       if (msg.includes("fondos") || msg.includes("rechazada")) {
         mensajeAmigable = "Tu tarjeta fue rechazada por falta de fondos o seguridad. Por favor, intenta con otro medio de pago.";
       } else if (msg.includes("stock") || msg.includes("agotado") || msg.includes("no quedan asientos")) {
@@ -210,7 +211,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
               </div>
             </div>
             <button 
-              onClick={() => setErrorMensaje(null)}
+              onClick={() => { setErrorMensaje(null); }}
               className="bg-red-500 text-white px-6 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-colors"
             >
               ENTENDIDO
@@ -428,7 +429,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                               <p className="text-5xl font-black text-white tracking-tighter">${sel.total?.toLocaleString()}</p>
                             </div>
                             <button
-                              onClick={() => handleComprar(sel.sectorId)}
+                              onClick={() => { void handleComprar(sel.sectorId); }}
                               className="relative group/pay overflow-hidden bg-emerald-500 hover:bg-emerald-400 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl shadow-emerald-500/30"
                             >
                               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/pay:animate-shimmer" />
@@ -444,7 +445,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                 {/* TÉRMINOS Y CONDICIONES */}
                 <div className="mt-8">
                   <button
-                    onClick={() => setMostrarTerminos(!mostrarTerminos)}
+                    onClick={() => { setMostrarTerminos(!mostrarTerminos); }}
                     className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:text-foreground transition-colors mx-auto"
                   >
                     Al confirmar, aceptas los Términos y Condiciones de TicketAR y FIFA

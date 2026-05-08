@@ -43,7 +43,7 @@ export default function MatchesPage() {
     cargarDatos();
   }, []);
 
-  const getPrecioReal = (matchId: string, precioBase: number) => {
+  function getPrecioReal(matchId: string, precioBase: number) {
     const sectoresValidos = sectores.filter(s => {
        const n = s.nombre.toLowerCase();
        return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
@@ -56,12 +56,12 @@ export default function MatchesPage() {
     return precioBase;
   };
 
-  const normalizeTeamLabel = (label: string) => {
+  function normalizeTeamLabel(label: string) {
     if (!label) return "TBD";
     return label.replace(/_/g, " ").toUpperCase();
   };
 
-  const isMatchSoldOut = () => {
+  function isMatchSoldOut() {
     // Si no hay sectores cargados, no asumimos agotado
     if (sectores.length === 0) return false;
     

@@ -7,7 +7,7 @@ import { useUser } from "@clerk/nextjs";
 
 type CampoFormulario = 'nombre' | 'apellido' | 'documentacion' | 'telefono' | 'provincia' | 'localidad';
 
-const validarCampo = (nombre: CampoFormulario, valor: string): string => {
+function validarCampo(nombre: CampoFormulario, valor: string): string {
   switch (nombre) {
     case 'nombre':
     case 'apellido':
@@ -96,35 +96,54 @@ function FormularioPerfil() {
     cargarPerfil();
   }, [isLoaded, user]);
 
-  const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>) => {
+  function manejarCambio(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setDatos({ ...datos, [name]: value });
-    if (tocados[name as CampoFormulario]) {
-      const error = validarCampo(name as CampoFormulario, value);
+    
+    const n = name as CampoFormulario;
+    const isTocado = n === 'nombre' ? tocados.nombre :
+                     n === 'apellido' ? tocados.apellido :
+                     n === 'documentacion' ? tocados.documentacion :
+                     n === 'telefono' ? tocados.telefono :
+                     n === 'provincia' ? tocados.provincia :
+                     n === 'localidad' ? tocados.localidad : false;
+
+    if (isTocado) {
+      const error = validarCampo(n, value);
       setErrores(prev => ({ ...prev, [name]: error }));
     }
-  };
+  }
 
-  const manejarBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  function manejarBlur(e: React.FocusEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setTocados(prev => ({ ...prev, [name]: true }));
     const error = validarCampo(name as CampoFormulario, value);
     setErrores(prev => ({ ...prev, [name]: error }));
-  };
+  }
 
-  const guardarDatos = async (e: React.FormEvent) => {
+  async function guardarDatos(e: React.FormEvent) {
     e.preventDefault();
-    // Validar todos los campos
-    const campos: CampoFormulario[] = ['nombre', 'apellido', 'documentacion', 'telefono', 'provincia', 'localidad'];
-    const nuevosErrores: Partial<Record<CampoFormulario, string>> = {};
-    let hayError = false;
-    campos.forEach(campo => {
-      const error = validarCampo(campo, datos[campo]);
-      if (error) { nuevosErrores[campo] = error; hayError = true; }
-    });
+    
+    const eNombre = validarCampo('nombre', datos.nombre);
+    const eApellido = validarCampo('apellido', datos.apellido);
+    const eDoc = validarCampo('documentacion', datos.documentacion);
+    const eTel = validarCampo('telefono', datos.telefono);
+    const eProv = validarCampo('provincia', datos.provincia);
+    const eLoc = validarCampo('localidad', datos.localidad);
+
+    const nuevosErrores: Partial<Record<CampoFormulario, string>> = {
+      ...(eNombre && { nombre: eNombre }),
+      ...(eApellido && { apellido: eApellido }),
+      ...(eDoc && { documentacion: eDoc }),
+      ...(eTel && { telefono: eTel }),
+      ...(eProv && { provincia: eProv }),
+      ...(eLoc && { localidad: eLoc }),
+    };
+
     setErrores(nuevosErrores);
-    setTocados(Object.fromEntries(campos.map(c => [c, true])));
-    if (hayError) return;
+    setTocados({ nombre: true, apellido: true, documentacion: true, telefono: true, provincia: true, localidad: true });
+    
+    if (Object.keys(nuevosErrores).length > 0) return;
 
     setEnviando(true);
     try {
@@ -154,43 +173,49 @@ function FormularioPerfil() {
 
   if (!isLoaded) return <div className="text-center py-10 text-foreground">Conectando con Clerk...</div>;
 
-  const campo = (
-    nombre: CampoFormulario,
+  function campo(
+    nombre: string,
     label: string,
+    valor: string,
+    error: string | undefined,
+    tocado: boolean | undefined,
     tipo: string = 'text',
     placeholder: string = ''
-  ) => (
-    <div className="space-y-2">
-      <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">
-        {label} <span className="text-red-500">*</span>
-      </label>
-      <input
-        type={tipo}
-        name={nombre}
-        placeholder={placeholder}
-        className={`w-full px-6 py-4 border-2 rounded-[1.2rem] bg-card text-foreground font-bold outline-none text-base transition-all duration-200 ${
-          errores[nombre]
-            ? 'border-red-500 focus:border-red-400 bg-red-500/5'
-            : tocados[nombre] && !errores[nombre]
-            ? 'border-emerald-500 focus:border-emerald-400'
-            : 'border-border focus:border-blue-500'
-        }`}
-        value={datos[nombre]}
-        onChange={manejarCambio}
-        onBlur={manejarBlur}
-      />
-      {errores[nombre] && (
-        <p className="text-red-500 text-[11px] font-bold flex items-center gap-1 animate-in fade-in duration-200">
-          <span>⚠</span> {errores[nombre]}
-        </p>
-      )}
-      {tocados[nombre] && !errores[nombre] && datos[nombre].trim() && (
-        <p className="text-emerald-500 text-[11px] font-bold flex items-center gap-1">
-          <span>✓</span> Correcto
-        </p>
-      )}
-    </div>
-  );
+  ) {
+    return (
+      <div className="space-y-2">
+        <label htmlFor={nombre} className="block text-[10px] font-black uppercase tracking-widest text-foreground">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <input
+          id={nombre}
+          type={tipo}
+          name={nombre}
+          placeholder={placeholder}
+          className={`w-full px-6 py-4 border-2 rounded-[1.2rem] bg-card text-foreground font-bold outline-none text-base transition-all duration-200 ${
+            error
+              ? 'border-red-500 focus:border-red-400 bg-red-500/5'
+              : tocado && !error
+              ? 'border-emerald-500 focus:border-emerald-400'
+              : 'border-border focus:border-blue-500'
+          }`}
+          value={valor}
+          onChange={manejarCambio}
+          onBlur={manejarBlur}
+        />
+        {error && (
+          <p className="text-red-500 text-[11px] font-bold flex items-center gap-1 animate-in fade-in duration-200">
+            <span>⚠</span> {error}
+          </p>
+        )}
+        {tocado && !error && valor.trim() && (
+          <p className="text-emerald-500 text-[11px] font-bold flex items-center gap-1">
+            <span>✓</span> Correcto
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background py-16 px-4 transition-colors duration-500 flex flex-col items-center justify-center">
@@ -224,8 +249,8 @@ function FormularioPerfil() {
               Datos Personales
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {campo('nombre', 'Nombre', 'text', 'Ej: Juan')}
-              {campo('apellido', 'Apellido', 'text', 'Ej: Pérez')}
+              {campo('nombre', 'Nombre', datos.nombre, errores.nombre, tocados.nombre, 'text', 'Ej: Juan')}
+              {campo('apellido', 'Apellido', datos.apellido, errores.apellido, tocados.apellido, 'text', 'Ej: Pérez')}
             </div>
 
             <div className="space-y-2">
@@ -247,8 +272,8 @@ function FormularioPerfil() {
               Documento &amp; Contacto
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {campo('documentacion', 'DNI / Pasaporte', 'text', 'Ej: 44196097 o AAB12345')}
-              {campo('telefono', 'Teléfono', 'tel', 'Ej: 3794613813')}
+              {campo('documentacion', 'DNI / Pasaporte', datos.documentacion, errores.documentacion, tocados.documentacion, 'text', 'Ej: 44196097 o AAB12345')}
+              {campo('telefono', 'Teléfono', datos.telefono, errores.telefono, tocados.telefono, 'tel', 'Ej: 3794613813')}
             </div>
             <p className="text-muted-foreground text-[10px] font-bold">
               El DNI/Pasaporte debe ser alfanumérico, sin espacios. El teléfono solo acepta dígitos (mín. 8).
@@ -260,8 +285,8 @@ function FormularioPerfil() {
               Ubicación
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {campo('provincia', 'Provincia', 'text', 'Ej: Corrientes')}
-              {campo('localidad', 'Localidad', 'text', 'Ej: Capital')}
+              {campo('provincia', 'Provincia', datos.provincia, errores.provincia, tocados.provincia, 'text', 'Ej: Corrientes')}
+              {campo('localidad', 'Localidad', datos.localidad, errores.localidad, tocados.localidad, 'text', 'Ej: Capital')}
             </div>
           </div>
 
