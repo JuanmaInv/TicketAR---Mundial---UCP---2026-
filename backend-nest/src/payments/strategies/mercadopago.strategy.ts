@@ -93,7 +93,9 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
       const payment = new Payment(this.client);
       const response = await payment.get({ id: transactionId });
 
-      const isApproved = response.status === 'approved' || process.env.E2E_BYPASS === 'true';
+      const isE2eBypass =
+        process.env.NODE_ENV !== 'production' && process.env.E2E_BYPASS === 'true';
+      const isApproved = response.status === 'approved' || isE2eBypass;
 
       return {
         success: isApproved,
