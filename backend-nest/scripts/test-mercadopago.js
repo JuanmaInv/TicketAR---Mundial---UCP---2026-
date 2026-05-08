@@ -3,30 +3,10 @@ const path = require('path');
 const crypto = require('crypto');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
-/**
- * Rutas permitidas (Whitelist) para evitar vulnerabilidades de Path Traversal
- * como reportado por Codacy.
- */
-const ALLOWED_PATHS = [
-  path.resolve(__dirname, '../.env'),
-  path.resolve(__dirname, '../../docs/resultados_pago_e2e.txt')
-];
-
-function getSafePath(targetPath) {
-  const resolvedPath = path.resolve(__dirname, targetPath);
-  if (!ALLOWED_PATHS.includes(resolvedPath)) {
-    throw new Error('Security Error: Ruta no permitida (Path Traversal attempt).');
-  }
-  return resolvedPath;
-}
-
-const envPath = getSafePath('../.env');
-const logPath = getSafePath('../../docs/resultados_pago_e2e.txt');
-
 // eslint-disable-next-line security/detect-non-literal-fs-filename
-if (fs.existsSync(envPath)) {
+if (fs.existsSync(path.resolve(__dirname, '../.env'))) {
   // eslint-disable-next-line security/detect-non-literal-fs-filename
-  const envConfig = fs.readFileSync(envPath, 'utf8');
+  const envConfig = fs.readFileSync(path.resolve(__dirname, '../.env'), 'utf8');
   envConfig.split('\n').forEach((line) => {
     const match = line.match(/^([^#\s][^=]+)=(.*)$/);
     if (match) process.env[match[1].trim()] = match[2].trim();
@@ -36,12 +16,12 @@ if (fs.existsSync(envPath)) {
 function log(message) {
   console.log(message);
   // eslint-disable-next-line security/detect-non-literal-fs-filename
-  fs.appendFileSync(logPath, message + '\n');
+  fs.appendFileSync(path.resolve(__dirname, '../../docs/resultados_pago_e2e.txt'), message + '\n');
 }
 
 async function runTest() {
   // eslint-disable-next-line security/detect-non-literal-fs-filename
-  fs.writeFileSync(logPath, '=== PRUEBA DE INTEGRACIÓN: MERCADO PAGO E2E ===\n\n');
+  fs.writeFileSync(path.resolve(__dirname, '../../docs/resultados_pago_e2e.txt'), '=== PRUEBA DE INTEGRACIÓN: MERCADO PAGO E2E ===\n\n');
   log('Iniciando validación directa con la API de Mercado Pago...\n');
 
   try {

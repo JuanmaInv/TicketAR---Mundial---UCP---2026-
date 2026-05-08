@@ -39,12 +39,10 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string): string | undefined => {
-              const config: Record<string, string> = {
-                MP_ACCESS_TOKEN: 'TEST_TOKEN_FAKE',
-                MP_WEBHOOK_URL: 'https://fake-ngrok.io/webhook',
-                FRONTEND_URL: 'http://localhost:3001',
-              };
-              return config[key];
+              if (key === 'MP_ACCESS_TOKEN') return 'TEST_TOKEN_FAKE';
+              if (key === 'MP_WEBHOOK_URL') return 'https://fake-ngrok.io/webhook';
+              if (key === 'FRONTEND_URL') return 'http://localhost:3001';
+              return undefined;
             }),
           },
         },
