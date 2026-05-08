@@ -46,8 +46,12 @@ export default function CalendarComponent() {
     const fecha = p.fechaPartido ? new Date(p.fechaPartido).toLocaleDateString('es-AR', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     }) : 'Fecha por confirmar';
-    if (!gruposFechaMap.has(fecha)) gruposFechaMap.set(fecha, []);
-    gruposFechaMap.get(fecha)!.push(p);
+    let grupo = gruposFechaMap.get(fecha);
+    if (!grupo) {
+      grupo = [];
+      gruposFechaMap.set(fecha, grupo);
+    }
+    grupo.push(p);
   });
 
   const gruposFecha = Array.from(gruposFechaMap.entries()).map(([fecha, lista]) => ({ fecha, lista }));

@@ -55,11 +55,10 @@ export default function FAQPage() {
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <div
+            <button
               key={faq.pregunta}
-              role="button"
-              tabIndex={0}
-              className={`bg-card border rounded-3xl overflow-hidden transition-all duration-300 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              type="button"
+              className={`block w-full text-left bg-card border rounded-3xl overflow-hidden transition-all duration-300 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 abierto === index ? 'border-blue-500 shadow-blue-500/10 shadow-xl' : 'border-border hover:border-blue-500/40'
               }`}
               onClick={() => { setAbierto(abierto === index ? null : index); }}
@@ -90,7 +89,7 @@ export default function FAQPage() {
                   </p>
                 </div>
               )}
-            </div>
+            </button>
           ))}
         </div>
 

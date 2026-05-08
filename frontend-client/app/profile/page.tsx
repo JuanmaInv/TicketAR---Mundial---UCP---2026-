@@ -101,12 +101,15 @@ function FormularioPerfil() {
     setDatos({ ...datos, [name]: value });
     
     const n = name as CampoFormulario;
-    const isTocado = n === 'nombre' ? tocados.nombre :
-                     n === 'apellido' ? tocados.apellido :
-                     n === 'documentacion' ? tocados.documentacion :
-                     n === 'telefono' ? tocados.telefono :
-                     n === 'provincia' ? tocados.provincia :
-                     n === 'localidad' ? tocados.localidad : false;
+    let isTocado = false;
+    switch (n) {
+      case 'nombre': isTocado = !!tocados.nombre; break;
+      case 'apellido': isTocado = !!tocados.apellido; break;
+      case 'documentacion': isTocado = !!tocados.documentacion; break;
+      case 'telefono': isTocado = !!tocados.telefono; break;
+      case 'provincia': isTocado = !!tocados.provincia; break;
+      case 'localidad': isTocado = !!tocados.localidad; break;
+    }
 
     if (isTocado) {
       const error = validarCampo(n, value);
@@ -162,7 +165,7 @@ function FormularioPerfil() {
         await createUsuario(payload);
       }
       setExito(true);
-      setTimeout(() => router.push(redirectUrl), 1500);
+      setTimeout(() => { router.push(redirectUrl); }, 1500);
     } catch (err) {
       const error = err as Error;
       alert("Error al guardar: " + error.message);
@@ -237,7 +240,7 @@ function FormularioPerfil() {
           </p>
         </div>
 
-        <form className="space-y-6" onSubmit={guardarDatos} noValidate>
+        <form className="space-y-6" onSubmit={(e) => { void guardarDatos(e); }} noValidate>
           {exito && (
             <div className="bg-emerald-500/10 border border-emerald-500 text-emerald-500 p-6 rounded-2xl text-center font-black animate-in slide-in-from-top-4 duration-500">
               ✅ ¡DATOS GUARDADOS CON ÉXITO! Redirigiendo...
@@ -254,10 +257,11 @@ function FormularioPerfil() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">
+              <label htmlFor="email" className="block text-[10px] font-black uppercase tracking-widest text-foreground">
                 Correo Electrónico
               </label>
               <input
+                id="email"
                 type="email"
                 className="w-full px-6 py-4 border-2 border-border rounded-[1.2rem] bg-card text-foreground font-bold opacity-60 cursor-not-allowed text-base"
                 value={datos.email}
