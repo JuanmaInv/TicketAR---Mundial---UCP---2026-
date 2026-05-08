@@ -71,9 +71,10 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  webServer: {
+    command: 'pnpm run dev', // Usa pnpm para levantar tu proyecto de Next.js
+    url: 'http://localhost:3001', // El puerto exacto donde tus tests esperan que esté el front
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000, // 120 segundos de tolerancia para que compile en GitHub Actions
+  },
 });
