@@ -14,7 +14,7 @@ Desarrollar una plataforma de venta de entradas enfocada en la seguridad y elimi
 ## 🛠️ Stack Tecnológico (Monorepo)
 - **Backend:** NestJS (Modular) en `/apps/api-backend`.
 - **Frontend:** Next.js + Tailwind en `/apps/web-frontend`.
-- **Database/Auth:** Supabase (No usar Clerk).
+- **Database/Auth:** Supabase (DB) y Clerk (Autenticación).
 - **Pagos:** Stripe (Int) / Mercado Pago (Local). No almacenar datos de tarjetas.
 - **Testing:** Playwright (E2E y estrés).
 - **Métricas:** Graphana para medir el compromiso del equipo.

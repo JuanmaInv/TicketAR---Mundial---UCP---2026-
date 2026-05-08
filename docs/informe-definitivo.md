@@ -24,12 +24,12 @@ Desarrollar una plataforma de venta de entradas enfocada en la seguridad y elimi
 |-----|-----------|---------|
 | Backend | NestJS (Modular) | `/backend-nest` |
 | Frontend | Next.js + Tailwind | `/frontend-client` |
-| Base de Datos / Auth | Supabase | — |
+| Base de Datos (DB) / Auth | Supabase / Clerk | — |
 | Pagos | Stripe (Int) / Mercado Pago (Local) | — |
 | Testing E2E | Playwright | — |
 | Métricas | Grafana | — |
 
-> ⚠️ **Regla de oro:** No almacenar datos de tarjetas. No usar Clerk para autenticación.
+> ⚠️ **Regla de oro:** No almacenar datos de tarjetas. Usar Clerk para Autenticación de UI y Supabase para base de datos.
 
 ---
 
