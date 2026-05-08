@@ -71,7 +71,7 @@ test.describe('BuyerForm Component Integration', () => {
     // Enviamos el formulario
     await component.getByRole('button', { name: /Validar Datos y Continuar/i }).click();
 
-    // En un test CT podemos incluso verificar que las variables mutaron internamente
-    // si usamos funciones de envoltura, pero aquí probamos la lógica visual e integración
+    // Verificamos que los datos fueron capturados correctamente
+    expect(datosEnviados).not.toBeNull();
   });
 });
