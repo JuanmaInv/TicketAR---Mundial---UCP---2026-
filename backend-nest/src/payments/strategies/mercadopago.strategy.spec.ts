@@ -1,35 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Payment } from 'mercadopago';
 import { MercadoPagoStrategy } from './mercadopago.strategy';
 
 /**
- * Unit tests para MercadoPagoStrategy.verifyPayment()
- *
- * Cubren los 4 casos exigidos por el PR review:
- *  1. Producción + E2E_BYPASS=true + API no approved → isApproved debe ser false
- *  2. Desarrollo + E2E_BYPASS=true → retorna success:true SIN llamar a la API
- *  3. Script test-mercadopago.js: token inválido → exit code 1  (test de integración manual)
- *  4. Script test-mercadopago.js: token válido → crea preferencia y loguea URL (test de integración manual)
+ * FIX: jest.mock() DEBE estar en el nivel raíz del módulo.
+ * Jest lo hoistea automáticamente al inicio del archivo antes de cualquier
+ * import. Si se coloca dentro de beforeEach(), el mock nunca se aplica
+ * y los tests llaman a la API real de Mercado Pago (error 401).
  */
+jest.mock('mercadopago', () => ({
+  MercadoPagoConfig: jest.fn(() => ({})),
+  Preference: jest.fn(),
+  // Payment se mockea como constructor que devuelve un objeto con .get()
+  // El mock de .get() se reemplaza en cada test con mockImplementation()
+  Payment: jest.fn(),
+}));
+
 describe('MercadoPagoStrategy — verifyPayment()', () => {
   let strategy: MercadoPagoStrategy;
-
-  // Mock del SDK de Mercado Pago para no hacer llamadas reales
-  const mockPaymentGet = jest.fn();
+  let mockPaymentGet: jest.Mock;
 
   beforeEach(async () => {
-    // Reset mocks y variables de entorno antes de cada test
     jest.clearAllMocks();
     delete process.env.E2E_BYPASS;
     delete process.env.NODE_ENV;
 
-    // Mock del módulo 'mercadopago' para interceptar Payment.get()
-    jest.mock('mercadopago', () => ({
-      MercadoPagoConfig: jest.fn().mockImplementation(() => ({})),
-      Preference: jest.fn(),
-      Payment: jest.fn().mockImplementation(() => ({
-        get: mockPaymentGet,
-      })),
+    // Creamos un nuevo mock de .get() por cada test para evitar contaminación
+    mockPaymentGet = jest.fn();
+
+    // Le decimos a la clase Payment (ya mockeada a nivel módulo) que cuando
+    // se instancie con `new Payment(...)` devuelva { get: mockPaymentGet }
+    (Payment as jest.Mock).mockImplementation(() => ({
+      get: mockPaymentGet,
     }));
 
     const module: TestingModule = await Test.createTestingModule({
@@ -60,15 +63,13 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TEST 1 (REQUERIDO POR PR REVIEW):
-  // En PRODUCCIÓN, E2E_BYPASS=true NO debe afectar el resultado.
-  // Si el API devuelve status != 'approved', isApproved debe ser false.
+  // TEST 1: En PRODUCCIÓN, E2E_BYPASS=true NO debe activarse.
+  // El flujo real debe ejecutarse: la API es llamada y devuelve "rejected".
   // ─────────────────────────────────────────────────────────────────────────
-  it('PROD: E2E_BYPASS=true + API status "rejected" → success debe ser false', async () => {
+  it('PROD: E2E_BYPASS=true + API "rejected" → success false, API invocada', async () => {
     process.env.NODE_ENV = 'production';
     process.env.E2E_BYPASS = 'true';
 
-    // Simulamos que la API de MP devuelve un pago rechazado
     mockPaymentGet.mockResolvedValueOnce({
       status: 'rejected',
       id: 12345,
@@ -78,16 +79,14 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
     const result = await strategy.verifyPayment('12345');
 
     expect(result.success).toBe(false);
-    // En producción, el bypass nunca debe activarse
+    // En producción el bypass no aplica → la API DEBE haber sido llamada
     expect(mockPaymentGet).toHaveBeenCalledTimes(1);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TEST 2 (REQUERIDO POR PR REVIEW):
-  // En DESARROLLO, E2E_BYPASS=true debe retornar success:true
-  // sin llamar a la API externa (el mock NO debe ser invocado).
+  // TEST 2: En DESARROLLO, E2E_BYPASS=true retorna success sin llamar a la API.
   // ─────────────────────────────────────────────────────────────────────────
-  it('DEV: E2E_BYPASS=true → retorna success:true sin llamar a la API de MP', async () => {
+  it('DEV: E2E_BYPASS=true → success true, API NOT invocada', async () => {
     process.env.NODE_ENV = 'development';
     process.env.E2E_BYPASS = 'true';
 
@@ -100,9 +99,9 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TEST 3: Ruta normal — pago aprobado en producción (sin bypass)
+  // TEST 3: Flujo normal — pago aprobado en producción sin bypass.
   // ─────────────────────────────────────────────────────────────────────────
-  it('PROD: sin bypass + API status "approved" → success debe ser true', async () => {
+  it('PROD: sin bypass + API "approved" → success true', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.E2E_BYPASS;
 
@@ -120,9 +119,9 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TEST 4: E2E_BYPASS=false en dev → debe seguir el flujo normal
+  // TEST 4: E2E_BYPASS=false en dev → flujo normal, API invocada.
   // ─────────────────────────────────────────────────────────────────────────
-  it('DEV: E2E_BYPASS=false → sigue el flujo normal y llama a la API', async () => {
+  it('DEV: E2E_BYPASS=false → flujo normal, API invocada', async () => {
     process.env.NODE_ENV = 'development';
     process.env.E2E_BYPASS = 'false';
 
@@ -135,14 +134,13 @@ describe('MercadoPagoStrategy — verifyPayment()', () => {
     const result = await strategy.verifyPayment('77777');
 
     expect(result.success).toBe(false);
-    // Con bypass desactivado, la API SÍ debe ser llamada
     expect(mockPaymentGet).toHaveBeenCalledTimes(1);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TEST 5: Error de red — verifyPayment debe capturar y retornar failure
+  // TEST 5: Error de red → verifyPayment captura y retorna failure.
   // ─────────────────────────────────────────────────────────────────────────
-  it('ERROR: fallo de red en Payment.get() → retorna success:false con mensaje de error', async () => {
+  it('ERROR: fallo de red en Payment.get() → success false con mensaje', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.E2E_BYPASS;
 
