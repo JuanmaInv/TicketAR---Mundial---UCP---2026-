@@ -1,20 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { getTickets, getUsuario, getTicketQr, getSectores, getPartidos, pagarTicket } from '@/lib/api';
 import WorldCupLoader from '@/components/WorldCupLoader';
+import { Ticket, Partido, Sector } from '@/types/ticket';
 
 export default function MyTicketsPage() {
   const { user, isLoaded } = useUser();
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [sectores, setSectores] = useState<any[]>([]);
-  const [partidos, setPartidos] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [partidos, setPartidos] = useState<Partido[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [dbUserId, setDbUserId] = useState<string | null>(null);
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
     
     try {
@@ -26,13 +27,12 @@ export default function MyTicketsPage() {
       ]);
 
       if (userData?.id) {
-        setDbUserId(userData.id);
         setSectores(allSectores);
         setPartidos(allPartidos);
         
         // Filtramos tickets del usuario que estén PAGADOS
         const myTickets = allTickets.filter(t => 
-          (t.idUsuario === userData.id || t.id_usuario === userData.id) && 
+          (t.idUsuario === userData.id) && 
           (t.estado === 'PAGADO' || t.estado === 'vendido')
         );
         setTickets(myTickets);
@@ -42,7 +42,7 @@ export default function MyTicketsPage() {
     } finally {
       setCargando(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -52,7 +52,7 @@ export default function MyTicketsPage() {
         setCargando(false);
       }
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, cargarDatos]);
 
   if (cargando) {
     return (
@@ -115,13 +115,13 @@ export default function MyTicketsPage() {
   );
 }
 
-function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sectores: any[], partidos: any[], onUpdate: () => void }) {
+function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: Ticket, sectores: Sector[], partidos: Partido[], onUpdate: () => void }) {
   const [qr, setQr] = useState<string | null>(null);
   const [verQr, setVerQr] = useState(false);
   const [pagando, setPagando] = useState(false);
 
-  const sector = sectores.find(s => s.id === (ticket.idSector || ticket.id_sector));
-  const partido = partidos.find(p => p.id === (ticket.idPartido || ticket.id_partido));
+  const sector = sectores.find(s => s.id === ticket.idSector);
+  const partido = partidos.find(p => p.id === ticket.idPartido);
 
   const handlePago = async () => {
     if (!confirm('¿Deseas proceder con el pago de esta entrada? (Simulación de pasarela)')) return;
@@ -137,7 +137,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
 
       alert('¡Pago procesado con éxito! Tu ticket ahora es válido.');
       onUpdate();
-    } catch (err) {
+    } catch {
       alert('Error al procesar el pago. Inténtalo de nuevo.');
     } finally {
       setPagando(false);
@@ -150,7 +150,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
         const dataUrl = await getTicketQr(ticket.id);
         setQr(dataUrl);
         setVerQr(true);
-      } catch (err) {
+      } catch {
         alert('Error al generar el QR. Contacta a soporte.');
       }
     } else {
@@ -183,10 +183,10 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
           <div className="flex-1">
             <h3 className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-50">Partido</h3>
             <p className="text-xl font-black text-foreground italic uppercase leading-none">
-              {partido ? `${partido.equipo_local} VS ${partido.equipo_visitante}` : 'Cargando encuentro...'}
+              {partido ? `${partido.equipoLocal} VS ${partido.equipoVisitante}` : 'Cargando encuentro...'}
             </p>
             <p className="text-muted-foreground text-xs font-bold mt-2 uppercase tracking-tighter italic">
-              {partido ? partido.nombre_estadio : 'Estadio Oficial'}
+              {partido ? partido.nombreEstadio : 'Estadio Oficial'}
             </p>
           </div>
 
@@ -222,7 +222,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
       <div className="p-10 bg-slate-100 dark:bg-black/40 flex flex-col items-center justify-center min-w-[280px] border-l border-border">
         {verQr && qr ? (
           <div className="bg-white p-3 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300">
-            <img src={qr} alt="QR Access" className="w-40 h-40" />
+            <Image src={qr} alt="QR Access" width={160} height={160} />
             <p className="text-black text-[8px] font-black text-center mt-2 uppercase tracking-[0.3em]">Scannable at Gate</p>
           </div>
         ) : (
