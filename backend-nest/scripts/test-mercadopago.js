@@ -1,5 +1,7 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const envPath = path.join(__dirname, '../.env');
 if (fs.existsSync(envPath)) {
@@ -32,7 +34,7 @@ async function runTest() {
     log('Cliente inicializado correctamente con el Token de Integración.\n');
 
     // Generar un ID de ticket falso para la prueba
-    const ticketId = `E2E-TICKET-${Math.floor(Math.random() * 10000)}`;
+    const ticketId = `E2E-TICKET-${crypto.randomInt(10000)}`;
 
     log('[2] Generando Preferencia de Pago (Simulación de Checkout Pro)...');
     const preference = new Preference(client);
@@ -53,7 +55,7 @@ async function runTest() {
         log('⚠️ AVISO: El MP_ACCESS_TOKEN configurado en .env es inválido o de prueba (sandbox expirado).');
         log('⚠️ Simulando respuesta exitosa del SDK para continuar la prueba arquitectónica...');
         prefResponse = {
-          id: `SIM-PREF-${Math.floor(Math.random()*10000)}`,
+          id: `SIM-PREF-${crypto.randomInt(10000)}`,
           init_point: 'https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=SIMULADO',
           external_reference: ticketId
         };
