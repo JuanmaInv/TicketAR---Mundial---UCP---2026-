@@ -27,6 +27,43 @@ function FormularioPerfil() {
   const [exito, setExito] = useState(false);
   const [existeEnDB, setExisteEnDB] = useState(false);
   const [mensajeError, setMensajeError] = useState("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  function validarCampo(nombre: string, valor: string): string {
+    const limpio = valor.trim();
+    if (!limpio) return "Este campo es obligatorio.";
+
+    if (nombre === "documentacion") {
+      if (!/^[a-zA-Z0-9]{6,20}$/.test(limpio)) {
+        return "Ingresá un DNI/Pasaporte válido (6 a 20 caracteres alfanuméricos).";
+      }
+    }
+
+    if (nombre === "telefono") {
+      if (!/^[0-9+\-\s()]{8,20}$/.test(limpio)) {
+        return "Ingresá un teléfono válido (8 a 20 caracteres).";
+      }
+    }
+
+    if (nombre === "nombre" || nombre === "apellido" || nombre === "provincia" || nombre === "localidad") {
+      if (limpio.length < 2) {
+        return "Debe tener al menos 2 caracteres.";
+      }
+    }
+
+    return "";
+  }
+
+  const errores = {
+    nombre: validarCampo("nombre", datos.nombre),
+    apellido: validarCampo("apellido", datos.apellido),
+    documentacion: validarCampo("documentacion", datos.documentacion),
+    telefono: validarCampo("telefono", datos.telefono),
+    provincia: validarCampo("provincia", datos.provincia),
+    localidad: validarCampo("localidad", datos.localidad),
+  };
+
+  const formularioValido = Object.values(errores).every((error) => !error);
 
   // Cargar datos existentes
   useEffect(() => {
@@ -72,13 +109,32 @@ function FormularioPerfil() {
   }, [isLoaded, user]);
 
   function manejarCambio(e: React.ChangeEvent<HTMLInputElement>) {
+    setExito(false);
+    setMensajeError("");
     setDatos({ ...datos, [e.target.name]: e.target.value });
+  }
+
+  function manejarBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const campo = e.target.name;
+    setTouched((prev) => ({ ...prev, [campo]: true }));
   }
 
   async function guardarDatos(e: React.FormEvent) {
     e.preventDefault();
     if (!user) {
       setMensajeError("Tu sesión no está activa. Iniciá sesión nuevamente.");
+      return;
+    }
+    if (!formularioValido) {
+      setTouched({
+        nombre: true,
+        apellido: true,
+        documentacion: true,
+        telefono: true,
+        provincia: true,
+        localidad: true,
+      });
+      setMensajeError("Revisá los campos marcados antes de guardar.");
       return;
     }
     setEnviando(true);
@@ -177,8 +233,12 @@ function FormularioPerfil() {
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
                 value={datos.nombre} 
                 onChange={manejarCambio} 
+                onBlur={manejarBlur}
                 required 
               />
+              {touched.nombre && errores.nombre && (
+                <p className="text-red-500 text-xs font-bold">{errores.nombre}</p>
+              )}
             </div>
             
             {/* APELLIDO */}
@@ -191,8 +251,12 @@ function FormularioPerfil() {
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
                 value={datos.apellido} 
                 onChange={manejarCambio} 
+                onBlur={manejarBlur}
                 required 
               />
+              {touched.apellido && errores.apellido && (
+                <p className="text-red-500 text-xs font-bold">{errores.apellido}</p>
+              )}
             </div>
           </div>
 
@@ -220,8 +284,12 @@ function FormularioPerfil() {
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
                 value={datos.documentacion} 
                 onChange={manejarCambio} 
+                onBlur={manejarBlur}
                 required 
               />
+              {touched.documentacion && errores.documentacion && (
+                <p className="text-red-500 text-xs font-bold">{errores.documentacion}</p>
+              )}
             </div>
 
             {/* TELÉFONO */}
@@ -235,8 +303,12 @@ function FormularioPerfil() {
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
                 value={datos.telefono} 
                 onChange={manejarCambio} 
+                onBlur={manejarBlur}
                 required 
               />
+              {touched.telefono && errores.telefono && (
+                <p className="text-red-500 text-xs font-bold">{errores.telefono}</p>
+              )}
             </div>
           </div>
 
@@ -252,8 +324,12 @@ function FormularioPerfil() {
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
                 value={datos.provincia} 
                 onChange={manejarCambio} 
+                onBlur={manejarBlur}
                 required 
               />
+              {touched.provincia && errores.provincia && (
+                <p className="text-red-500 text-xs font-bold">{errores.provincia}</p>
+              )}
             </div>
 
             {/* LOCALIDAD */}
@@ -267,15 +343,19 @@ function FormularioPerfil() {
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
                 value={datos.localidad} 
                 onChange={manejarCambio} 
+                onBlur={manejarBlur}
                 required 
               />
+              {touched.localidad && errores.localidad && (
+                <p className="text-red-500 text-xs font-bold">{errores.localidad}</p>
+              )}
             </div>
           </div>
 
           {/* BOTÓN DE ACCIÓN DINÁMICO */}
           <button 
             type="submit" 
-            disabled={enviando}
+            disabled={enviando || !formularioValido}
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-950/20 text-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-12"
           >
             {enviando ? 'GUARDANDO...' : (matchId ? 'CONFIRMAR Y ELEGIR UBICACIÓN →' : 'GUARDAR CAMBIOS')}
