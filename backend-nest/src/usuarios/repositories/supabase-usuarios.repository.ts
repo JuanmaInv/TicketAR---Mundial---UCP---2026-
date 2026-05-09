@@ -3,6 +3,7 @@ import { IUsuariosRepository } from './usuarios.repository.interface';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { UsuarioEntidad } from '../entities/usuario.entidad';
 import { CrearUsuarioDto } from '../dto/crear-usuario.dto';
+import { RolUsuario } from '../../common/enums/rol-usuario.enum';
 
 //CRUD aplicado a la tabla usuarios de la base de datos supabase usando patron REPOSITORY.
 
@@ -23,7 +24,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
           telefono: crearUsuarioDto.telefono,
           localidad: crearUsuarioDto.localidad,
           provincia: crearUsuarioDto.provincia,
-          rol: 'cliente',
+          rol: RolUsuario.CLIENTE,
         },
       ])
       .select()
@@ -98,6 +99,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       nombre: string;
       apellido: string;
       numero_pasaporte: string;
+      rol: string;
       telefono: string;
       localidad: string;
       provincia: string;
@@ -111,6 +113,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       nombre: d.nombre,
       apellido: d.apellido,
       numeroPasaporte: d.numero_pasaporte,
+      rol: d.rol as RolUsuario,
       telefono: d.telefono,
       localidad: d.localidad,
       provincia: d.provincia,
