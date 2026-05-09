@@ -124,14 +124,19 @@ export class EntradasService {
     // Validamos que el ticket se pueda confirmar (ej: que no esté cancelado o expirado)
     estadoActual.confirmarPago();
 
-    const ticketPagado = await this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    const ticketPagado = await this.entradasRepository.actualizarEstado(
+      id,
+      TicketStatus.PAGADO,
+    );
 
     // Emitir evento para que los listeners (ej: NotificationsService) reaccionen
     this.eventEmitter.emit('ticket.pagado', {
       ticketId: ticketPagado.id,
       idUsuario: ticketPagado.idUsuario,
     });
-    this.logger.log(`Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`);
+    this.logger.log(
+      `Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`,
+    );
 
     return ticketPagado;
   }
@@ -194,7 +199,9 @@ export class EntradasService {
         ticketId: ticketPagado.id,
         idUsuario: ticketPagado.idUsuario,
       });
-      this.logger.log(`Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`);
+      this.logger.log(
+        `Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`,
+      );
 
       return { ticket: ticketPagado, paymentResult };
     }
