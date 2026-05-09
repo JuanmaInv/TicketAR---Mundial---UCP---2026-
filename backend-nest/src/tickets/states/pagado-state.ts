@@ -18,8 +18,12 @@ export class PagadoState implements TicketState {
     return TicketStatus.PAGADO;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  pagar(_paymentsService: PaymentsService): Promise<PaymentResult> {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  async pagar(
+    _paymentsService: PaymentsService,
+    _amount: number,
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+  ): Promise<PaymentResult> {
     return Promise.reject(
       new BadRequestException('Este ticket ya ha sido pagado.'),
     );

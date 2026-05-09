@@ -76,5 +76,10 @@ export default defineConfig({
     url: 'http://localhost:3001', // El puerto exacto donde tus tests esperan que esté el front
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 120 segundos de tolerancia para que compile en GitHub Actions
+    env: {
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '',
+      CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY ?? '',
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000',
+    },
   },
 });

@@ -18,7 +18,10 @@ export class ReservadoState implements TicketState {
     return TicketStatus.RESERVADO;
   }
 
-  async pagar(paymentsService: PaymentsService): Promise<PaymentResult> {
+  async pagar(
+    paymentsService: PaymentsService,
+    amount: number,
+  ): Promise<PaymentResult> {
     const ahora = new Date();
     if (
       this.ticket.fechaExpiracionReserva &&
@@ -33,7 +36,7 @@ export class ReservadoState implements TicketState {
     // Usamos el servicio de pagos (Patrón Strategy)
     // Le pasamos el ID real del ticket para que Mercado Pago lo rastree
     const resultado = await paymentsService.processTicketPayment(
-      50000,
+      amount,
       this.ticket.id,
     );
 

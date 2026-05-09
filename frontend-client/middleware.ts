@@ -11,6 +11,9 @@ export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect();
   }
+}, {
+  signInUrl: '/login',
+  signUpUrl: '/register',
 });
 
 export const config = {

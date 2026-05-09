@@ -96,8 +96,8 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
     // Validamos todos los campos de golpe antes de enviar
     Object.keys(datosCompra).forEach(key => {
       if (key !== 'partidoId') { // No validamos el ID del partido porque viene por props
-        const error = validarCampo(key, datosCompra[key as keyof DatosCompra]);
-        if (error) nuevosErrores[key] = error;
+        const errorMsg = validarCampo(key, datosCompra[key as keyof DatosCompra]);
+        if (errorMsg) nuevosErrores[key] = errorMsg;
       }
     });
 

@@ -14,6 +14,7 @@ import { PaymentResult } from '../payments/strategies/payment-strategy.interface
 import type { IEntradasRepository } from './repositories/entradas.repository.interface';
 import { TicketStateFactory } from './states/ticket-state.factory';
 import { QrService } from './qr.service';
+import { SectoresService } from '../stadium-sectors/stadium-sectors.service';
 
 interface TicketExpirado {
   id: string;
@@ -30,6 +31,7 @@ export class EntradasService {
     private readonly ticketStateFactory: TicketStateFactory,
     private readonly paymentsService: PaymentsService,
     private readonly qrService: QrService,
+    private readonly sectoresService: SectoresService,
   ) { }
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
@@ -152,8 +154,12 @@ export class EntradasService {
     const estado = this.ticketStateFactory.create(ticket.estado);
     estado.setContext(ticket);
 
+    // Obtenemos el precio real del sector desde el repositorio de sectores
+    const sector = await this.sectoresService.obtenerUno(ticket.idSector);
+    const precioFinal = sector.precio;
+
     // El estado procesa el pago usando el servicio de pagos (Strategy)
-    const paymentResult = await estado.pagar(this.paymentsService);
+    const paymentResult = await estado.pagar(this.paymentsService, precioFinal);
 
     // Si NO hay paymentUrl y el pago fue exitoso, es un pago inmediato (Simulado)
     if (!paymentResult.paymentUrl && paymentResult.success) {

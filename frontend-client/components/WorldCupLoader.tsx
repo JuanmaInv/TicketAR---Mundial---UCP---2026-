@@ -1,4 +1,4 @@
-import React from 'react';
+import Image from 'next/image';
 
 export default function WorldCupLoader() {
   return (
@@ -11,10 +11,12 @@ export default function WorldCupLoader() {
 
         {/* Trophy with bounce animation */}
         <div className="relative animate-bounce" style={{ animationDuration: '2s' }}>
-          <img
+          <Image
             src="/copa.png"
             alt="Copa del Mundo"
-            className="w-32 h-32 object-contain drop-shadow-[0_0_25px_rgba(234,179,8,0.8)] relative z-10"
+            width={128}
+            height={128}
+            className="object-contain drop-shadow-[0_0_25px_rgba(234,179,8,0.8)] relative z-10"
           />
         </div>
       </div>
