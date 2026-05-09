@@ -28,14 +28,14 @@ export default function SectorSelector({ alContinuarCompra }: SectorSelectorProp
   const sectorActual = SECTORES.find(s => s.nombre === sectorSeleccionado);
   const precioTotal = sectorActual ? sectorActual.precio * cantidad : 0;
 
-  const continuarCompra = () => {
+  function continuarCompra() {
     if (!sectorSeleccionado) {
       setMensajeError('Por favor seleccioná un sector.');
       return;
     }
     setMensajeError('');
     alContinuarCompra(sectorSeleccionado, cantidad, precioTotal);
-  };
+  }
 
   return (
     <div className="w-full space-y-8">
@@ -58,22 +58,22 @@ export default function SectorSelector({ alContinuarCompra }: SectorSelectorProp
 
           {/* Botones de Sectores a un lado */}
           <div className="w-full md:w-1/3 flex flex-col justify-center gap-4">
-            <button onClick={() => setSectorSeleccionado('Popular')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[0].color} ${sectorSeleccionado === 'Popular' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <button type="button" onClick={() => setSectorSeleccionado('Popular')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[0].color} ${sectorSeleccionado === 'Popular' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
               <span className="block text-sm tracking-wide">POPULAR</span>
               <span className="block text-lg">${SECTORES[0].precio}</span>
             </button>
 
-            <button onClick={() => setSectorSeleccionado('General')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[1].color} ${sectorSeleccionado === 'General' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <button type="button" onClick={() => setSectorSeleccionado('General')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[1].color} ${sectorSeleccionado === 'General' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
               <span className="block text-sm tracking-wide">GENERAL</span>
               <span className="block text-lg">${SECTORES[1].precio}</span>
             </button>
 
-            <button onClick={() => setSectorSeleccionado('Prensa')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'Prensa' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <button type="button" onClick={() => setSectorSeleccionado('Prensa')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[3].color} ${sectorSeleccionado === 'Prensa' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
               <span className="block text-sm tracking-wide">PRENSA</span>
               <span className="block text-lg">${SECTORES[3].precio}</span>
             </button>
 
-            <button onClick={() => setSectorSeleccionado('VIP')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
+            <button type="button" onClick={() => setSectorSeleccionado('VIP')} className={`rounded-[1.2rem] px-6 py-4 text-center font-black text-white shadow-[0_18px_35px_rgba(0,0,0,0.32)] transition-all ${SECTORES[2].color} ${sectorSeleccionado === 'VIP' ? 'scale-105 ring-4 ring-white/90' : 'opacity-95 hover:-translate-y-1 hover:scale-[1.03]'}`}>
               <span className="block text-sm tracking-wide">VIP</span>
               <span className="block text-lg">${SECTORES[2].precio}</span>
             </button>
@@ -92,6 +92,7 @@ export default function SectorSelector({ alContinuarCompra }: SectorSelectorProp
         </label>
         <div className="flex items-center gap-6">
           <button
+            type="button"
             onClick={() => setCantidad(Math.max(1, cantidad - 1))}
             className="bg-gradient-to-br from-slate-600 to-slate-800 hover:from-slate-500 hover:to-slate-700 text-white px-6 py-3 rounded-lg font-bold text-xl transition-all duration-200 transform hover:scale-110 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 border border-slate-500/30 hover:border-blue-400/60"
           >
@@ -101,6 +102,7 @@ export default function SectorSelector({ alContinuarCompra }: SectorSelectorProp
             {cantidad}
           </div>
           <button
+            type="button"
             onClick={() => setCantidad(Math.min(6, cantidad + 1))}
             className="bg-gradient-to-br from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-bold text-xl transition-all duration-200 transform hover:scale-110 hover:shadow-lg hover:shadow-emerald-500/40 active:scale-95 border border-emerald-500/30 hover:border-emerald-300/60"
           >
@@ -136,6 +138,7 @@ export default function SectorSelector({ alContinuarCompra }: SectorSelectorProp
 
       {/* Botón Comprar */}
       <button
+        type="button"
         onClick={continuarCompra}
         className="w-full py-5 rounded-xl font-bold text-xl transition-all transform bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:scale-105 shadow-lg active:scale-95"
       >

@@ -13,6 +13,18 @@ interface SeleccionCompra {
   total: number;
 }
 
+function redirigirPagoSeguro(urlPago: string): boolean {
+  try {
+    const url = new URL(urlPago, window.location.origin);
+    const protocoloValido = url.protocol === 'https:' || url.protocol === 'http:';
+    if (!protocoloValido) return false;
+    window.location.assign(url.toString());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function CheckoutContent({ partidoId }: { partidoId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -68,13 +80,13 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
   }, [paso, perfilIncompleto, cargandoUsuario, router, partidoId]);
 
-  const seleccionarCompra = (sector: Sector, cantidad: number, total: number) => {
+  function seleccionarCompra(sector: Sector, cantidad: number, total: number) {
     setSeleccionCompra({ sector, cantidad, total });
     setMensajeError('');
     setPaso(3);
-  };
+  }
 
-  const obtenerMensajePago = (error: unknown) => {
+  function obtenerMensajePago(error: unknown) {
     const mensaje = error instanceof Error ? error.message : 'No pudimos procesar el pago.';
     if (mensaje.includes('400')) {
       return 'Tu pago fue rechazado. Revisá los datos del medio de pago o intentá con otra tarjeta.';
@@ -83,7 +95,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       return 'Ese sector se agotó mientras estabas comprando. Elegí otra ubicación disponible.';
     }
     return mensaje;
-  };
+  }
 
   const confirmarPago = async () => {
     if (!seleccionCompra) return;
@@ -106,7 +118,10 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       window.sessionStorage.removeItem(`ticketar-reserva-${partidoId}`);
       
       if (respuestaPago.resultadoPago?.paymentUrl) {
-        window.location.href = respuestaPago.resultadoPago.paymentUrl;
+        const redireccionExitosa = redirigirPagoSeguro(respuestaPago.resultadoPago.paymentUrl);
+        if (!redireccionExitosa) {
+          throw new Error('El enlace de pago recibido no es valido.');
+        }
       } else {
         router.push('/my-tickets');
       }
@@ -321,7 +336,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                     Modificar
                   </button>
                   <button
-                    onClick={confirmarPago}
+                    onClick={() => { void confirmarPago(); }}
                     disabled={procesando}
                     className="sm:w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs disabled:opacity-60"
                   >

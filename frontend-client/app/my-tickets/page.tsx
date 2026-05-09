@@ -16,6 +16,18 @@ type EntradaApi = Ticket & {
   id_partido?: string;
 };
 
+function redirigirPagoSeguro(urlPago: string): boolean {
+  try {
+    const url = new URL(urlPago, window.location.origin);
+    const protocoloValido = url.protocol === 'https:' || url.protocol === 'http:';
+    if (!protocoloValido) return false;
+    window.location.assign(url.toString());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function MyTicketsPage() {
   const { user, isLoaded } = useUser();
   const [entradas, setEntradas] = useState<EntradaApi[]>([]);
@@ -89,7 +101,7 @@ export default function MyTicketsPage() {
             </h1>
             <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Acreditaciones oficiales FIFA 2026</p>
           </div>
-          <button onClick={cargarDatos} className="text-blue-500 text-[10px] font-black uppercase tracking-widest hover:text-foreground transition-colors">
+          <button type="button" onClick={() => { void cargarDatos(); }} className="text-blue-500 text-[10px] font-black uppercase tracking-widest hover:text-foreground transition-colors">
             Actualizar Lista ↻
           </button>
         </header>
@@ -129,8 +141,8 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
   const [pagando, setPagando] = useState(false);
   const [mensajeAccion, setMensajeAccion] = useState('');
 
-  const sector = sectores.find(s => s.id === (entrada.idSector || entrada.id_sector));
-  const partido = partidos.find(p => p.id === (entrada.idPartido || entrada.id_partido));
+  const sector = sectores.find((s) => s.id === (entrada.idSector || entrada.id_sector));
+  const partido = partidos.find((p) => p.id === (entrada.idPartido || entrada.id_partido));
 
   const pagarEntrada = async () => {
     setPagando(true);
@@ -139,7 +151,10 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
       const respuesta = await pagarTicket(entrada.id);
       
       if (respuesta.resultadoPago?.paymentUrl) {
-        window.location.href = respuesta.resultadoPago.paymentUrl;
+        const redireccionExitosa = redirigirPagoSeguro(respuesta.resultadoPago.paymentUrl);
+        if (!redireccionExitosa) {
+          throw new Error('El enlace de pago recibido no es valido.');
+        }
         return;
       }
 
@@ -216,8 +231,9 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
            </div>
            
            {(entrada.estado === 'RESERVADO' || entrada.estado === 'reservado') && (
-             <button 
-                onClick={pagarEntrada}
+             <button
+                type="button"
+                onClick={() => { void pagarEntrada(); }}
                 disabled={pagando}
                 className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 animate-pulse"
              >
@@ -239,8 +255,9 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
             <p className="text-black text-[8px] font-black text-center mt-2 uppercase tracking-[0.3em]">Scannable at Gate</p>
           </div>
         ) : (
-          <button 
-            onClick={cargarQr}
+          <button
+            type="button"
+            onClick={() => { void cargarQr(); }}
             className="flex flex-col items-center gap-4 group"
           >
             <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all shadow-2xl ${

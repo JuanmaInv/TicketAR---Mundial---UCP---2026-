@@ -7,10 +7,10 @@ interface CountdownTimerProps {
   onExpirar: () => void;
 }
 
-const calcularTiempoRestante = (tiempoExpiracion: Date) => {
+function calcularTiempoRestante(tiempoExpiracion: Date): number {
   const diferencia = tiempoExpiracion.getTime() - Date.now();
   return diferencia > 0 ? diferencia : 0;
-};
+}
 
 export default function CountdownTimer({ tiempoExpiracion, onExpirar }: CountdownTimerProps) {
   const [tiempoRestante, setTiempoRestante] = useState<number>(() =>

@@ -23,7 +23,7 @@ export default function MatchesPage() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [disponibilidad, setDisponibilidad] = useState<
-    Record<string, number | null>
+    Record<string, number | null | undefined>
   >({});
   const [cargando, setCargando] = useState(true);
   const [mensajeError, setMensajeError] = useState("");

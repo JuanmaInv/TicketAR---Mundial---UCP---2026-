@@ -2,6 +2,23 @@ import { Ticket, Partido } from '../types/ticket';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
+function obtenerBaseApiSegura(): URL {
+  const base = new URL(API_URL);
+  const protocoloValido = base.protocol === 'http:' || base.protocol === 'https:';
+
+  if (!protocoloValido || base.username || base.password) {
+    throw new Error('La configuracion de NEXT_PUBLIC_API_URL es invalida.');
+  }
+
+  return base;
+}
+
+const BASE_API_SEGURA = obtenerBaseApiSegura();
+
+function construirUrlApi(ruta: string): string {
+  return new URL(ruta, BASE_API_SEGURA).toString();
+}
+
 export const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -59,7 +76,7 @@ const obtenerMensajeErrorApi = async (respuesta: Response, mensajePorDefecto: st
 };
 
 export async function getPartidos(): Promise<Partido[]> {
-  const res = await fetch(`${API_URL}/partidos`);
+  const res = await fetch(construirUrlApi('/partidos'));
   if (!res.ok) throw new Error('Error al traer partidos');
   const data = await res.json();
   const lista = Array.isArray(data) ? data : (data.data ?? data.items ?? []);
@@ -78,7 +95,7 @@ export async function getPartidos(): Promise<Partido[]> {
 
 export async function getSectores(partidoId?: string): Promise<Sector[]> {
   const ruta = partidoId ? `/sectores/partido/${partidoId}` : '/sectores';
-  const res = await fetch(`${API_URL}${ruta}`);
+  const res = await fetch(construirUrlApi(ruta));
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores'));
   const data = await res.json();
   const lista = Array.isArray(data) ? data : (data.data ?? []);
@@ -93,7 +110,7 @@ export async function getSectores(partidoId?: string): Promise<Sector[]> {
 
 
 export async function createTicket(entrada: { idUsuario: string, idPartido: string, idSector: string }): Promise<Ticket> {
-  const res = await fetch(`${API_URL}/entradas`, {
+  const res = await fetch(construirUrlApi('/entradas'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(entrada),
@@ -105,13 +122,14 @@ export async function createTicket(entrada: { idUsuario: string, idPartido: stri
 }
 
 export async function getUsuario(email: string): Promise<Usuario | null> {
-  const res = await fetch(`${API_URL}/usuarios/buscar?email=${encodeURIComponent(email)}`);
+  const ruta = `/usuarios/buscar?email=${encodeURIComponent(email)}`;
+  const res = await fetch(construirUrlApi(ruta));
   if (!res.ok) return null;
   return res.json();
 }
 
 export async function createUsuario(usuario: Usuario): Promise<boolean> {
-  const res = await fetch(`${API_URL}/usuarios`, {
+  const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(usuario),
@@ -120,7 +138,7 @@ export async function createUsuario(usuario: Usuario): Promise<boolean> {
 }
 
 export async function updateUsuario(email: string, usuario: Usuario): Promise<boolean> {
-  const res = await fetch(`${API_URL}/usuarios/${encodeURIComponent(email)}`, {
+  const res = await fetch(construirUrlApi(`/usuarios/${encodeURIComponent(email)}`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(usuario),
@@ -129,20 +147,20 @@ export async function updateUsuario(email: string, usuario: Usuario): Promise<bo
 }
 
 export async function getTickets(): Promise<Ticket[]> {
-  const res = await fetch(`${API_URL}/entradas`);
+  const res = await fetch(construirUrlApi('/entradas'));
   if (!res.ok) throw new Error('Error al traer entradas');
   return res.json();
 }
 
 export async function getTicketQr(id: string): Promise<string> {
-  const res = await fetch(`${API_URL}/entradas/${id}/qr`);
+  const res = await fetch(construirUrlApi(`/entradas/${id}/qr`));
   if (!res.ok) throw new Error('QR no disponible');
   const data = await res.json();
   return data.qrDataUrl;
 }
 
 export async function pagarTicket(id: string): Promise<RespuestaPago> {
-  const res = await fetch(`${API_URL}/entradas/${id}/pagar`, {
+  const res = await fetch(construirUrlApi(`/entradas/${id}/pagar`), {
     method: 'POST',
   });
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos procesar el pago.'));
