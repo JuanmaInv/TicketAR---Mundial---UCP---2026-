@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { getTickets, getUsuario, getTicketQr, getSectores, getPartidos, pagarTicket, Sector } from '@/lib/api';
 import WorldCupLoader from '@/components/WorldCupLoader';
@@ -251,7 +252,7 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
       <div className="p-10 bg-slate-100 dark:bg-black/40 flex flex-col items-center justify-center min-w-[280px] border-l border-border">
         {verQr && qr ? (
           <div className="bg-white p-3 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300">
-            <img src={qr} alt="QR Access" className="w-40 h-40" />
+            <Image src={qr} alt="QR Access" width={160} height={160} unoptimized />
             <p className="text-black text-[8px] font-black text-center mt-2 uppercase tracking-[0.3em]">Scannable at Gate</p>
           </div>
         ) : (

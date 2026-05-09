@@ -62,7 +62,7 @@ export default function MatchesPage() {
     cargarDatos();
   }, []);
 
-  const getPrecioReal = (matchId: string, precioBase: number) => {
+  function getPrecioReal(matchId: string, precioBase: number): number {
     const sectoresValidos = sectores.filter(s => {
        const n = s.nombre.toLowerCase();
        return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
@@ -73,12 +73,12 @@ export default function MatchesPage() {
       if (precioBase < 1000) return minPrecio;
     }
     return precioBase;
-  };
+  }
 
-  const normalizeTeamLabel = (label: string) => {
+  function normalizeTeamLabel(label: string): string {
     if (!label) return "TBD";
     return label.replace(/_/g, " ").toUpperCase();
-  };
+  }
 
   const filteredPartidos = partidos.filter((p) => {
     const local = p.equipo_local.toLowerCase();

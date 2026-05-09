@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { getSectores, Sector, formatPrice } from '@/lib/api';
 
 interface SectorSelectorProps {
@@ -76,9 +77,11 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
         <div className="relative rounded-[2rem] border border-white/10 bg-zinc-950 p-6 shadow-2xl">
           <div className="flex flex-col md:flex-row gap-8 items-center">
             <div className="w-full md:w-3/5 aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black relative">
-              <img
+              <Image
                 src="/stadium_3_sectors_2026_1777906767323.png"
                 alt="Mapa del Estadio"
+                width={900}
+                height={900}
                 className="w-full h-full object-cover opacity-90"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

@@ -66,11 +66,11 @@ function FormularioPerfil() {
     cargarPerfil();
   }, [isLoaded, user]);
 
-  const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>) => {
+  function manejarCambio(e: React.ChangeEvent<HTMLInputElement>) {
     setDatos({ ...datos, [e.target.name]: e.target.value });
-  };
+  }
 
-  const guardarDatos = async (e: React.FormEvent) => {
+  async function guardarDatos(e: React.FormEvent) {
     e.preventDefault();
     setEnviando(true);
     setMensajeError("");
@@ -102,7 +102,7 @@ function FormularioPerfil() {
     } finally {
       setEnviando(false);
     }
-  };
+  }
   if (!isLoaded) return <div className="text-center py-10 text-foreground">Conectando con Clerk...</div>;
   return (
     <main className="min-h-screen bg-background py-16 px-4 transition-colors duration-500 flex flex-col items-center justify-center">
@@ -118,7 +118,7 @@ function FormularioPerfil() {
           </p>
         </div>
 
-        <form className="space-y-8" onSubmit={guardarDatos}>
+        <form className="space-y-8" onSubmit={(e) => { void guardarDatos(e); }}>
           {exito && (
             <div className="bg-emerald-500/10 border border-emerald-500 text-emerald-500 p-6 rounded-2xl text-center font-black animate-bounce">
               ¡DATOS GUARDADOS CON ÉXITO!
@@ -133,8 +133,9 @@ function FormularioPerfil() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* NOMBRE */}
             <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Nombre</label>
+              <label htmlFor="nombre" className="block text-[10px] font-black uppercase tracking-widest text-foreground">Nombre</label>
               <input 
+                id="nombre"
                 type="text" 
                 name="nombre" 
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
@@ -146,8 +147,9 @@ function FormularioPerfil() {
             
             {/* APELLIDO */}
             <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Apellido</label>
+              <label htmlFor="apellido" className="block text-[10px] font-black uppercase tracking-widest text-foreground">Apellido</label>
               <input 
+                id="apellido"
                 type="text" 
                 name="apellido" 
                 className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
@@ -160,8 +162,9 @@ function FormularioPerfil() {
 
           {/* EMAIL (FULL WIDTH) */}
           <div className="space-y-3">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Correo Electrónico (Vínculo Clerk)</label>
+            <label htmlFor="email" className="block text-[10px] font-black uppercase tracking-widest text-foreground">Correo Electrónico (Vínculo Clerk)</label>
             <input 
+              id="email"
               type="email" 
               className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold opacity-70 cursor-not-allowed text-lg" 
               value={datos.email} 
@@ -172,8 +175,9 @@ function FormularioPerfil() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* DNI */}
             <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">DNI / Documento</label>
+              <label htmlFor="documentacion" className="block text-[10px] font-black uppercase tracking-widest text-foreground">DNI / Documento</label>
               <input 
+                id="documentacion"
                 type="text" 
                 name="documentacion" 
                 placeholder="Ej: 44196097"
@@ -186,8 +190,9 @@ function FormularioPerfil() {
 
             {/* TELÉFONO */}
             <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Teléfono</label>
+              <label htmlFor="telefono" className="block text-[10px] font-black uppercase tracking-widest text-foreground">Teléfono</label>
               <input 
+                id="telefono"
                 type="tel" 
                 name="telefono" 
                 placeholder="Ej: 3794613813"
@@ -202,8 +207,9 @@ function FormularioPerfil() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* PROVINCIA */}
             <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Provincia</label>
+              <label htmlFor="provincia" className="block text-[10px] font-black uppercase tracking-widest text-foreground">Provincia</label>
               <input 
+                id="provincia"
                 type="text" 
                 name="provincia" 
                 placeholder="Ej: Corrientes"
@@ -216,8 +222,9 @@ function FormularioPerfil() {
 
             {/* LOCALIDAD */}
             <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Localidad</label>
+              <label htmlFor="localidad" className="block text-[10px] font-black uppercase tracking-widest text-foreground">Localidad</label>
               <input 
+                id="localidad"
                 type="text" 
                 name="localidad" 
                 placeholder="Ej: Ciudad de Corrientes"

@@ -27,7 +27,7 @@ export default function CalendarComponent() {
     loadData();
   }, []);
 
-  const getPrecioReal = (matchId: string, precioBase: number) => {
+  function getPrecioReal(matchId: string, precioBase: number): number {
     const sectoresValidos = sectores.filter(s => {
       const n = s.nombre.toLowerCase();
       return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
@@ -37,12 +37,12 @@ export default function CalendarComponent() {
       return Math.min(...precios);
     }
     return precioBase;
-  };
+  }
 
-  const normalizeTeamLabel = (label: string) => {
+  function normalizeTeamLabel(label: string): string {
     if (!label) return "TBD";
     return label.replace(/_/g, " ").toUpperCase();
-  };
+  }
 
   if (loading) return null;
 
@@ -73,7 +73,7 @@ export default function CalendarComponent() {
         });
 
         return (
-          <div key={i} className="min-h-[200px] bg-white dark:bg-slate-900/60 p-4 transition-all duration-500 hover:bg-slate-50 dark:hover:bg-slate-800/80 border-r border-b border-slate-100 dark:border-white/5">
+          <div key={dia} className="min-h-[200px] bg-white dark:bg-slate-900/60 p-4 transition-all duration-500 hover:bg-slate-50 dark:hover:bg-slate-800/80 border-r border-b border-slate-100 dark:border-white/5">
             <span className="text-xl font-black text-blue-600 dark:text-blue-400 italic">
               {dia}
             </span>

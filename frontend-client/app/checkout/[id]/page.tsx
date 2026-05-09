@@ -166,7 +166,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
           <div className="bg-black text-white p-2 rounded-2xl border-4 border-red-500/20 shadow-2xl">
               <div className="px-6 py-4 rounded-xl flex flex-col items-center">
                 <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-red-400">Tiempo restante para abonar:</p>
-                <CountdownTimer tiempoExpiracion={fechaExpiracion} onExpirar={() => router.push('/')} />
+                <CountdownTimer tiempoExpiracion={fechaExpiracion} onExpirar={() => { router.push('/'); }} />
               </div>
             </div>
         </div>
@@ -198,35 +198,35 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                 <div className="bg-background border-2 border-border rounded-[3rem] p-12 mb-16">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-12 gap-x-16">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Nombre Completo</label>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Nombre Completo</p>
                       <p className="text-2xl font-black text-foreground italic uppercase">
                         {datosUsuario?.nombre || '---'} {datosUsuario?.apellido || '---'}
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Documento (DNI/Pasaporte)</label>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Documento (DNI/Pasaporte)</p>
                       <p className={`text-2xl font-black italic uppercase ${datosUsuario?.numeroPasaporte ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
                         {datosUsuario?.numeroPasaporte || '❌ No cargado'}
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Email de Contacto</label>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Email de Contacto</p>
                       <p className="text-2xl font-black text-foreground italic uppercase">{datosUsuario?.email || user?.emailAddresses[0]?.emailAddress}</p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Teléfono</label>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Teléfono</p>
                       <p className={`text-2xl font-black italic uppercase ${datosUsuario?.telefono ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
                         {datosUsuario?.telefono || '❌ No cargado'}
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Provincia</label>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Provincia</p>
                       <p className={`text-2xl font-black italic uppercase ${datosUsuario?.provincia ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
                         {datosUsuario?.provincia || '❌ No cargado'}
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Localidad</label>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Localidad</p>
                       <p className={`text-2xl font-black italic uppercase ${datosUsuario?.localidad ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
                         {datosUsuario?.localidad || '❌ No cargado'}
                       </p>
