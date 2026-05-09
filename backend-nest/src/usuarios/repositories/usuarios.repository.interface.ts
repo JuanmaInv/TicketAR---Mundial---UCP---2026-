@@ -5,7 +5,10 @@ export interface IUsuariosRepository {
   crear(usuario: CrearUsuarioDto): Promise<UsuarioEntidad>;
   buscarPorEmail(email: string): Promise<UsuarioEntidad | null>;
   buscarPorId(id: string): Promise<UsuarioEntidad | null>;
-  actualizar(email: string, datos: any): Promise<UsuarioEntidad>;
+  actualizar(
+    email: string,
+    datos: Partial<CrearUsuarioDto>,
+  ): Promise<UsuarioEntidad>;
   obtenerTodos(): Promise<UsuarioEntidad[]>;
   eliminar(id: string): Promise<void>;
 }
