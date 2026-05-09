@@ -2,8 +2,8 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createUsuario, getUsuario, updateUsuario } from "@/lib/api";
-import { useUser } from "@clerk/nextjs";
+import { createUsuario, getUsuario, updateUsuario, deleteUsuario } from "@/lib/api";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 function FormularioPerfil() {
   const router = useRouter();
@@ -22,10 +22,12 @@ function FormularioPerfil() {
     provincia: "",
   });
 
+  const { signOut } = useClerk();
   const [errores, setErrores] = useState<Record<string, boolean>>({});
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
   const [existeEnDB, setExisteEnDB] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   // Cargar datos existentes
   useEffect(() => {
@@ -101,6 +103,25 @@ function FormularioPerfil() {
       setEnviando(false);
     }
   };
+  const eliminarCuenta = async () => {
+    if (!confirm("¿ESTÁS SEGURO? Esta acción eliminará permanentemente tu cuenta y no podrás recuperar tus entradas (En caso de haber comprado).")) return;
+    
+    setEliminando(true);
+    try {
+      const ok = await deleteUsuario(datos.email);
+      if (ok) {
+        alert("Cuenta y datos eliminados de TicketAR exitosamente.");
+        await signOut();
+        router.push("/");
+      } else {
+        alert("Hubo un problema. Si el backend aún no implementó la ruta DELETE, esto fallará. (Status != 200)");
+      }
+    } catch (e) {
+      alert("Error de conexión al intentar eliminar la cuenta.");
+    }
+    setEliminando(false);
+  };
+
   if (!isLoaded) return <div className="text-center py-10 text-foreground">Conectando con Clerk...</div>;
   return (
     <main className="min-h-screen bg-background py-16 px-4 transition-colors duration-500 flex flex-col items-center justify-center">
@@ -230,6 +251,21 @@ function FormularioPerfil() {
           >
             {enviando ? 'GUARDANDO...' : (matchId ? 'CONFIRMAR Y ELEGIR UBICACIÓN →' : 'GUARDAR CAMBIOS')}
           </button>
+
+          {/* ZONA DE PELIGRO: DARSE DE BAJA */}
+          {existeEnDB && (
+            <div className="mt-12 pt-8 border-t border-red-500/20 flex flex-col items-center gap-4">
+              <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold">Zona de Peligro</p>
+              <button 
+                type="button"
+                onClick={eliminarCuenta}
+                disabled={eliminando}
+                className="text-red-500 hover:text-red-400 text-xs font-black uppercase tracking-[0.2em] transition-colors underline decoration-red-500/30 underline-offset-8"
+              >
+                {eliminando ? "Procesando Baja..." : "Darse de Baja (Eliminar Cuenta Definitivamente)"}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </main>

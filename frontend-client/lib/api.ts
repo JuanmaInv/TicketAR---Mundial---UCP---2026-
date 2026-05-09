@@ -88,6 +88,13 @@ export async function updateUsuario(email: string, usuario: any) {
   return res.ok;
 }
 
+export async function deleteUsuario(email: string) {
+  const res = await fetch(`${API_URL}/usuarios/${email}`, {
+    method: 'DELETE',
+  });
+  return res.ok;
+}
+
 export async function getTickets(): Promise<any[]> {
   const res = await fetch(`${API_URL}/entradas`);
   if (!res.ok) throw new Error('Error al traer tickets');
