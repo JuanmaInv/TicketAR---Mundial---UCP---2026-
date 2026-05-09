@@ -149,10 +149,13 @@ export async function createUsuario(usuario: Usuario): Promise<boolean> {
 
 export async function updateUsuario(email: string, usuario: Usuario): Promise<boolean> {
   const emailSeguro = validarEmailSeguro(email);
-  const res = await fetch(construirUrlApi(`/usuarios/${encodeURIComponent(emailSeguro)}`), {
+  const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(usuario),
+    body: JSON.stringify({
+      ...usuario,
+      email: emailSeguro,
+    }),
   });
   return res.ok;
 }
