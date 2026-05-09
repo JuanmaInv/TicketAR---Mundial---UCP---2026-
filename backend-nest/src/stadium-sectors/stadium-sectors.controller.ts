@@ -11,6 +11,11 @@ export class SectoresController {
     return this.sectoresService.obtenerTodos();
   }
 
+  @Get('partido/:idPartido')
+  obtenerPorPartido(@Param('idPartido') idPartido: string) {
+    return this.sectoresService.obtenerPorPartido(idPartido);
+  }
+
   @Get(':id')
   obtenerUno(@Param('id') id: string) {
     return this.sectoresService.obtenerUno(id);

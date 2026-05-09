@@ -22,7 +22,11 @@ export default function MatchesPage() {
   const { user } = useUser();
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
+  const [disponibilidad, setDisponibilidad] = useState<
+    Record<string, number | null | undefined>
+  >({});
   const [cargando, setCargando] = useState(true);
+  const [mensajeError, setMensajeError] = useState("");
   
   const [filtroSeleccion, setFiltroSeleccion] = useState<string>("");
   const [faseSeleccionada, setFaseSeleccionada] = useState<string>("Todas");
@@ -32,10 +36,25 @@ export default function MatchesPage() {
     async function cargarDatos() {
       try {
         const [dataPartidos, dataSectores] = await Promise.all([getPartidos(), getSectores()]);
+        const disponibilidadPorPartido = await Promise.all(
+          dataPartidos.map(async (partido) => {
+            try {
+              const sectoresPartido = await getSectores(partido.id);
+              const disponibles = sectoresPartido.reduce(
+                (total, sector) => total + Math.max(0, sector.capacidadDisponible || 0),
+                0,
+              );
+              return [partido.id, disponibles] as const;
+            } catch {
+              return [partido.id, null] as const;
+            }
+          }),
+        );
         setPartidos(dataPartidos);
         setSectores(dataSectores);
-      } catch (err) {
-        console.error("Error:", err);
+        setDisponibilidad(Object.fromEntries(disponibilidadPorPartido));
+      } catch {
+        setMensajeError("No pudimos cargar los partidos. Intentá nuevamente en unos minutos.");
       } finally {
         setCargando(false);
       }
@@ -43,7 +62,7 @@ export default function MatchesPage() {
     cargarDatos();
   }, []);
 
-  function getPrecioReal(matchId: string, precioBase: number) {
+  function getPrecioReal(matchId: string, precioBase: number): number {
     const sectoresValidos = sectores.filter(s => {
        const n = s.nombre.toLowerCase();
        return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
@@ -54,31 +73,16 @@ export default function MatchesPage() {
       if (precioBase < 1000) return minPrecio;
     }
     return precioBase;
-  };
+  }
 
-  function normalizeTeamLabel(label: string) {
+  function normalizeTeamLabel(label: string): string {
     if (!label) return "TBD";
     return label.replace(/_/g, " ").toUpperCase();
-  };
+  }
 
-  function isMatchSoldOut() {
-    // Si no hay sectores cargados, no asumimos agotado
-    if (sectores.length === 0) return false;
-    
-    // Filtramos sectores de venta (Palco, Platea, Popular)
-    // Nota: Como el API actual no filtra por matchId, esta es una lógica simplificada
-    const sectoresVenta = sectores.filter(s => {
-      const n = s.nombre.toLowerCase();
-      return n.includes('palco') || n.includes('platea') || n.includes('popular');
-    });
-
-    // Si todos los sectores de venta tienen capacidad 0, está agotado
-    return sectoresVenta.length > 0 && sectoresVenta.every(s => s.capacidadDisponible <= 0);
-  };
-
-    const filteredPartidos = partidos.filter((p) => {
-    const local = p.equipoLocal.toLowerCase();
-    const visitante = p.equipoVisitante.toLowerCase();
+  const filteredPartidos = partidos.filter((p) => {
+    const local = p.equipo_local.toLowerCase();
+    const visitante = p.equipo_visitante.toLowerCase();
     const filtro = filtroSeleccion.toLowerCase();
     
     const matchFiltro = !filtroSeleccion || local.includes(filtro) || visitante.includes(filtro);
@@ -162,16 +166,24 @@ export default function MatchesPage() {
               Cronograma <span className="text-primary">Oficial FIFA</span>
             </h1>
           </div>
+          {mensajeError && (
+            <div className="mb-8 rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm font-bold text-red-500">
+              {mensajeError}
+            </div>
+          )}
 
           <div className="space-y-12">
-            {filteredPartidos.map((partido) => {
-              const precio = getPrecioReal(partido.id, partido.precioBase);
-              const local = normalizeTeamLabel(partido.equipoLocal);
-              const visitante = normalizeTeamLabel(partido.equipoVisitante);
+            {filteredPartidos.map((match) => {
+              const precio = getPrecioReal(match.id, match.precio_base);
+              const local = normalizeTeamLabel(match.equipo_local);
+              const visitante = normalizeTeamLabel(match.equipo_visitante);
+              const disponibles = disponibilidad[match.id];
+              const disponibilidadDesconocida = disponibles === null || disponibles === undefined;
+              const agotado = !disponibilidadDesconocida && disponibles <= 0;
 
               return (
                 /* BORDE DINÁMICO APLICADO AQUÍ */
-                <div key={partido.id} className="world-cup-border rounded-[3.5rem] p-[3px]">
+                <div key={match.id} className="world-cup-border rounded-[3.5rem] p-[3px]">
                   <div className="group relative bg-card rounded-[3.4rem] overflow-hidden transition-all duration-500 min-h-[350px] flex flex-col md:flex-row shadow-2xl">
                     
                     {/* 🚩 ANIMACIÓN DE REVELADO: Banderas aparecen al Hover */}
@@ -189,7 +201,7 @@ export default function MatchesPage() {
                     <div className="p-12 relative z-10 w-full flex flex-col justify-between">
                       <div className="flex justify-between items-center mb-8">
                         <span className="bg-primary/10 text-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors">
-                          Mundial 2026 • {partido.fase}
+                          Mundial 2026 • {match.fase}
                         </span>
                         <span className="text-muted text-xs font-bold uppercase italic tracking-widest">10 / JUN / 2026</span>
                       </div>
@@ -213,32 +225,35 @@ export default function MatchesPage() {
                       <div className="flex flex-col lg:flex-row justify-between items-center pt-10 border-t border-border gap-8">
                         <div className="flex flex-col gap-2">
                           <p className="text-foreground font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-2">
-                            <span className="text-xl">📍</span> {partido.nombreEstadio}
+                            <span className="text-xl">📍</span> {match.nombre_estadio}
                           </p>
                           <div className="flex items-center gap-2">
                             <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse"></div>
-                            <p className="text-success text-[10px] font-black uppercase tracking-widest italic">{partido.estado}</p>
+                            <p className="text-success text-[10px] font-black uppercase tracking-widest italic">{match.estado}</p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-10">
-                          <div className="text-center sm:text-right">
+                        <div className="flex items-center gap-10">
+                          <div className="text-right">
                             <p className="text-muted text-[9px] font-black uppercase tracking-widest mb-1">Tickets desde</p>
-                            <p className="text-4xl md:text-5xl font-black text-foreground tracking-tighter transition-colors">
+                            <p className="text-5xl font-black text-foreground tracking-tighter transition-colors">
                               {formatPrice(precio)}
                             </p>
                           </div>
-                          {isMatchSoldOut() ? (
-                            <div className="bg-zinc-200 dark:bg-zinc-800 text-zinc-500 px-10 md:px-14 py-4 md:py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
-                              AGOTADO
-                            </div>
+                          {agotado ? (
+                            <span className="bg-zinc-300 text-zinc-600 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
+                              Entradas agotadas
+                            </span>
+                          ) : disponibilidadDesconocida ? (
+                            <span className="bg-amber-300 text-amber-900 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
+                              Disponibilidad no disponible
+                            </span>
                           ) : (
-                            <Link 
-                              href={user ? `/profile?partidoId=${partido.id}` : "/login"} 
-                              className="relative group/btn overflow-hidden bg-emerald-600 hover:bg-emerald-500 text-white px-10 md:px-14 py-4 md:py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-[0_10px_40px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95 w-full sm:w-auto text-center"
+                            <Link
+                              href={user ? `/profile?matchId=${match.id}` : "/login"}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 sm:px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle text-center"
                             >
-                              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-shimmer"></span>
-                              COMPRAR AHORA
+                              Comprar Ahora
                             </Link>
                           )}
                         </div>

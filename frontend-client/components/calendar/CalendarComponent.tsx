@@ -10,7 +10,7 @@ export default function CalendarComponent() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mesActual, setMesActual] = useState(0);
+  const [mensajeError, setMensajeError] = useState('');
 
   useEffect(() => {
     async function loadData() {
@@ -18,8 +18,8 @@ export default function CalendarComponent() {
         const [p, s] = await Promise.all([getPartidos(), getSectores()]);
         setPartidos(p);
         setSectores(s);
-      } catch (e) {
-        console.error(e);
+      } catch {
+        setMensajeError('No pudimos cargar el calendario de partidos.');
       } finally {
         setLoading(false);
       }
@@ -27,138 +27,85 @@ export default function CalendarComponent() {
     loadData();
   }, []);
 
-  function getMinPrecio() {
-    const validos = sectores.filter(s => {
+  function getPrecioReal(matchId: string, precioBase: number): number {
+    const sectoresValidos = sectores.filter(s => {
       const n = s.nombre.toLowerCase();
       return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
     });
-    return validos.length > 0 ? Math.min(...validos.map(s => s.precio)) : 0;
-  }
-
-  function normalizeTeamLabel(label: string) {
-    if (!label) return 'TBD';
-    return label.replace(/_/g, ' ');
-  }
-
-  // Agrupar por fecha
-  const gruposFechaMap = new Map<string, Partido[]>();
-  partidos.forEach(p => {
-    const fecha = p.fechaPartido ? new Date(p.fechaPartido).toLocaleDateString('es-AR', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    }) : 'Fecha por confirmar';
-    let grupo = gruposFechaMap.get(fecha);
-    if (!grupo) {
-      grupo = [];
-      gruposFechaMap.set(fecha, grupo);
+    if (sectoresValidos.length > 0) {
+      const precios = sectoresValidos.map(s => s.precio);
+      return Math.min(...precios);
     }
-    grupo.push(p);
-  });
+    return precioBase;
+  }
 
-  const gruposFecha = Array.from(gruposFechaMap.entries()).map(([fecha, lista]) => ({ fecha, lista }));
-  const fechas = gruposFecha.map(g => g.fecha);
-  const MESES_POR_PAGINA = 3;
-  const inicio = mesActual * MESES_POR_PAGINA;
-  const gruposVisibles = gruposFecha.slice(inicio, inicio + MESES_POR_PAGINA);
-  const minPrecio = getMinPrecio();
+  function normalizeTeamLabel(label: string): string {
+    if (!label) return "TBD";
+    return label.replace(/_/g, " ").toUpperCase();
+  }
 
-  if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) return null;
 
-  if (partidos.length === 0) return (
-    <div className="text-center py-20 text-muted-foreground font-bold uppercase tracking-widest">
-      No hay partidos disponibles en este momento.
-    </div>
-  );
+  if (mensajeError) {
+    return (
+      <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm font-bold text-red-500">
+        {mensajeError}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Navegación */}
-      <div className="flex justify-between items-center">
-        <button
-          type="button"
-          onClick={() => { setMesActual(Math.max(0, mesActual - 1)); }}
-          disabled={mesActual === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl font-black text-xs uppercase tracking-widest text-foreground hover:border-blue-500 transition-all disabled:opacity-30"
-        >
-          ← Anterior
-        </button>
-        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-          {inicio + 1}–{Math.min(inicio + MESES_POR_PAGINA, fechas.length)} de {fechas.length} fechas
-        </p>
-        <button
-          type="button"
-          onClick={() => { setMesActual(mesActual + 1); }}
-          disabled={inicio + MESES_POR_PAGINA >= fechas.length}
-          className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl font-black text-xs uppercase tracking-widest text-foreground hover:border-blue-500 transition-all disabled:opacity-30"
-        >
-          Siguiente →
-        </button>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-2xl transition-colors duration-700">
+      {Array.from({ length: 28 }).map((_, i) => {
+        const dia = i + 1;
+        
+        // Filtrar partidos por el día de la fecha_partido
+        const partidosDelDia = partidos.filter(p => {
+          if (!p.fecha_partido) return false;
+          try {
+            const fecha = new Date(p.fecha_partido);
+            // Si la fecha es válida, comparamos el día
+            // (Asumimos que el calendario es para el mes actual de los partidos)
+            return fecha.getDate() === dia;
+          } catch {
+            return false;
+          }
+        });
 
-      {/* Lista de fechas */}
-      {gruposVisibles.map((grupo) => (
-        <div key={grupo.fecha} className="space-y-3">
-          {/* Cabecera de fecha */}
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-border" />
-            <span className="bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest capitalize">
-              📅 {grupo.fecha}
+        return (
+          <div key={dia} className="min-h-[200px] bg-white dark:bg-slate-900/60 p-4 transition-all duration-500 hover:bg-slate-50 dark:hover:bg-slate-800/80 border-r border-b border-slate-100 dark:border-white/5">
+            <span className="text-xl font-black text-blue-600 dark:text-blue-400 italic">
+              {dia}
             </span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          {/* Partidos del día */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {grupo.lista.map((partido) => (
-              <Link
-                key={partido.id}
-                href={`/checkout/${partido.id}`}
-                className="group bg-card border border-border hover:border-blue-500 rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1"
-              >
-                {/* Fase badge */}
-                <div className="flex justify-between items-center mb-4">
-                  <span className="bg-blue-600/10 text-blue-500 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                    {partido.fase || 'Grupos'}
-                  </span>
-                  <span className="text-muted-foreground text-[10px] font-bold uppercase">🟢 Disponible</span>
-                </div>
-
-                {/* Equipos */}
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <div className="flex flex-col items-center gap-2 flex-1">
-                    <Bandera pais={normalizeTeamLabel(partido.equipoLocal)} className="w-12 h-8 rounded-lg shadow-md" />
-                    <p className="text-foreground font-black text-xs uppercase text-center leading-tight">
-                      {normalizeTeamLabel(partido.equipoLocal)}
+            
+            <div className="mt-4 space-y-3">
+              {partidosDelDia.map(partido => {
+                const precio = getPrecioReal(partido.id, partido.precio_base);
+                return (
+                  <Link 
+                    key={partido.id}
+                    href={`/checkout/${partido.id}`}
+                    className="block bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-xl p-3 shadow-sm hover:scale-105 transition-transform"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                       <span className="text-[7px] font-black uppercase text-slate-400">Grupos</span>
+                       <span className="text-[7px] font-bold text-blue-500">21:00</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-1 mb-2">
+                      <Bandera pais={normalizeTeamLabel(partido.equipo_local)} className="w-6 h-4" />
+                      <span className="text-[8px] font-black text-slate-400">VS</span>
+                      <Bandera pais={normalizeTeamLabel(partido.equipo_visitante)} className="w-6 h-4" />
+                    </div>
+                    <p className="text-[8px] font-black text-blue-600 dark:text-blue-400 text-center uppercase tracking-tighter">
+                      Desde {formatPrice(precio)}
                     </p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-blue-500 font-black text-lg italic">VS</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 flex-1">
-                    <Bandera pais={normalizeTeamLabel(partido.equipoVisitante)} className="w-12 h-8 rounded-lg shadow-md" />
-                    <p className="text-foreground font-black text-xs uppercase text-center leading-tight">
-                      {normalizeTeamLabel(partido.equipoVisitante)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Estadio + precio */}
-                <div className="border-t border-border pt-3 flex justify-between items-center">
-                  <p className="text-muted-foreground text-[10px] font-bold uppercase truncate max-w-[60%]">
-                    📍 {partido.nombreEstadio || 'Estadio Oficial'}
-                  </p>
-                  <p className="text-blue-500 font-black text-sm">
-                    Desde {formatPrice(minPrecio || partido.precioBase)}
-                  </p>
-                </div>
-              </Link>
-            ))}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

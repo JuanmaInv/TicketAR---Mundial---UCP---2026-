@@ -6,7 +6,10 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 
 export interface TicketState extends IState<TicketEntity> {
   get status(): TicketStatus;
-  pagar(paymentsService: PaymentsService, amount: number): Promise<PaymentResult>;
+  pagar(
+    paymentsService: PaymentsService,
+    amount: number,
+  ): Promise<PaymentResult>;
   confirmarPago(): void;
   cancelar(): void;
 }

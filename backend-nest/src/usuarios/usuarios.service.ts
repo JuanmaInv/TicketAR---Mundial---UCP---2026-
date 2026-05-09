@@ -21,6 +21,10 @@ export class UsuariosService {
     return this.usuariosRepository.buscarPorEmail(email);
   }
 
+  async buscarPorId(id: string): Promise<UsuarioEntidad | null> {
+    return this.usuariosRepository.buscarPorId(id);
+  }
+
   async actualizar(email: string, datos: any): Promise<UsuarioEntidad> {
     return this.usuariosRepository.actualizar(email, datos);
   }

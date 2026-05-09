@@ -8,7 +8,7 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 export class CanceladoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) { }
+  constructor(private readonly logger: Logger) {}
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -18,12 +18,12 @@ export class CanceladoState implements TicketState {
     return TicketStatus.CANCELADO;
   }
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   async pagar(
-    _paymentsService: PaymentsService,
-    _amount: number,
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+    paymentsService: PaymentsService,
+    amount: number,
   ): Promise<PaymentResult> {
+    void paymentsService;
+    void amount;
     return Promise.reject(
       new BadRequestException(
         'No se puede pagar un ticket que ha sido cancelado.',

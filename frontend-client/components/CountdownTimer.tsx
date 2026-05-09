@@ -7,41 +7,29 @@ interface CountdownTimerProps {
   onExpirar: () => void;
 }
 
+function calcularTiempoRestante(tiempoExpiracion: Date): number {
+  const diferencia = tiempoExpiracion.getTime() - Date.now();
+  return diferencia > 0 ? diferencia : 0;
+}
+
 export default function CountdownTimer({ tiempoExpiracion, onExpirar }: CountdownTimerProps) {
-  const [tiempoRestante, setTiempoRestante] = useState<number>(() => {
-    const ahora = new Date().getTime();
-    const expiracion = tiempoExpiracion.getTime();
-    const diferencia = expiracion - ahora;
-    return diferencia > 0 ? diferencia : 0;
-  });
+  const [tiempoRestante, setTiempoRestante] = useState<number>(() =>
+    calcularTiempoRestante(tiempoExpiracion),
+  );
 
   useEffect(() => {
-    // Calculamos el tiempo cada vez que se ejecute la función
-    const calcularTiempoRestante = () => {
-      const ahora = new Date().getTime();
-      const expiracion = tiempoExpiracion.getTime();
-      const diferencia = expiracion - ahora;
-
-      // Si la diferencia es menor a 0, devolvemos 0 para que no haya números negativos
-      return diferencia > 0 ? diferencia : 0;
-    };
-
-    // Configuramos el temporizador para que se actualice cada segundo (1000 ms)
     const intervalo = setInterval(() => {
-      const restante = calcularTiempoRestante();
+      const restante = calcularTiempoRestante(tiempoExpiracion);
       setTiempoRestante(restante);
 
-      // Si llegó a cero, detenemos el reloj y ejecutamos la función onExpirar
       if (restante <= 0) {
         clearInterval(intervalo);
         onExpirar();
       }
     }, 1000);
 
-    // Limpieza del intervalo cuando el componente se desmonta
-    // Esto es muy importante para no causar bugs de memoria (memory leaks)
     return () => clearInterval(intervalo);
-  }, [tiempoExpiracion, onExpirar]); // El efecto se reinicia si estas variables cambian
+  }, [tiempoExpiracion, onExpirar]);
 
   // Cálculos matemáticos para obtener los minutos y los segundos en base a los milisegundos restantes
   const minutos = Math.floor((tiempoRestante % (1000 * 60 * 60)) / (1000 * 60));

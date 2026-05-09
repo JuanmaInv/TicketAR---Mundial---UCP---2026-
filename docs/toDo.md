@@ -4,3 +4,7 @@
 
 
 3) Ver si decrementa la cantidad de asientos disponibles al comprar tickets en la tabla de partidos_sectores. 
+
+4) Implementar darse de baja para eliminar la cuenta de la base de datos.  Implementar esto en la base de datos.
+
+5) Implementar Endpoints: delete partidos_id, patch partidos_id, get s.

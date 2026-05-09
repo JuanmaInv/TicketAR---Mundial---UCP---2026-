@@ -12,7 +12,12 @@ import { QrService } from './qr.service';
 import { SectoresModule } from '../stadium-sectors/stadium-sectors.module';
 
 @Module({
-  imports: [SupabaseModule, UsuariosModule, forwardRef(() => PagosModule), SectoresModule],
+  imports: [
+    SupabaseModule,
+    UsuariosModule,
+    forwardRef(() => PagosModule),
+    SectoresModule,
+  ],
   controllers: [EntradasController],
   providers: [
     EntradasService,
