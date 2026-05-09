@@ -80,7 +80,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       setFechaExpiracion(nuevaFecha);
       localStorage.setItem(`checkout_expiration_${partidoId}`, nuevaFecha.getTime().toString());
     }
-  }, [partidoId]);
+  }, [partidoId, limpiarCheckout]);
+
 
   // Persistir paso cuando cambia
   useEffect(() => {

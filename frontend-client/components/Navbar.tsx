@@ -23,6 +23,7 @@ export default function Navbar() {
   // Evitar errores de hidratación asegurando que el contenido dependiente del cliente
   // solo se renderice después del montaje.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
