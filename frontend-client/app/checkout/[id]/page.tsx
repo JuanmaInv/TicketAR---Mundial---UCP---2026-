@@ -22,6 +22,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [editandoDatos, setEditandoDatos] = useState(false);
   const [formData, setFormData] = useState({ telefono: '', provincia: '', localidad: '' });
   const [guardandoDatos, setGuardandoDatos] = useState(false);
+  const [terminosAceptados, setTerminosAceptados] = useState(false);
 
   // Cargar datos del usuario para el Paso 1
   useEffect(() => {
@@ -383,9 +384,24 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                   </div>
 
                   <div className="mt-12 pt-10 border-t border-white/10 flex flex-col items-center">
+                    
+                    <div className="flex items-start gap-4 mb-8 p-6 bg-blue-500/10 border border-blue-500/20 rounded-2xl w-full">
+                      <input 
+                        type="checkbox" 
+                        id="terminos_checkout" 
+                        checked={terminosAceptados}
+                        onChange={(e) => setTerminosAceptados(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-background cursor-pointer"
+                      />
+                      <label htmlFor="terminos_checkout" className="text-xs text-zinc-400 font-medium leading-relaxed cursor-pointer">
+                        Acepto los <span className="text-blue-500 font-bold hover:underline">Términos y Condiciones</span> y asumo la responsabilidad sobre los datos ingresados. Confirmo que la compra es final y acato las políticas de la FIFA.
+                      </label>
+                    </div>
+
                     <button 
                       onClick={handleComprarFinal}
-                      className="w-full md:w-auto px-16 py-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-4"
+                      disabled={!terminosAceptados}
+                      className="w-full md:w-auto px-16 py-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-4"
                     >
                       <span>Ir a Pagar</span>
                       <span className="text-2xl">💳</span>

@@ -28,6 +28,7 @@ function FormularioPerfil() {
   const [exito, setExito] = useState(false);
   const [existeEnDB, setExisteEnDB] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [terminosAceptados, setTerminosAceptados] = useState(false);
 
   // Cargar datos existentes
   useEffect(() => {
@@ -243,26 +244,44 @@ function FormularioPerfil() {
             </div>
           </div>
 
+          {!existeEnDB && (
+            <div className="flex items-start gap-4 mt-6 p-6 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+              <input 
+                type="checkbox" 
+                id="terminos" 
+                checked={terminosAceptados}
+                onChange={(e) => setTerminosAceptados(e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-background"
+              />
+              <label htmlFor="terminos" className="text-xs text-muted-foreground font-medium leading-relaxed">
+                Acepto los <span className="text-blue-500 font-bold cursor-pointer hover:underline">Términos y Condiciones</span> y las <span className="text-blue-500 font-bold cursor-pointer hover:underline">Políticas de Privacidad</span> de TicketAR para la compra y gestión de entradas oficiales, así como las normativas impuestas por la FIFA.
+              </label>
+            </div>
+          )}
+
           {/* BOTÓN DE ACCIÓN DINÁMICO */}
           <button 
             type="submit" 
-            disabled={enviando}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-950/20 text-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-12"
+            disabled={enviando || (!existeEnDB && !terminosAceptados)}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-950/20 text-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed mt-12"
           >
             {enviando ? 'GUARDANDO...' : (matchId ? 'CONFIRMAR Y ELEGIR UBICACIÓN →' : 'GUARDAR CAMBIOS')}
           </button>
 
           {/* ZONA DE PELIGRO: DARSE DE BAJA */}
           {existeEnDB && (
-            <div className="mt-12 pt-8 border-t border-red-500/20 flex flex-col items-center gap-4">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold">Zona de Peligro</p>
+            <div className="mt-16 p-8 border-2 border-red-500/20 bg-red-500/5 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 transition-all hover:border-red-500/40">
+              <div className="text-center md:text-left">
+                <p className="text-red-500 text-lg uppercase tracking-widest font-black italic mb-1">Zona de Peligro</p>
+                <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Al eliminar tu cuenta perderás todos tus tickets.</p>
+              </div>
               <button 
                 type="button"
                 onClick={eliminarCuenta}
                 disabled={eliminando}
-                className="text-red-500 hover:text-red-400 text-xs font-black uppercase tracking-[0.2em] transition-colors underline decoration-red-500/30 underline-offset-8"
+                className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-red-900/20 active:scale-95 whitespace-nowrap"
               >
-                {eliminando ? "Procesando Baja..." : "Darse de Baja (Eliminar Cuenta Definitivamente)"}
+                {eliminando ? "PROCESANDO..." : "ELIMINAR CUENTA"}
               </button>
             </div>
           )}

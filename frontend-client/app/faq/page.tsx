@@ -9,23 +9,19 @@ export default function FAQPage() {
   const faqs = [
     {
       question: "¿Cuántas entradas puedo comprar por usuario?",
-      answer: "Por disposición oficial y para evitar la reventa, cada usuario registrado y validado con su documento oficial (DNI/Pasaporte) puede adquirir un máximo de 6 entradas por partido."
+      answer: "Por disposición oficial y para garantizar equidad, cada usuario validado con su documento (DNI/Pasaporte) puede adquirir un máximo de 6 entradas por partido."
     },
     {
       question: "¿Cómo ingreso al estadio el día del partido?",
-      answer: "El ingreso es estrictamente con el documento de identidad registrado en tu cuenta (DNI o Pasaporte) y el Código QR generado tras la compra. El titular de la cuenta debe estar presente con su grupo."
-    },
-    {
-      question: "¿Puedo revender o transferir mis entradas?",
-      answer: "La transferencia directa de entradas está prohibida. TicketAR cuenta con una plataforma oficial de reventa segura donde puedes devolver tu entrada, y nosotros nos encargamos de reasignarla garantizando un proceso legal y sin sobreprecios."
+      answer: "El ingreso es estrictamente presentando el documento de identidad registrado en tu cuenta (DNI o Pasaporte) y el Código QR generado en la plataforma. El titular de la compra debe estar presente."
     },
     {
       question: "¿Qué métodos de pago aceptan?",
-      answer: "Actualmente procesamos los pagos a través de Mercado Pago, lo cual te permite abonar con tarjetas de crédito, débito y dinero en cuenta. Tu pago está protegido y procesado instantáneamente."
+      answer: "Actualmente procesamos todos nuestros pagos a través de Mercado Pago, permitiendo el uso de tarjetas de crédito, débito y dinero en cuenta. Tu transacción está totalmente protegida."
     },
     {
       question: "¿Qué pasa si se me acaba el tiempo durante la compra?",
-      answer: "El sistema reserva tu lugar por 15 minutos mientras completas los datos. Si el tiempo expira, las entradas vuelven a liberarse para otros usuarios y deberás comenzar el proceso nuevamente."
+      answer: "El sistema reserva tu lugar por 15 minutos mientras completás tus datos. Si el reloj llega a cero, las entradas vuelven a liberarse y deberás intentar nuevamente."
     }
   ];
 
@@ -76,13 +72,25 @@ export default function FAQPage() {
           ))}
         </div>
 
-        <div className="mt-20 text-center bg-card p-12 rounded-[3rem] border border-border shadow-2xl">
-          <span className="text-6xl mb-6 block">🌍</span>
-          <p className="text-foreground text-xl font-black uppercase tracking-widest italic mb-2">¿Aún tienes dudas?</p>
-          <p className="text-muted-foreground text-xs uppercase tracking-widest mb-8">El soporte oficial de FIFA está a tu disposición 24/7</p>
-          <a href="mailto:soporte@ticketar.com" className="inline-flex bg-foreground text-background px-12 py-5 rounded-2xl font-black uppercase tracking-[0.2em] italic hover:scale-105 active:scale-95 transition-all shadow-2xl">
-            Contactar Soporte →
-          </a>
+        <div className="mt-20 text-center bg-card p-12 rounded-[3rem] border border-border shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none"></div>
+          
+          <span className="text-6xl mb-6 block relative z-10">📞</span>
+          <p className="text-foreground text-2xl font-black uppercase tracking-widest italic mb-2 relative z-10">¿Todavía tenés dudas?</p>
+          <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest mb-10 relative z-10">
+            Nuestros canales oficiales de TicketAR están abiertos para reclamos o consultas
+          </p>
+          
+          <div className="flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
+            <div className="bg-background border border-border px-8 py-6 rounded-2xl flex flex-col items-center shadow-lg w-full md:w-auto">
+              <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-2">WhatsApp / Teléfono</span>
+              <span className="text-xl font-black text-foreground">+54 9 11 1234-5678</span>
+            </div>
+            <div className="bg-background border border-border px-8 py-6 rounded-2xl flex flex-col items-center shadow-lg w-full md:w-auto">
+              <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-2">Correo Oficial TicketAR</span>
+              <a href="mailto:soporte@ticketar.com.ar" className="text-xl font-black text-blue-500 hover:text-blue-400 transition-colors">soporte@ticketar.com.ar</a>
+            </div>
+          </div>
         </div>
       </div>
     </main>
