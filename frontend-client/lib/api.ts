@@ -46,6 +46,18 @@ export interface Usuario {
   localidad?: string;
 }
 
+interface AuthHeaders {
+  userId: string;
+  userEmail: string;
+}
+
+function construirHeadersUsuario(auth: AuthHeaders): HeadersInit {
+  return {
+    'x-user-id': auth.userId,
+    'x-user-email': auth.userEmail,
+  };
+}
+
 export interface RespuestaPago {
   entrada: Ticket;
   resultadoPago?: {
@@ -130,10 +142,15 @@ export async function createTicket(entrada: { idUsuario: string, idPartido: stri
   return res.json();
 }
 
-export async function getUsuario(email: string): Promise<Usuario | null> {
+export async function getUsuario(
+  email: string,
+  auth: AuthHeaders,
+): Promise<Usuario | null> {
   const emailSeguro = validarEmailSeguro(email);
   const ruta = `/usuarios/buscar?email=${encodeURIComponent(emailSeguro)}`;
-  const res = await fetch(construirUrlApi(ruta));
+  const res = await fetch(construirUrlApi(ruta), {
+    headers: construirHeadersUsuario(auth),
+  });
   if (!res.ok) return null;
   return res.json();
 }
@@ -147,11 +164,18 @@ export async function createUsuario(usuario: Usuario): Promise<boolean> {
   return res.ok;
 }
 
-export async function updateUsuario(email: string, usuario: Usuario): Promise<boolean> {
+export async function updateUsuario(
+  email: string,
+  usuario: Usuario,
+  auth: AuthHeaders,
+): Promise<boolean> {
   const emailSeguro = validarEmailSeguro(email);
   const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...construirHeadersUsuario(auth),
+    },
     body: JSON.stringify({
       ...usuario,
       email: emailSeguro,
@@ -164,6 +188,21 @@ export async function getTickets(): Promise<Ticket[]> {
   const res = await fetch(construirUrlApi('/entradas'));
   if (!res.ok) throw new Error('Error al traer entradas');
   return res.json();
+}
+
+export async function eliminarMiCuenta(auth: AuthHeaders): Promise<void> {
+  const res = await fetch(construirUrlApi('/usuarios/me'), {
+    method: 'DELETE',
+    headers: construirHeadersUsuario(auth),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos eliminar tu cuenta en este momento.',
+      ),
+    );
+  }
 }
 
 export async function getTicketQr(id: string): Promise<string> {
