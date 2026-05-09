@@ -16,7 +16,22 @@ function obtenerBaseApiSegura(): URL {
 const BASE_API_SEGURA = obtenerBaseApiSegura();
 
 function construirUrlApi(ruta: string): string {
+  const rutaValida = /^\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/;
+  if (!rutaValida.test(ruta) || ruta.includes('://') || ruta.startsWith('//')) {
+    throw new Error('Ruta de API invalida.');
+  }
   return new URL(ruta, BASE_API_SEGURA).toString();
+}
+
+function construirUrlApiConQuery(
+  path: string,
+  query: Record<string, string>,
+): string {
+  const url = new URL(construirUrlApi(path));
+  Object.entries(query).forEach(([clave, valor]) => {
+    url.searchParams.set(clave, valor);
+  });
+  return url.toString();
 }
 
 export const formatPrice = (price: number) => {
@@ -147,8 +162,10 @@ export async function getUsuario(
   auth: AuthHeaders,
 ): Promise<Usuario | null> {
   const emailSeguro = validarEmailSeguro(email);
-  const ruta = `/usuarios/buscar?email=${encodeURIComponent(emailSeguro)}`;
-  const res = await fetch(construirUrlApi(ruta), {
+  const url = construirUrlApiConQuery('/usuarios/buscar', {
+    email: emailSeguro,
+  });
+  const res = await fetch(url, {
     headers: construirHeadersUsuario(auth),
   });
   if (!res.ok) return null;
