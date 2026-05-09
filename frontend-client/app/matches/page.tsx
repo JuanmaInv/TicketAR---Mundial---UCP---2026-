@@ -213,12 +213,18 @@ export default function MatchesPage() {
                               {formatPrice(precio)}
                             </p>
                           </div>
-                          <Link 
-                            href={user ? `/profile?matchId=${match.id}` : "/login"} 
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
-                          >
-                            Comprar Ahora
-                          </Link>
+                          {match.estado?.toUpperCase() === 'AGOTADO' ? (
+                            <button disabled className="bg-zinc-800 text-zinc-500 px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed border border-zinc-700">
+                              AGOTADO
+                            </button>
+                          ) : (
+                            <Link 
+                              href={user ? `/checkout/${match.id}` : "/login"} 
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
+                            >
+                              Comprar Ahora
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>

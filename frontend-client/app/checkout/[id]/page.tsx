@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import SectorSelector from '@/components/checkout/SectorSelector';
 import CountdownTimer from '@/components/CountdownTimer';
-import { createTicket, getUsuario, pagarTicket } from '@/lib/api';
+import { createTicket, getUsuario, pagarTicket, updateUsuario } from '@/lib/api';
 
 function CheckoutContent({ partidoId }: { partidoId: string }) {
   const router = useRouter();
@@ -19,6 +19,9 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [resumenCompra, setResumenCompra] = useState<{sectorId: string, cantidad: number, total: number} | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
+  const [editandoDatos, setEditandoDatos] = useState(false);
+  const [formData, setFormData] = useState({ telefono: '', provincia: '', localidad: '' });
+  const [guardandoDatos, setGuardandoDatos] = useState(false);
 
   // Cargar datos del usuario para el Paso 1
   useEffect(() => {
@@ -27,6 +30,14 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
         .then(data => {
           if (data && data.id) {
             setUserData(data);
+            setFormData({
+              telefono: data.telefono || '',
+              provincia: data.provincia || '',
+              localidad: data.localidad || ''
+            });
+            if (!data.telefono || !data.provincia || !data.localidad || !data.numeroPasaporte) {
+              setEditandoDatos(true);
+            }
           } else {
             router.push('/profile?error=not_registered');
           }
@@ -95,9 +106,31 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   // Bloqueo de seguridad
   useEffect(() => {
     if (!cargandoUsuario && paso === 2 && perfilIncompleto) {
-      router.push(`/profile?matchId=${partidoId}`);
+      setPaso(1);
+      setEditandoDatos(true);
     }
-  }, [paso, perfilIncompleto, cargandoUsuario, router, partidoId]);
+  }, [paso, perfilIncompleto, cargandoUsuario]);
+
+  const handleGuardarDatos = async () => {
+    if (!formData.telefono || !formData.provincia || !formData.localidad) {
+      alert("Por favor completa todos los campos (Teléfono, Provincia, Localidad) para continuar.");
+      return;
+    }
+    setGuardandoDatos(true);
+    try {
+      const email = user?.emailAddresses[0]?.emailAddress || '';
+      const ok = await updateUsuario(email, { ...userData, ...formData });
+      if (ok) {
+        setUserData({ ...userData, ...formData });
+        setEditandoDatos(false);
+      } else {
+        alert("Error al guardar tus datos en el servidor.");
+      }
+    } catch (e) {
+      alert("Error de conexión al actualizar el perfil.");
+    }
+    setGuardandoDatos(false);
+  };
 
   const handleSeleccionarSector = (sectorId: string, cantidad: number, total: number) => {
     setResumenCompra({ sectorId, cantidad, total });
@@ -216,47 +249,70 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Teléfono</label>
-                      <p className={`text-2xl font-black italic uppercase ${userData?.telefono ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
-                        {userData?.telefono || '❌ No cargado'}
-                      </p>
+                      {editandoDatos ? (
+                         <input type="text" value={formData.telefono} onChange={e => setFormData({...formData, telefono: e.target.value})} className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="Ej: +54 11 1234 5678" />
+                      ) : (
+                         <p className={`text-2xl font-black italic uppercase ${userData?.telefono ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
+                           {userData?.telefono || '❌ No cargado'}
+                         </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Provincia</label>
-                      <p className={`text-2xl font-black italic uppercase ${userData?.provincia ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
-                        {userData?.provincia || '❌ No cargado'}
-                      </p>
+                      {editandoDatos ? (
+                         <input type="text" value={formData.provincia} onChange={e => setFormData({...formData, provincia: e.target.value})} className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="Ej: Buenos Aires" />
+                      ) : (
+                         <p className={`text-2xl font-black italic uppercase ${userData?.provincia ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
+                           {userData?.provincia || '❌ No cargado'}
+                         </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Localidad</label>
-                      <p className={`text-2xl font-black italic uppercase ${userData?.localidad ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
-                        {userData?.localidad || '❌ No cargado'}
-                      </p>
+                      {editandoDatos ? (
+                         <input type="text" value={formData.localidad} onChange={e => setFormData({...formData, localidad: e.target.value})} className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="Ej: CABA" />
+                      ) : (
+                         <p className={`text-2xl font-black italic uppercase ${userData?.localidad ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
+                           {userData?.localidad || '❌ No cargado'}
+                         </p>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {perfilIncompleto ? (
+                {editandoDatos ? (
                   <div className="flex flex-col gap-4">
-                    <div className="bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl flex items-center gap-4 mb-4">
-                      <span className="text-3xl">⚠️</span>
-                      <p className="text-amber-600 dark:text-amber-400 font-bold text-sm">
-                        Tu perfil está incompleto. El Mundial exige validación de identidad oficial.
-                      </p>
-                    </div>
+                    {perfilIncompleto && (
+                      <div className="bg-blue-500/10 border border-blue-500/30 p-6 rounded-2xl flex items-center gap-4 mb-2">
+                        <span className="text-3xl">ℹ️</span>
+                        <p className="text-blue-400 font-bold text-sm">
+                          Por favor, completa tus datos de contacto para finalizar la compra.
+                        </p>
+                      </div>
+                    )}
                     <button 
-                      onClick={() => router.push(`/profile?redirect=/checkout/${partidoId}`)}
-                      className="w-full bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-blue-500/20 text-lg"
+                      onClick={handleGuardarDatos}
+                      disabled={guardandoDatos}
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98]"
                     >
-                      Completar mi Perfil Ahora →
+                      {guardandoDatos ? "GUARDANDO..." : "GUARDAR DATOS Y CONTINUAR →"}
                     </button>
                   </div>
                 ) : (
-                  <button 
-                    onClick={() => setPaso(2)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    Confirmar Datos y Continuar →
-                  </button>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <button 
+                      onClick={() => setEditandoDatos(true)}
+                      className="md:w-1/3 bg-zinc-800 hover:bg-zinc-700 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all text-sm"
+                    >
+                      EDITAR MIS DATOS
+                    </button>
+                    <button 
+                      onClick={() => setPaso(2)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-blue-500/20 text-lg hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      CONTINUAR A UBICACIÓN →
+                    </button>
+                  </div>
                 )}
               </div>
             )}
