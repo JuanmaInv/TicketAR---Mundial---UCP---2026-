@@ -5,7 +5,7 @@ import { getSectores, Sector, formatPrice } from '@/lib/api';
 
 interface SectorSelectorProps {
   partidoId: string;
-  onComprar: (sectorId: string, cantidad: number, total: number) => void;
+  onComprar: (sector: Sector, cantidad: number, total: number) => void;
 }
 
 export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
@@ -13,25 +13,29 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    getSectores()
+    getSectores(partidoId)
       .then(datos => {
         // FILTRAR SOLO PALCO, PLATEA Y POPULAR (Ignorar Prensa y otros)
         const sectoresFiltrados = datos.filter(s => {
           const n = s.nombre.toLowerCase();
           return n.includes('palco') || n.includes('platea') || n.includes('popular');
         });
+        const primerDisponible = sectoresFiltrados.find(s => s.capacidadDisponible > 0);
         
         setSectores(sectoresFiltrados);
-        if (sectoresFiltrados.length > 0) setSectorSeleccionado(sectoresFiltrados[0].id);
+        if (primerDisponible) setSectorSeleccionado(primerDisponible.id);
+        if (!primerDisponible) setError('No quedan entradas disponibles para este partido.');
         setCargando(false);
       })
       .catch(err => {
         console.error('Error cargando sectores:', err);
+        setError(err instanceof Error ? err.message : 'No pudimos consultar la disponibilidad.');
         setCargando(false);
       });
-  }, []);
+  }, [partidoId]);
 
   const sectorActual = sectores.find(s => s.id === sectorSeleccionado);
   const precioTotal = sectorActual ? sectorActual.precio * cantidad : 0;
@@ -46,11 +50,16 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
   };
 
   const handleComprar = () => {
-    if (!sectorSeleccionado) {
-      alert('Por favor selecciona un sector');
+    if (!sectorActual) {
+      setError('Elegí un sector disponible para continuar.');
       return;
     }
-    onComprar(sectorSeleccionado, cantidad, precioTotal);
+    if (sectorActual.capacidadDisponible < cantidad) {
+      setError(`Solo quedan ${sectorActual.capacidadDisponible} entradas en ${sectorActual.nombre}.`);
+      return;
+    }
+    setError('');
+    onComprar(sectorActual, cantidad, precioTotal);
   };
 
   if (cargando) {
@@ -59,6 +68,11 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
 
   return (
     <div className="w-full space-y-8">
+      {error && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-bold text-red-200">
+          {error}
+        </div>
+      )}
       {/* Visualización del Estadio Simplificada */}
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-amber-600 rounded-[2.5rem] blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
@@ -96,8 +110,12 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
                           <span className="block text-[10px] font-black text-white/90 uppercase tracking-widest mb-1">{sector.nombre}</span>
                           <span className="block text-2xl font-black text-white tracking-tighter">{formatPrice(sector.precio)}</span>
                         </div>
-                        {agotado && (
+                        {agotado ? (
                           <span className="bg-red-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">Agotado</span>
+                        ) : (
+                          <span className="bg-white/20 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                            {sector.capacidadDisponible} disp.
+                          </span>
                         )}
                       </div>
                     </button>
@@ -117,9 +135,9 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
               Cantidad de Entradas
             </label>
             <div className="flex items-center gap-6">
-              <button onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="text-2xl font-bold text-white hover:text-blue-500 transition-colors">−</button>
+              <button aria-label="Restar entrada" onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="text-2xl font-bold text-white hover:text-blue-500 transition-colors">−</button>
               <span className="text-4xl font-black text-white w-12 text-center">{cantidad}</span>
-              <button onClick={() => setCantidad(Math.min(6, cantidad + 1))} className="text-2xl font-bold text-white hover:text-emerald-500 transition-colors">+</button>
+              <button aria-label="Sumar entrada" onClick={() => setCantidad(Math.min(6, sectorActual?.capacidadDisponible ?? 6, cantidad + 1))} className="text-2xl font-bold text-white hover:text-emerald-500 transition-colors">+</button>
             </div>
           </div>
         </div>
@@ -140,7 +158,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
                 : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30'
               }`}
             >
-              {sectorActual.capacidadDisponible <= 0 ? 'AGOTADO' : 'COMPRAR AHORA →'}
+              {sectorActual.capacidadDisponible <= 0 ? 'AGOTADO' : 'REVISAR COMPRA →'}
             </button>
           </div>
         )}

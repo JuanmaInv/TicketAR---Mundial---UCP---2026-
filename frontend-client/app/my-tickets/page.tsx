@@ -1,20 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
-import { getTickets, getUsuario, getTicketQr, getSectores, getPartidos, pagarTicket } from '@/lib/api';
+import { getTickets, getUsuario, getTicketQr, getSectores, getPartidos, pagarTicket, Sector } from '@/lib/api';
 import WorldCupLoader from '@/components/WorldCupLoader';
+import { Partido, Ticket } from '@/types/ticket';
+
+type TicketApi = Ticket & {
+  idUsuario?: string;
+  id_usuario?: string;
+  idSector?: string;
+  id_sector?: string;
+  idPartido?: string;
+  id_partido?: string;
+};
 
 export default function MyTicketsPage() {
   const { user, isLoaded } = useUser();
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [sectores, setSectores] = useState<any[]>([]);
-  const [partidos, setPartidos] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<TicketApi[]>([]);
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [partidos, setPartidos] = useState<Partido[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [dbUserId, setDbUserId] = useState<string | null>(null);
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
     
     try {
@@ -26,23 +35,22 @@ export default function MyTicketsPage() {
       ]);
 
       if (userData?.id) {
-        setDbUserId(userData.id);
         setSectores(allSectores);
         setPartidos(allPartidos);
         
         // Filtramos tickets del usuario que estén PAGADOS
-        const myTickets = allTickets.filter(t => 
+        const myTickets = (allTickets as TicketApi[]).filter(t =>
           (t.idUsuario === userData.id || t.id_usuario === userData.id) && 
           (t.estado === 'PAGADO' || t.estado === 'vendido')
         );
         setTickets(myTickets);
       }
-    } catch (err) {
-      console.error('Error cargando datos de tickets:', err);
+    } catch (error) {
+      console.error('Error cargando datos de tickets:', error);
     } finally {
       setCargando(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -52,7 +60,7 @@ export default function MyTicketsPage() {
         setCargando(false);
       }
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, cargarDatos]);
 
   if (cargando) {
     return (
@@ -115,7 +123,7 @@ export default function MyTicketsPage() {
   );
 }
 
-function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sectores: any[], partidos: any[], onUpdate: () => void }) {
+function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: TicketApi, sectores: Sector[], partidos: Partido[], onUpdate: () => void }) {
   const [qr, setQr] = useState<string | null>(null);
   const [verQr, setVerQr] = useState(false);
   const [pagando, setPagando] = useState(false);
@@ -137,7 +145,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
 
       alert('¡Pago procesado con éxito! Tu ticket ahora es válido.');
       onUpdate();
-    } catch (err) {
+    } catch {
       alert('Error al procesar el pago. Inténtalo de nuevo.');
     } finally {
       setPagando(false);
@@ -150,7 +158,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
         const dataUrl = await getTicketQr(ticket.id);
         setQr(dataUrl);
         setVerQr(true);
-      } catch (err) {
+      } catch {
         alert('Error al generar el QR. Contacta a soporte.');
       }
     } else {

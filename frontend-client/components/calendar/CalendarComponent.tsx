@@ -58,7 +58,7 @@ export default function CalendarComponent() {
             // Si la fecha es válida, comparamos el día
             // (Asumimos que el calendario es para el mes actual de los partidos)
             return fecha.getDate() === dia;
-          } catch (e) {
+          } catch {
             return false;
           }
         });

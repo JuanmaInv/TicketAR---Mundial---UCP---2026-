@@ -22,6 +22,7 @@ export default function MatchesPage() {
   const { user } = useUser();
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
+  const [disponibilidad, setDisponibilidad] = useState<Record<string, number>>({});
   const [cargando, setCargando] = useState(true);
   
   const [filtroSeleccion, setFiltroSeleccion] = useState<string>("");
@@ -32,8 +33,23 @@ export default function MatchesPage() {
     async function cargarDatos() {
       try {
         const [dataPartidos, dataSectores] = await Promise.all([getPartidos(), getSectores()]);
+        const disponibilidadPorPartido = await Promise.all(
+          dataPartidos.map(async (partido) => {
+            try {
+              const sectoresPartido = await getSectores(partido.id);
+              const disponibles = sectoresPartido.reduce(
+                (total, sector) => total + Math.max(0, sector.capacidadDisponible || 0),
+                0,
+              );
+              return [partido.id, disponibles] as const;
+            } catch {
+              return [partido.id, 0] as const;
+            }
+          }),
+        );
         setPartidos(dataPartidos);
         setSectores(dataSectores);
+        setDisponibilidad(Object.fromEntries(disponibilidadPorPartido));
       } catch (err) {
         console.error("Error:", err);
       } finally {
@@ -153,6 +169,8 @@ export default function MatchesPage() {
               const precio = getPrecioReal(match.id, match.precio_base);
               const local = normalizeTeamLabel(match.equipo_local);
               const visitante = normalizeTeamLabel(match.equipo_visitante);
+              const disponibles = disponibilidad[match.id] ?? 0;
+              const agotado = disponibles <= 0;
 
               return (
                 /* BORDE DINÁMICO APLICADO AQUÍ */
@@ -213,12 +231,18 @@ export default function MatchesPage() {
                               {formatPrice(precio)}
                             </p>
                           </div>
-                          <Link 
-                            href={user ? `/profile?matchId=${match.id}` : "/login"} 
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
-                          >
-                            Comprar Ahora
-                          </Link>
+                          {agotado ? (
+                            <span className="bg-zinc-300 text-zinc-600 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
+                              Entradas agotadas
+                            </span>
+                          ) : (
+                            <Link
+                              href={user ? `/profile?matchId=${match.id}` : "/login"}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 sm:px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle text-center"
+                            >
+                              Comprar Ahora
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>

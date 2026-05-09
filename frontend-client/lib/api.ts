@@ -18,6 +18,46 @@ export interface Sector {
   capacidadDisponible: number;
 }
 
+export interface Usuario {
+  id?: string;
+  email: string;
+  nombre?: string;
+  apellido?: string;
+  numeroPasaporte?: string;
+  telefono?: string;
+  provincia?: string;
+  localidad?: string;
+}
+
+export interface PaymentResponse {
+  ticket: Ticket;
+  paymentResult?: {
+    success: boolean;
+    transactionId?: string;
+    paymentUrl?: string;
+    error?: string;
+  };
+}
+
+type ApiSector = {
+  id: string;
+  nombre: string;
+  precio: number;
+  capacidad: number;
+  capacidadDisponible?: number;
+  capacidad_disponible?: number;
+};
+
+const parseApiError = async (res: Response, fallback: string) => {
+  try {
+    const data = (await res.json()) as { message?: string | string[] };
+    if (Array.isArray(data.message)) return data.message.join(' ');
+    return data.message || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export async function getPartidos(): Promise<Partido[]> {
   const res = await fetch(`${API_URL}/partidos`);
   if (!res.ok) throw new Error('Error al traer partidos');
@@ -36,12 +76,13 @@ export async function getPartidos(): Promise<Partido[]> {
   }));
 }
 
-export async function getSectores(): Promise<Sector[]> {
-  const res = await fetch(`${API_URL}/sectores`);
-  if (!res.ok) throw new Error('Error al traer sectores');
+export async function getSectores(partidoId?: string): Promise<Sector[]> {
+  const endpoint = partidoId ? `/sectores/partido/${partidoId}` : '/sectores';
+  const res = await fetch(`${API_URL}${endpoint}`);
+  if (!res.ok) throw new Error(await parseApiError(res, 'Error al traer sectores'));
   const data = await res.json();
   const lista = Array.isArray(data) ? data : (data.data ?? []);
-  return lista.map((s: any) => ({
+  return lista.map((s: ApiSector) => ({
     id: s.id,
     nombre: s.nombre,
     precio: s.precio,
@@ -58,19 +99,18 @@ export async function createTicket(ticket: { idUsuario: string, idPartido: strin
     body: JSON.stringify(ticket),
   });
   if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || 'Error al reservar');
+    throw new Error(await parseApiError(res, 'No pudimos reservar la entrada. Intentá nuevamente.'));
   }
   return res.json();
 }
 
-export async function getUsuario(email: string) {
+export async function getUsuario(email: string): Promise<Usuario | null> {
   const res = await fetch(`${API_URL}/usuarios/buscar?email=${email}`);
   if (!res.ok) return null;
   return res.json();
 }
 
-export async function createUsuario(usuario: { email: string, nombre: string, apellido: string, numeroPasaporte: string }) {
+export async function createUsuario(usuario: Usuario): Promise<boolean> {
   const res = await fetch(`${API_URL}/usuarios`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -79,7 +119,7 @@ export async function createUsuario(usuario: { email: string, nombre: string, ap
   return res.ok;
 }
 
-export async function updateUsuario(email: string, usuario: any) {
+export async function updateUsuario(email: string, usuario: Usuario): Promise<boolean> {
   const res = await fetch(`${API_URL}/usuarios/${email}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -88,7 +128,7 @@ export async function updateUsuario(email: string, usuario: any) {
   return res.ok;
 }
 
-export async function getTickets(): Promise<any[]> {
+export async function getTickets(): Promise<Ticket[]> {
   const res = await fetch(`${API_URL}/entradas`);
   if (!res.ok) throw new Error('Error al traer tickets');
   return res.json();
@@ -101,10 +141,10 @@ export async function getTicketQr(id: string): Promise<string> {
   return data.qrDataUrl;
 }
 
-export async function pagarTicket(id: string): Promise<any> {
+export async function pagarTicket(id: string): Promise<PaymentResponse> {
   const res = await fetch(`${API_URL}/entradas/${id}/pagar`, {
     method: 'POST',
   });
-  if (!res.ok) throw new Error('Error al procesar el pago');
+  if (!res.ok) throw new Error(await parseApiError(res, 'No pudimos procesar el pago.'));
   return res.json();
 }

@@ -22,7 +22,6 @@ function FormularioPerfil() {
     provincia: "",
   });
 
-  const [errores, setErrores] = useState<Record<string, boolean>>({});
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
   const [existeEnDB, setExisteEnDB] = useState(false);
@@ -57,7 +56,7 @@ function FormularioPerfil() {
             }));
             setExisteEnDB(false);
           }
-        } catch (e) {
+        } catch {
           // Si falla la búsqueda, al menos tenemos el email de Clerk
           setDatos(prev => ({ ...prev, email: emailClerk }));
         }
@@ -95,8 +94,9 @@ function FormularioPerfil() {
       setTimeout(() => {
         router.push(redirectUrl);
       }, 1500);
-    } catch (error: any) {
-      alert("Error al guardar: " + error.message);
+    } catch (error) {
+      const mensaje = error instanceof Error ? error.message : "Intentá nuevamente en unos minutos.";
+      alert("No pudimos guardar tus datos. " + mensaje);
     } finally {
       setEnviando(false);
     }

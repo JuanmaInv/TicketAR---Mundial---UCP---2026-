@@ -44,7 +44,7 @@ export interface Ticket {
   // disponible: el ticket está disponible para la venta
   // pendiente: el ticket está pendiente de pago (por error no se pudo pagar, entonces deja reservado a esa persona el ticket durante 15 minutos)
   // vendido: el ticket ha sido vendido
-  estado: 'disponible' | 'pendiente' | 'vendido';
+  estado: 'disponible' | 'pendiente' | 'vendido' | 'reservado' | 'RESERVADO' | 'PAGADO' | 'CANCELADO';
   fechaCreacion?: string; // Fecha de creacion del ticket
 
   // Agregamos opcionalmente los campos del comprador para evitar errores de TS en el flujo
