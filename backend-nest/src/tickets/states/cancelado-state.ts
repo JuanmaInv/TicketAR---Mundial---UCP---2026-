@@ -18,10 +18,11 @@ export class CanceladoState implements TicketState {
     return TicketStatus.CANCELADO;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   async pagar(
     _paymentsService: PaymentsService,
     _amount: number,
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   ): Promise<PaymentResult> {
     return Promise.reject(
       new BadRequestException(
