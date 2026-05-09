@@ -7,16 +7,26 @@ import {
   Query,
   Put,
   Param,
-  Headers,
+  Req,
+  UseGuards,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { UsuariosService } from './usuarios.service';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
+import { AuthenticatedUserGuard } from '../common/guards/authenticated-user.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import type { RequestUser } from '../common/interfaces/request-user.interface';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolUsuario } from '../common/enums/rol-usuario.enum';
 
 interface ActualizarUsuarioBody {
   email?: string;
   [clave: string]: unknown;
 }
+
+type RequestWithUser = Request & { currentUser?: RequestUser };
 
 @Controller('usuarios')
 export class UsuariosController {
@@ -28,29 +38,77 @@ export class UsuariosController {
   }
 
   @Get()
+  @UseGuards(AuthenticatedUserGuard, RolesGuard)
+  @Roles(RolUsuario.ADMINISTRADOR)
   obtenerTodos() {
     return this.usuariosService.obtenerTodos();
   }
 
   @Get('buscar')
-  buscarPorEmail(@Query('email') email: string) {
+  @UseGuards(AuthenticatedUserGuard)
+  buscarPorEmail(@Query('email') email: string, @Req() req: RequestWithUser) {
+    const usuarioAutenticado = req.currentUser;
+    if (!usuarioAutenticado) {
+      throw new ForbiddenException('Usuario no autenticado.');
+    }
+    const emailNormalizado = email.trim().toLowerCase();
+    if (
+      usuarioAutenticado.rol !== RolUsuario.ADMINISTRADOR &&
+      usuarioAutenticado.email.trim().toLowerCase() !== emailNormalizado
+    ) {
+      throw new ForbiddenException(
+        'No tenés permiso para consultar datos de otros usuarios.',
+      );
+    }
     return this.usuariosService.buscarPorEmail(email);
   }
 
   @Put(':email')
+  @UseGuards(AuthenticatedUserGuard)
   actualizar(
     @Param('email') email: string,
     @Body() datos: Record<string, unknown>,
+    @Req() req: RequestWithUser,
   ) {
+    const usuarioAutenticado = req.currentUser;
+    if (!usuarioAutenticado) {
+      throw new ForbiddenException('Usuario no autenticado.');
+    }
+    const emailNormalizado = email.trim().toLowerCase();
+    if (
+      usuarioAutenticado.rol !== RolUsuario.ADMINISTRADOR &&
+      usuarioAutenticado.email.trim().toLowerCase() !== emailNormalizado
+    ) {
+      throw new ForbiddenException(
+        'No tenés permiso para actualizar datos de otros usuarios.',
+      );
+    }
     return this.usuariosService.actualizar(email, datos);
   }
 
   @Put()
-  actualizarPorBody(@Body() datos: ActualizarUsuarioBody) {
+  @UseGuards(AuthenticatedUserGuard)
+  actualizarPorBody(
+    @Body() datos: ActualizarUsuarioBody,
+    @Req() req: RequestWithUser,
+  ) {
     const email = typeof datos.email === 'string' ? datos.email : '';
     if (!email) {
       throw new BadRequestException(
         'El email es obligatorio para actualizar el usuario.',
+      );
+    }
+    const usuarioAutenticado = req.currentUser;
+    if (!usuarioAutenticado) {
+      throw new ForbiddenException('Usuario no autenticado.');
+    }
+    const emailNormalizado = email.trim().toLowerCase();
+    if (
+      usuarioAutenticado.rol !== RolUsuario.ADMINISTRADOR &&
+      usuarioAutenticado.email.trim().toLowerCase() !== emailNormalizado
+    ) {
+      throw new ForbiddenException(
+        'No tenés permiso para actualizar datos de otros usuarios.',
       );
     }
     return this.usuariosService.actualizar(email, datos);
@@ -65,14 +123,13 @@ export class UsuariosController {
    * NOTA: Hasta implementar JWT, el ID del usuario se envía via header x-user-id.
    */
   @Delete('me')
-  async darDeBaja(@Headers('x-user-id') userId: string) {
-    if (!userId) {
-      throw new BadRequestException(
-        'Se requiere el header x-user-id para identificar al usuario',
-      );
+  @UseGuards(AuthenticatedUserGuard)
+  async darDeBaja(@Req() req: RequestWithUser) {
+    const usuarioAutenticado = req.currentUser;
+    if (!usuarioAutenticado) {
+      throw new ForbiddenException('Usuario no autenticado.');
     }
-
-    await this.usuariosService.eliminar(userId);
+    await this.usuariosService.eliminar(usuarioAutenticado.id);
     return {
       mensaje:
         'Tu cuenta y todos tus registros asociados han sido eliminados correctamente.',
