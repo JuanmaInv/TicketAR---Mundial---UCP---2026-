@@ -62,8 +62,10 @@ function obtenerCapacidadSector(
     | null,
 ): number {
   if (!sector) return 0;
-  const sectorNormalizado = Array.isArray(sector) ? sector[0] : sector;
-  return sectorNormalizado?.capacidad ?? 0;
+  if (Array.isArray(sector)) {
+    return sector.length > 0 ? sector[0].capacidad : 0;
+  }
+  return sector.capacidad;
 }
 
 @Injectable()

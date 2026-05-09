@@ -63,6 +63,16 @@ export class UsuariosController {
     return this.usuariosService.buscarPorEmail(email);
   }
 
+  @Get('me')
+  @UseGuards(AuthenticatedUserGuard)
+  async obtenerPerfil(@Req() req: RequestWithUser) {
+    const usuarioAutenticado = req.currentUser;
+    if (!usuarioAutenticado) {
+      throw new ForbiddenException('Usuario no autenticado.');
+    }
+    return this.usuariosService.buscarPorId(usuarioAutenticado.id);
+  }
+
   @Put(':email')
   @UseGuards(AuthenticatedUserGuard)
   actualizar(
