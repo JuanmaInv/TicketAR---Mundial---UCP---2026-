@@ -45,6 +45,18 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
     return this.mapearEntidad(data);
   }
 
+  async buscarPorId(id: string): Promise<UsuarioEntidad | null> {
+    const { data, error } = (await this.supabaseService
+      .getClient()
+      .from('usuarios')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()) as { data: unknown; error: Error | null };
+
+    if (error || !data) return null;
+    return this.mapearEntidad(data);
+  }
+
   async actualizar(
     correo: string,
     datos: Partial<CrearUsuarioDto>,

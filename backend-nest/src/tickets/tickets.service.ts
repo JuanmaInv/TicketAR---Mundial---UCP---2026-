@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
@@ -35,6 +36,7 @@ export class EntradasService {
     private readonly paymentsService: PaymentsService,
     private readonly qrService: QrService,
     private readonly sectoresService: SectoresService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
@@ -122,7 +124,16 @@ export class EntradasService {
     // Validamos que el ticket se pueda confirmar (ej: que no esté cancelado o expirado)
     estadoActual.confirmarPago();
 
-    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    const ticketPagado = await this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+
+    // Emitir evento para que los listeners (ej: NotificationsService) reaccionen
+    this.eventEmitter.emit('ticket.pagado', {
+      ticketId: ticketPagado.id,
+      idUsuario: ticketPagado.idUsuario,
+    });
+    this.logger.log(`Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`);
+
+    return ticketPagado;
   }
 
   /**
@@ -177,6 +188,14 @@ export class EntradasService {
         id,
         TicketStatus.PAGADO,
       );
+
+      // Emitir evento para que los listeners (ej: NotificationsService) reaccionen
+      this.eventEmitter.emit('ticket.pagado', {
+        ticketId: ticketPagado.id,
+        idUsuario: ticketPagado.idUsuario,
+      });
+      this.logger.log(`Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`);
+
       return { ticket: ticketPagado, paymentResult };
     }
 
