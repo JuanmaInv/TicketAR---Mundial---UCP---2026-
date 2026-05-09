@@ -106,7 +106,11 @@ export class StatsService {
 
     const sectorMap = new Map<string, SectorStats>();
 
-    (entradas ?? []).forEach((entry: EntradaConSector) => {
+    const entradasSeguras: EntradaConSector[] = Array.isArray(entradas)
+      ? (entradas as EntradaConSector[])
+      : [];
+
+    entradasSeguras.forEach((entry) => {
       const sector = obtenerSectorSimple(entry.sectores_estadio);
       const sectorNombre = sector?.nombre ?? 'Desconocido';
       const precio = sector?.precio ?? 0;
