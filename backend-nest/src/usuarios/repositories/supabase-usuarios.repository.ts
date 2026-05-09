@@ -3,6 +3,7 @@ import { IUsuariosRepository } from './usuarios.repository.interface';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { UsuarioEntidad } from '../entities/usuario.entidad';
 import { CrearUsuarioDto } from '../dto/crear-usuario.dto';
+import { RolUsuario } from '../../common/enums/rol-usuario.enum';
 
 //CRUD aplicado a la tabla usuarios de la base de datos supabase usando patron REPOSITORY.
 
@@ -23,7 +24,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
           telefono: crearUsuarioDto.telefono,
           localidad: crearUsuarioDto.localidad,
           provincia: crearUsuarioDto.provincia,
-          rol: 'cliente',
+          rol: RolUsuario.CLIENTE,
         },
       ])
       .select()
@@ -91,6 +92,24 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
     return data.map((u) => this.mapearEntidad(u));
   }
 
+  /**
+   * Elimina un usuario por su ID.
+   * La eliminación en cascada (entradas, reservas) es manejada por ON DELETE CASCADE en la DB.
+   */
+  async eliminar(id: string): Promise<void> {
+    const { error } = await this.supabaseService
+      .getClient()
+      .from('usuarios')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(
+        `Error al eliminar usuario con ID ${id}: ${error.message}`,
+      );
+    }
+  }
+
   private mapearEntidad(data: unknown): UsuarioEntidad {
     const d = data as {
       id: string;
@@ -98,6 +117,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       nombre: string;
       apellido: string;
       numero_pasaporte: string;
+      rol: string;
       telefono: string;
       localidad: string;
       provincia: string;
@@ -111,6 +131,7 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
       nombre: d.nombre,
       apellido: d.apellido,
       numeroPasaporte: d.numero_pasaporte,
+      rol: d.rol as RolUsuario,
       telefono: d.telefono,
       localidad: d.localidad,
       provincia: d.provincia,

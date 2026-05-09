@@ -16,6 +16,10 @@ function obtenerBaseApiSegura(): URL {
 const BASE_API_SEGURA = obtenerBaseApiSegura();
 
 function construirUrlApi(ruta: string): string {
+  const rutaValida = /^\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/;
+  if (!rutaValida.test(ruta) || ruta.includes('://') || ruta.startsWith('//')) {
+    throw new Error('Ruta de API invalida.');
+  }
   return new URL(ruta, BASE_API_SEGURA).toString();
 }
 
@@ -44,6 +48,18 @@ export interface Usuario {
   telefono?: string;
   provincia?: string;
   localidad?: string;
+}
+
+interface AuthHeaders {
+  userId: string;
+  userEmail: string;
+}
+
+function construirHeadersUsuario(auth: AuthHeaders): HeadersInit {
+  return {
+    'x-user-id': auth.userId,
+    'x-user-email': auth.userEmail,
+  };
 }
 
 export interface RespuestaPago {
@@ -130,12 +146,18 @@ export async function createTicket(entrada: { idUsuario: string, idPartido: stri
   return res.json();
 }
 
-export async function getUsuario(email: string): Promise<Usuario | null> {
+export async function getUsuario(
+  email: string,
+  auth: AuthHeaders,
+): Promise<Usuario | null> {
   const emailSeguro = validarEmailSeguro(email);
-  const ruta = `/usuarios/buscar?email=${encodeURIComponent(emailSeguro)}`;
-  const res = await fetch(construirUrlApi(ruta));
+  const res = await fetch(construirUrlApi('/usuarios/me'), {
+    headers: construirHeadersUsuario(auth),
+  });
   if (!res.ok) return null;
-  return res.json();
+  const usuario = (await res.json()) as Usuario | null;
+  if (!usuario?.email) return null;
+  return usuario.email.trim().toLowerCase() === emailSeguro ? usuario : null;
 }
 
 export async function createUsuario(usuario: Usuario): Promise<boolean> {
@@ -147,11 +169,18 @@ export async function createUsuario(usuario: Usuario): Promise<boolean> {
   return res.ok;
 }
 
-export async function updateUsuario(email: string, usuario: Usuario): Promise<boolean> {
+export async function updateUsuario(
+  email: string,
+  usuario: Usuario,
+  auth: AuthHeaders,
+): Promise<boolean> {
   const emailSeguro = validarEmailSeguro(email);
   const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...construirHeadersUsuario(auth),
+    },
     body: JSON.stringify({
       ...usuario,
       email: emailSeguro,
@@ -164,6 +193,21 @@ export async function getTickets(): Promise<Ticket[]> {
   const res = await fetch(construirUrlApi('/entradas'));
   if (!res.ok) throw new Error('Error al traer entradas');
   return res.json();
+}
+
+export async function eliminarMiCuenta(auth: AuthHeaders): Promise<void> {
+  const res = await fetch(construirUrlApi('/usuarios/me'), {
+    method: 'DELETE',
+    headers: construirHeadersUsuario(auth),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos eliminar tu cuenta en este momento.',
+      ),
+    );
+  }
 }
 
 export async function getTicketQr(id: string): Promise<string> {

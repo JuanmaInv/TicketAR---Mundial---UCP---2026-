@@ -50,7 +50,10 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   // Cargar datos del usuario para el Paso 1
   useEffect(() => {
     if (user?.emailAddresses[0]?.emailAddress) {
-      getUsuario(user.emailAddresses[0].emailAddress)
+      getUsuario(user.emailAddresses[0].emailAddress, {
+        userId: user.id,
+        userEmail: user.emailAddresses[0].emailAddress,
+      })
         .then(datos => {
           if (datos && datos.id) {
             setDatosUsuario(datos);

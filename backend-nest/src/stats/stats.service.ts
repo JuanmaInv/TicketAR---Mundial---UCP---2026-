@@ -1,0 +1,179 @@
+import { Injectable } from '@nestjs/common';
+import { SupabaseService } from '../common/supabase/supabase.service';
+import { EstadisticasVentas, SectorStats } from './interfaces/stats.interface';
+import { TicketStatus } from '../common/enums/ticket-status.enum';
+
+interface EntradaConSector {
+  estado: TicketStatus;
+  sectores_estadio:
+    | {
+        nombre: string;
+        precio: number;
+      }
+    | {
+        nombre: string;
+        precio: number;
+      }[]
+    | null;
+}
+
+interface ProximoPartidoRow {
+  id: string;
+  equipo_local: string;
+  equipo_visitante: string;
+}
+
+interface PartidoSectorRow {
+  asientos_disponibles: number;
+  sectores_estadio:
+    | {
+        capacidad: number;
+      }
+    | {
+        capacidad: number;
+      }[]
+    | null;
+}
+
+function obtenerSectorSimple(
+  sector:
+    | {
+        nombre: string;
+        precio: number;
+      }
+    | {
+        nombre: string;
+        precio: number;
+      }[]
+    | null,
+): { nombre: string; precio: number } | null {
+  if (!sector) return null;
+  return Array.isArray(sector) ? (sector[0] ?? null) : sector;
+}
+
+function obtenerCapacidadSector(
+  sector:
+    | {
+        capacidad: number;
+      }
+    | {
+        capacidad: number;
+      }[]
+    | null,
+): number {
+  if (!sector) return 0;
+  if (Array.isArray(sector)) {
+    return sector.length > 0 ? sector[0].capacidad : 0;
+  }
+  return sector.capacidad;
+}
+
+@Injectable()
+export class StatsService {
+  constructor(private readonly supabaseService: SupabaseService) {}
+
+  private get supabase() {
+    return this.supabaseService.getClient();
+  }
+
+  async obtenerEstadisticasGenerales(): Promise<EstadisticasVentas> {
+    // 1. Obtener todas las entradas con información del sector para calcular ingresos
+    // Usamos el join de Supabase: 'entradas(estado), sectores_estadio(nombre, precio)'
+    const { data: entradas, error: errorEntradas } = await this.supabase.from(
+      'entradas',
+    ).select(`
+        estado,
+        sectores_estadio (
+          nombre,
+          precio
+        ),
+        partidos (
+          equipo_local,
+          equipo_visitante
+        )
+      `);
+
+    if (errorEntradas) throw errorEntradas;
+
+    const stats: EstadisticasVentas = {
+      ingresosTotales: 0,
+      entradasVendidas: 0,
+      entradasPendientes: 0,
+      desglosePorSector: [],
+      proximoPartidoOcupacion: {
+        partido: 'N/A',
+        porcentaje: 0,
+      },
+    };
+
+    const sectorMap = new Map<string, SectorStats>();
+
+    const entradasSeguras: EntradaConSector[] = Array.isArray(entradas)
+      ? (entradas as EntradaConSector[])
+      : [];
+
+    entradasSeguras.forEach((entry) => {
+      const sector = obtenerSectorSimple(entry.sectores_estadio);
+      const sectorNombre = sector?.nombre ?? 'Desconocido';
+      const precio = sector?.precio ?? 0;
+
+      if (entry.estado === TicketStatus.PAGADO) {
+        stats.ingresosTotales += precio;
+        stats.entradasVendidas++;
+
+        // Actualizar desglose por sector
+        if (!sectorMap.has(sectorNombre)) {
+          sectorMap.set(sectorNombre, {
+            sector: sectorNombre,
+            cantidad: 0,
+            ingresos: 0,
+          });
+        }
+        const sectorStats = sectorMap.get(sectorNombre);
+        if (sectorStats) {
+          sectorStats.cantidad++;
+          sectorStats.ingresos += precio;
+        }
+      } else if (entry.estado === TicketStatus.RESERVADO) {
+        stats.entradasPendientes++;
+      }
+    });
+
+    stats.desglosePorSector = Array.from(sectorMap.values());
+
+    // 2. Obtener ocupación del próximo partido
+    const { data: proximoPartido } = await this.supabase
+      .from('partidos')
+      .select('id, equipo_local, equipo_visitante')
+      .gte('fecha_partido', new Date().toISOString())
+      .order('fecha_partido', { ascending: true })
+      .limit(1)
+      .maybeSingle<ProximoPartidoRow>();
+
+    if (proximoPartido) {
+      const { data: sectores } = await this.supabase
+        .from('partido_sectores')
+        .select('asientos_disponibles, sectores_estadio(capacidad)')
+        .eq('id_partido', proximoPartido.id)
+        .returns<PartidoSectorRow[]>();
+
+      if (sectores) {
+        let totalCapacidad = 0;
+        let totalDisponibles = 0;
+        sectores.forEach((sectorRow) => {
+          totalCapacidad += obtenerCapacidadSector(sectorRow.sectores_estadio);
+          totalDisponibles += sectorRow.asientos_disponibles || 0;
+        });
+
+        const ocupados = totalCapacidad - totalDisponibles;
+        stats.proximoPartidoOcupacion = {
+          partido: `${proximoPartido.equipo_local} vs ${proximoPartido.equipo_visitante}`,
+          porcentaje:
+            totalCapacidad > 0 ? (ocupados / totalCapacidad) * 100 : 0,
+        };
+      }
+    }
+
+    return stats;
+  }
+}

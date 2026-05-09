@@ -10,6 +10,7 @@ import { PartidosModule } from './matches/matches.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { SupabaseModule } from './common/supabase/supabase.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -29,6 +30,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     CredencialesPasaporteModule,
     // Módulo de notificaciones (envío de QR por email tras pago)
     NotificationsModule,
+    // Módulo de estadísticas para el panel administrativo
+    StatsModule,
   ],
   controllers: [],
   providers: [],
