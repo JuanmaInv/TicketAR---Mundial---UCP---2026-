@@ -30,9 +30,10 @@ import { StatsModule } from './stats/stats.module';
     CredencialesPasaporteModule,
     // Módulo de notificaciones (envío de QR por email tras pago)
     NotificationsModule,
+    // Módulo de estadísticas para el panel administrativo
     StatsModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

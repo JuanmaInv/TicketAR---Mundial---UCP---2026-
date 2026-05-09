@@ -3,9 +3,9 @@
 ## 🔄 Pendientes / En Proceso
 
 ### 1. Inteligencia de Negocio 📊 (Prioridad 1)
-- [x] Implementar `GET /estadisticas` (Reporte de ventas e ingresos).
-  - [x] Query para sumar ingresos totales.
-  - [x] Desglose por sector (Ocupación vs Capacidad).
+- [ ] Implementar `GET /estadisticas` (Reporte de ventas e ingresos).
+  - [ ] Query para sumar ingresos totales.
+  - [ ] Desglose por sector (Ocupación vs Capacidad).
 
 ### 2. Integración de Pagos Real 💳 (Prioridad 2)
 - [ ] Crear endpoint de Webhook para pasarelas de pago.
