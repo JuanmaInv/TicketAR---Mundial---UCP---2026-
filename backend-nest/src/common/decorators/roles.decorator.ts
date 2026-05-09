@@ -8,5 +8,5 @@ import { RolUsuario } from '../enums/rol-usuario.enum';
  *
  * Internamente, guarda los roles como metadata que luego el RolesGuard lee.
  */
-export const ROLES_KEY = 'roles';
+export const ROLES_KEY = Symbol('roles_metadata');
 export const Roles = (...roles: RolUsuario[]) => SetMetadata(ROLES_KEY, roles);

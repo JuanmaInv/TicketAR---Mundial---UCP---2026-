@@ -8,7 +8,6 @@ import {
   Put,
   Param,
   Headers,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
@@ -34,7 +33,10 @@ export class UsuariosController {
   }
 
   @Put(':email')
-  actualizar(@Param('email') email: string, @Body() datos: any) {
+  actualizar(
+    @Param('email') email: string,
+    @Body() datos: Record<string, unknown>,
+  ) {
     return this.usuariosService.actualizar(email, datos);
   }
 

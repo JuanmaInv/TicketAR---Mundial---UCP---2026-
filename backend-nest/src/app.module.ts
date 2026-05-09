@@ -36,4 +36,4 @@ import { StatsModule } from './stats/stats.module';
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

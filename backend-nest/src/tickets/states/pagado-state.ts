@@ -8,7 +8,7 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 export class PagadoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) { }
+  constructor(private readonly logger: Logger) {}
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;

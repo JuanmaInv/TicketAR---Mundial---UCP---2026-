@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { RolUsuario } from '../enums/rol-usuario.enum';
@@ -37,11 +38,17 @@ export class RolesGuard implements CanActivate {
     }
 
     // 2. Extraemos el rol del usuario desde el request
-    const request = context.switchToHttp().getRequest();
-    const rolUsuario = request.headers['x-user-role']?.toUpperCase();
+    const request = context.switchToHttp().getRequest<Request>();
+    const rolHeader = request.headers['x-user-role'];
+    const rolUsuario = (
+      Array.isArray(rolHeader) ? rolHeader[0] : rolHeader
+    )?.toUpperCase();
 
     // 3. Validamos que el rol sea uno de los permitidos por el sistema
-    if (!rolUsuario || !Object.values(RolUsuario).includes(rolUsuario as RolUsuario)) {
+    if (
+      !rolUsuario ||
+      !Object.values(RolUsuario).includes(rolUsuario as RolUsuario)
+    ) {
       throw new ForbiddenException(
         'Acceso denegado: Rol de usuario no válido o no proporcionado.',
       );
