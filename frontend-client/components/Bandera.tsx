@@ -1,4 +1,4 @@
-import React from 'react';
+import Image from 'next/image';
 
 interface BanderaProps {
   pais: string;
@@ -92,14 +92,17 @@ export default function Bandera({ pais, fill = false, className = "" }: BanderaP
     );
   }
 
-  const resolucion = fill ? 'w640' : 'w80';
-  const size = fill ? 'w-full h-full' : 'w-[44px] h-[32px]';
+  const resolucion = fill ? 'w640' : 'w160';
 
   return (
-    <img
-      src={`https://flagcdn.com/${resolucion}/${codigo}.png`}
-      alt={`Bandera de ${pais}`}
-      className={`${size} rounded-sm shadow-sm object-cover ${className}`}
-    />
+    <div className={`${fill ? 'w-full h-full relative' : 'w-[44px] h-[32px] relative'} ${className}`}>
+      <Image
+        src={`https://flagcdn.com/${resolucion}/${codigo}.png`}
+        alt={`Bandera de ${pais}`}
+        fill={true}
+        className="rounded-sm shadow-sm object-cover"
+        unoptimized={!fill} // Unoptimized for small flags to avoid processing
+      />
+    </div>
   );
 }
