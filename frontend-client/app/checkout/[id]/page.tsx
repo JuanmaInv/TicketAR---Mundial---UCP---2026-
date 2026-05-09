@@ -144,12 +144,12 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   );
 
   return (
-    <main className="min-h-screen py-12 px-4 bg-background transition-colors duration-500 flex flex-col items-center justify-center">
+    <main className="min-h-screen py-8 md:py-12 px-3 md:px-4 bg-background transition-colors duration-500 flex flex-col items-center justify-center">
       <div className="w-full max-w-5xl">
         
         {/* HEADER: INDICADOR DE PASOS Y TIMER */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-          <div className="flex items-center gap-4 bg-card px-8 py-4 rounded-[2rem] border border-border shadow-sm">
+        <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center mb-8 md:mb-10 gap-4 md:gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 bg-card px-4 md:px-8 py-3 md:py-4 rounded-[1.5rem] md:rounded-[2rem] border border-border shadow-sm">
              <div className="flex items-center gap-3">
                 <span className={`w-10 h-10 flex items-center justify-center rounded-full font-black text-sm ${paso >= 1 ? 'bg-blue-600 text-white' : 'bg-muted text-muted-foreground'}`}>1</span>
                 <span className={`text-xs font-black uppercase tracking-widest ${paso === 1 ? 'text-foreground' : 'text-muted-foreground'}`}>Datos</span>
@@ -167,7 +167,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
           </div>
 
           <div className="bg-black text-white p-2 rounded-2xl border-4 border-red-500/20 shadow-2xl">
-              <div className="px-6 py-4 rounded-xl flex flex-col items-center">
+              <div className="px-3 md:px-6 py-3 md:py-4 rounded-xl flex flex-col items-center">
                 <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-red-400">Tiempo restante para abonar:</p>
                 <CountdownTimer tiempoExpiracion={fechaExpiracion} onExpirar={() => { router.push('/'); }} />
               </div>
@@ -175,9 +175,9 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
         </div>
 
         {/* CONTENEDOR PRINCIPAL */}
-        <div className="bg-card border-2 border-border rounded-[4rem] shadow-2xl relative overflow-hidden transition-all duration-500">
+        <div className="bg-card border-2 border-border rounded-[2rem] md:rounded-[4rem] shadow-2xl relative overflow-hidden transition-all duration-500">
           
-          <div className="p-12 md:p-20">
+          <div className="p-6 md:p-12 lg:p-20">
             {/* PASO 1: CONFIRMACIÓN DE DATOS */}
             {paso === 1 && (
               <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
