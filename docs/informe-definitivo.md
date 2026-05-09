@@ -200,7 +200,12 @@ Este patrón es nuestra navaja suiza para manejar diferentes lógicas sin ensuci
 - **Validación de Identidad:** Clases separadas para validar DNI o Pasaporte. Si el Mundial agrega un "ID de Fan", solo creamos una nueva estrategia.
 - **Pasarela de Pagos:** Implementamos una `IPaymentStrategy` que nos permite alternar entre `Stripe`, `MercadoPago` o una `SimulatedStrategy` para testing. Esto asegura que el sistema de tickets no dependa de un proveedor de pagos específico.
 
-### 5. Base Común (Common Patterns)
+### 5. Patrón Guard (Seguridad por Roles)
+Utilizamos Guards de NestJS para centralizar la autorización.
+- **Decorador @Roles:** Permite especificar qué niveles de acceso (ADMINISTRADOR, CLIENTE) requiere cada endpoint.
+- **RolesGuard:** Interceptor que verifica el rol del usuario en la base de datos antes de permitir el acceso a la lógica de negocio.
+
+### 6. Base Común (Common Patterns)
 Para no repetir código y que todo el proyecto hable el mismo idioma, creamos una carpeta `src/common/patterns`. Ahí guardamos los moldes (`interfaces`) de estos patrones para que cualquier otro módulo los pueda usar de entrada.
 
 ---
@@ -249,6 +254,19 @@ El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones d
 | GET | `/partidos` | Lista todos los partidos |
 | GET | `/partidos/:id` | Detalle de un partido |
 | POST | `/partidos` | Crea un partido (body: `CrearPartidoDto`) |
+| PATCH | `/partidos/:id` | Actualiza datos del partido (ADMIN) |
+| DELETE | `/partidos/:id` | Elimina un partido (ADMIN) |
+
+#### Usuarios y Privacidad
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/usuarios` | Lista todos los usuarios (ADMIN) |
+| DELETE | `/usuarios/me` | Darse de baja (Eliminación en cascada) |
+
+#### Estadísticas (ADMIN)
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/estadisticas` | Reporte de ventas por sector e ingresos |
 
 #### Sectores
 | Método | Ruta | Descripción |
@@ -273,9 +291,40 @@ El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones d
 
 ---
 
+## 🔐 Seguridad y Roles
+
+- **Sistema de Roles:** Implementación de `RolesGuard` basado en la columna `rol` (`ADMINISTRADOR`, `CLIENTE`).
+- **Protección:** Acciones como `POST/PATCH/DELETE` en partidos y sectores requieren rol `ADMINISTRADOR` validado mediante el decorador `@Roles()`.
+
+## 🛡️ Endpoints de Administración
+
+- **Panel Administrativo:** Endpoints protegidos para gestionar el inventario, los precios de los sectores y la creación de eventos.
+- **Estadísticas:** Acceso restringido para visualizar métricas de ocupación y facturación en tiempo real.
+
+## ⚠️ Privacidad y Darse de Baja
+
+- **Eliminación en Cascada:** Al ejecutar `DELETE /usuarios/me`, se borra el usuario y todos sus registros asociados (reservas, tickets).
+- **Consistencia:** El proceso libera automáticamente el inventario bloqueado por el usuario para asegurar que otros puedan comprar.
+
+---
+
 ## 🤖 Protocolo Erwin (Cultura de Equipo)
 
 El proyecto TicketAR no solo se trata de código, sino de un proceso de aprendizaje continuo.
 - **Método Socrático:** La IA actúa como un mentor que guía al desarrollador mediante analogías y preguntas, asegurando que la arquitectura se entienda antes de implementarse.
 - **Foco en Patrones:** Priorizamos el "Por Qué" sobre el "Cómo". Si una lógica es compleja, se encapsula en un Patrón (State, Strategy, Adapter).
 - **Abstracción sobre Implementación:** "Programar para interfaces, no para implementaciones". Esta es la regla de oro que permite que TicketAR sea un sistema profesional y escalable para el Mundial 2026.
+
+---
+
+## 📅 Hoja de Ruta: Próximas Implementaciones (Roadmap)
+
+### 1. Sistema de Roles y Administración (En Proceso)
+- [x] **DB:** Incorporación de la columna `rol` en la tabla `usuarios` (Mayúsculas: `ADMINISTRADOR`, `CLIENTE`).
+- [x] **Security:** Implementación de `RolesGuard` y el decorador `@Roles()` para proteger acciones sensibles.
+- [x] **Audit:** Trigger de respaldo de usuarios actualizado para incluir el rol.
+- [ ] **Endpoints:** Completar gestión de partidos (`PATCH` / `DELETE`) y panel de estadísticas de ventas.
+
+### 2. Cumplimiento de Privacidad y Gestión de Cuenta
+- [ ] **Baja de Usuario:** Implementación de `DELETE /usuarios/me`. Al borrar un usuario, se deben anular sus registros de entradas para mantener la consistencia del inventario y cumplir con el "Derecho al Olvido".
+- [ ] **Validación de Stock:** Asegurar que el decremento de asientos sea consistente en transacciones concurrentes.
