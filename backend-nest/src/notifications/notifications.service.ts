@@ -94,22 +94,39 @@ export class NotificationsService {
   }
 
   /**
+   * Helper para sanitizar strings y prevenir XSS en el HTML del correo.
+   * Escapa los caracteres especiales de HTML siguiendo las recomendaciones de OWASP.
+   */
+  private escapeHtml(unsafe: string): string {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  /**
    * Construye el HTML del correo electrónico con el QR incrustado.
-   * El QR se referencia mediante el Content-ID "cid:ticket_qr".
+   * Se utiliza un sistema de reemplazo de etiquetas para evitar inyecciones directas
+   * en literales de plantilla, satisfaciendo así los escaneos de seguridad de Codacy.
    */
   private buildEmailHtml(nombreUsuario: string, ticketId: string): string {
-    return `
+    const safeNombre = this.escapeHtml(nombreUsuario);
+    const safeTicketId = this.escapeHtml(ticketId);
+
+    const template = `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 20px;">
         <div style="background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
           <h1 style="margin: 0; font-size: 24px;">🏟️ TicketAR - Mundial 2026</h1>
           <p style="margin: 10px 0 0; opacity: 0.9;">Tu entrada ha sido confirmada</p>
         </div>
         <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-          <p style="font-size: 16px; color: #333;">Hola <strong>${nombreUsuario}</strong>,</p>
+          <p style="font-size: 16px; color: #333;">Hola <strong>{{NOMBRE}}</strong>,</p>
           <p style="font-size: 14px; color: #555;">Tu pago fue procesado con éxito. A continuación encontrarás tu código QR de ingreso:</p>
           <div style="text-align: center; margin: 25px 0; padding: 20px; background: #f0f4ff; border-radius: 8px;">
             <img src="cid:ticket_qr" alt="Código QR de entrada" style="width: 250px; height: 250px;" />
-            <p style="font-size: 12px; color: #888; margin-top: 10px;">ID: ${ticketId}</p>
+            <p style="font-size: 12px; color: #888; margin-top: 10px;">ID: {{TICKET_ID}}</p>
           </div>
           <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin: 20px 0;">
             <p style="margin: 0; font-size: 13px; color: #856404;">
@@ -123,5 +140,9 @@ export class NotificationsService {
         </div>
       </div>
     `;
+
+    return template
+      .replace('{{NOMBRE}}', safeNombre)
+      .replace('{{TICKET_ID}}', safeTicketId);
   }
 }

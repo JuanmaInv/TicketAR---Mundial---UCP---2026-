@@ -3,6 +3,8 @@ import { EntradasService } from './tickets.service';
 import { TicketStateFactory } from './states/ticket-state.factory';
 import { PaymentsService } from '../payments/payments.service';
 import { QrService } from './qr.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 
 describe('EntradasService', () => {
   let service: EntradasService;
@@ -38,6 +40,10 @@ describe('EntradasService', () => {
         {
           provide: QrService,
           useValue: { generarQrBase64: jest.fn() },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
         },
       ],
     }).compile();
