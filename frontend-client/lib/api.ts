@@ -65,7 +65,16 @@ type SectorApi = {
   capacidad_disponible?: number;
 };
 
-const obtenerMensajeErrorApi = async (respuesta: Response, mensajePorDefecto: string) => {
+function validarEmailSeguro(email: string): string {
+  const emailNormalizado = email.trim().toLowerCase();
+  const regexEmail = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+  if (!regexEmail.test(emailNormalizado) || emailNormalizado.length > 254) {
+    throw new Error('Email invalido.');
+  }
+  return emailNormalizado;
+}
+
+async function obtenerMensajeErrorApi(respuesta: Response, mensajePorDefecto: string): Promise<string> {
   try {
     const datos = (await respuesta.json()) as { message?: string | string[] };
     if (Array.isArray(datos.message)) return datos.message.join(' ');
@@ -73,7 +82,7 @@ const obtenerMensajeErrorApi = async (respuesta: Response, mensajePorDefecto: st
   } catch {
     return mensajePorDefecto;
   }
-};
+}
 
 export async function getPartidos(): Promise<Partido[]> {
   const res = await fetch(construirUrlApi('/partidos'));
@@ -122,7 +131,8 @@ export async function createTicket(entrada: { idUsuario: string, idPartido: stri
 }
 
 export async function getUsuario(email: string): Promise<Usuario | null> {
-  const ruta = `/usuarios/buscar?email=${encodeURIComponent(email)}`;
+  const emailSeguro = validarEmailSeguro(email);
+  const ruta = `/usuarios/buscar?email=${encodeURIComponent(emailSeguro)}`;
   const res = await fetch(construirUrlApi(ruta));
   if (!res.ok) return null;
   return res.json();
@@ -138,7 +148,8 @@ export async function createUsuario(usuario: Usuario): Promise<boolean> {
 }
 
 export async function updateUsuario(email: string, usuario: Usuario): Promise<boolean> {
-  const res = await fetch(construirUrlApi(`/usuarios/${encodeURIComponent(email)}`), {
+  const emailSeguro = validarEmailSeguro(email);
+  const res = await fetch(construirUrlApi(`/usuarios/${encodeURIComponent(emailSeguro)}`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(usuario),

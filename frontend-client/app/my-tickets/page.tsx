@@ -135,7 +135,7 @@ export default function MyTicketsPage() {
   );
 }
 
-function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: EntradaApi, sectores: Sector[], partidos: Partido[], alActualizar: () => void }) {
+function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: EntradaApi, sectores: Sector[], partidos: Partido[], alActualizar: () => Promise<void> }) {
   const [qr, setQr] = useState<string | null>(null);
   const [verQr, setVerQr] = useState(false);
   const [pagando, setPagando] = useState(false);
@@ -144,7 +144,7 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
   const sector = sectores.find((s) => s.id === (entrada.idSector || entrada.id_sector));
   const partido = partidos.find((p) => p.id === (entrada.idPartido || entrada.id_partido));
 
-  const pagarEntrada = async () => {
+  async function pagarEntrada() {
     setPagando(true);
     setMensajeAccion('');
     try {
@@ -159,7 +159,7 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
       }
 
       setMensajeAccion('Pago procesado con éxito. Tu entrada ahora es válida.');
-      alActualizar();
+      void alActualizar();
     } catch {
       setMensajeAccion('No pudimos procesar el pago. Intentá nuevamente o probá otro medio de pago.');
     } finally {
@@ -179,7 +179,7 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
     } else {
       setMensajeAccion('Esta entrada todavía no fue abonada. Completá el pago para ver tu QR.');
     }
-  };
+  }
 
   return (
     <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row relative group hover:border-blue-600/30 transition-all duration-500 shadow-lg">

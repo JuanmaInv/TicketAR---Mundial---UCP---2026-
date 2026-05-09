@@ -97,7 +97,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     return mensaje;
   }
 
-  const confirmarPago = async () => {
+  async function confirmarPago() {
     if (!seleccionCompra) return;
     setProcesando(true);
     setMensajeError('');
@@ -129,7 +129,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       setMensajeError(obtenerMensajePago(error));
       setProcesando(false);
     }
-  };
+  }
 
   if (cargandoUsuario) return (
     <div className="min-h-screen flex items-center justify-center bg-background">

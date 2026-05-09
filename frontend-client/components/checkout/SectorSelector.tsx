@@ -137,7 +137,9 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
               <button
                 type="button"
                 aria-label="Restar entrada"
-                onClick={() => setCantidad(Math.max(1, cantidad - 1))}
+                onClick={() => {
+                  setCantidad(Math.max(1, cantidad - 1));
+                }}
                 className="text-2xl font-bold text-white hover:text-blue-500 transition-colors"
               >
                 -
@@ -146,7 +148,9 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
               <button
                 type="button"
                 aria-label="Sumar entrada"
-                onClick={() => setCantidad(Math.min(6, sectorActual?.capacidadDisponible ?? 6, cantidad + 1))}
+                onClick={() => {
+                  setCantidad(Math.min(6, sectorActual?.capacidadDisponible ?? 6, cantidad + 1));
+                }}
                 className="text-2xl font-bold text-white hover:text-emerald-500 transition-colors"
               >
                 +
