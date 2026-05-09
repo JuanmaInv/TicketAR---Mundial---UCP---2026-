@@ -1,0 +1,31 @@
+====================================================
+RESULTADOS DE PRUEBAS E2E - PLAYWRIGHT
+Fecha: 03 de Mayo de 2026
+Rama actual: 274
+Proyecto: TicketAR 2026
+====================================================
+
+RESUMEN DE EJECUCIÓN:
+- Servidores: Frontend (Next.js - Puerto 3000) y Backend (NestJS - Puerto 3001) iniciados correctamente.
+- Total de tests ejecutados: 18
+- Tests Exitosos (Passed): 3
+- Tests Fallidos (Failed): 15
+- Tiempo de ejecución: ~1.1 minutos
+
+DETALLE DE LOS FALLOS PRINCIPALES:
+
+1. Timeout en el Formulario de Login:
+   - Error: `locator.fill: Test timeout of 30000ms exceeded. waiting for getByLabel(/usuario|email/i)`
+   - Causa Probable: El test intenta llenar los campos de "Usuario" o "Email" usando el texto de sus etiquetas (labels). Sin embargo, Playwright no logra encontrar ningún elemento en la pantalla con esos nombres durante los 30 segundos de espera.
+   - Solución Recomendada: Verificar que la página de `/login` esté renderizando correctamente los `label` o atributos `aria-label` esperados ("usuario", "email", etc.).
+
+2. Falla de Redirección en Rutas Protegidas:
+   - Error: `expect(page).toHaveURL(expected) failed`
+     Expected pattern: `/.*\/login/`
+     Received string: `"http://localhost:3000/checkout"`
+   - Causa Probable: Se esperaba que al entrar a `/checkout` sin estar logeado (autenticado), la aplicación automáticamente redirigiera al usuario a la página de `/login`. Sin embargo, el navegador se quedó en `/checkout`.
+   - Solución Recomendada: Revisar la lógica de protección de rutas (ej. middleware de Next.js o Auth Guards) para asegurar que un usuario sin sesión activa sea redirigido inmediatamente.
+
+PRÓXIMOS PASOS RECOMENDADOS:
+- Ajustar los selectores (`getByLabel`, `getByRole`) en los archivos `e2e.spec.ts` y `ticketar-flow.spec.ts` para que coincidan exactamente con la estructura actual del HTML.
+- Verificar si la conexión entre el Frontend y el Backend está funcionando (puede haber errores de CORS o de base de datos impidiendo que la página cargue los elementos).

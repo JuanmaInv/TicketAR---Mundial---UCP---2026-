@@ -1,80 +1,120 @@
 @import "tailwindcss";
-@custom-variant dark (&:is(.dark));
+
+/* -------------------------------------------------------------------------- */
+/*  SISTEMA DE DISEÑO TICKETAR - ACCESIBILIDAD Y TEMAS (v4 Clean)            */
+/* -------------------------------------------------------------------------- */
 
 :root {
-  /* Modo Claro - Mezcla de Banderas (USA, México, Canadá) */
-  --background:
-    radial-gradient(circle at 0% 0%, rgba(0, 43, 127, 0.12) 0%, transparent 35%),
-    /* USA Blue */
-    radial-gradient(circle at 100% 0%, rgba(225, 0, 26, 0.12) 0%, transparent 35%),
-    /* Canada Red */
-    radial-gradient(circle at 50% 100%, rgba(0, 104, 71, 0.12) 0%, transparent 35%),
-    /* Mexico Green */
-    #f8fafc;
-  /* Color de fondo base */
+  color-scheme: light dark;
 
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --primary: #002B7F;
-  --accent: #E1001A;
-  --success: #006847;
+  /* Colores Semánticos (Tailwind v4 los detecta por el prefijo --color-*) */
+  --color-background: #ffffff;
+  --color-foreground: #1a1a1a;
+  
+  --color-card: #ffffff;
+  --color-card-foreground: #1a1a1a;
+  --color-card-border: #e2e8f0;
+
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+
+  --color-success: #059669;
+  --color-border: #e2e8f0;
+  
+  --transition-speed: 0.3s;
+
+  /* Colores Mundialistas */
+  --mexico-green: #006847;
+  --canada-red: #ce1126;
+  --usa-blue: #002868;
 }
-
 
 .dark {
-  /* Modo Oscuro - Diseño Original */
-  --background: #0f172a;
-  /* Slate 900 */
-  --foreground: #f8fafc;
-  /* Slate 50 */
-  --card: #1e293b;
-  /* Slate 800 */
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+
+  --color-card: #1e293b;
+  --color-card-foreground: #f8fafc;
+  --color-card-border: rgba(255, 255, 255, 0.1);
+
+  --color-primary: #60a5fa;
+  --color-primary-foreground: #0f172a;
+
+  --color-border: #334155;
+  --color-success: #34d399;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-primary: var(--primary);
-  --color-accent: var(--accent);
-  --color-success: var(--success);
-
-  --color-canada-red: var(--canada-red);
-  --color-usa-blue: var(--usa-blue);
-  --color-mexico-green: var(--mexico-green);
-  --color-gold: var(--gold);
-}
-
+/* Aplicación global de estilos */
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), sans-serif;
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  transition: background-color var(--transition-speed) ease, color var(--color-foreground) ease;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Glass effect for Light Mode */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+/* 🌈 ANIMACIÓN DE BORDE MUNDIALISTA */
+@keyframes border-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.dark .glass {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2); }
+  50% { transform: scale(1.03); box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.4); }
 }
 
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s infinite ease-in-out;
 }
 
-.dark .glass-panel {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.world-cup-border {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.world-cup-border::before {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 50% 50%, 50% 50%;
+  background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+  background-image: conic-gradient(
+    var(--mexico-green), 
+    #ffffff, 
+    var(--canada-red), 
+    #ffffff, 
+    var(--usa-blue), 
+    #ffffff,
+    var(--mexico-green)
+  );
+  animation: border-rotate 4s linear infinite;
+}
+
+.world-cup-border::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 3px;
+  top: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  background: var(--color-card);
+  border-radius: inherit;
+  transition: background var(--transition-speed);
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s infinite linear;
 }

@@ -9,8 +9,15 @@ import { SupabaseEntradasRepository } from './repositories/supabase-entradas.rep
 import { ReservasExpiradasService } from './reservas-expiradas.service';
 import { QrService } from './qr.service';
 
+import { SectoresModule } from '../stadium-sectors/stadium-sectors.module';
+
 @Module({
-  imports: [SupabaseModule, UsuariosModule, forwardRef(() => PagosModule)],
+  imports: [
+    SupabaseModule,
+    UsuariosModule,
+    forwardRef(() => PagosModule),
+    SectoresModule,
+  ],
   controllers: [EntradasController],
   providers: [
     EntradasService,

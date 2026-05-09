@@ -5,4 +5,5 @@ export interface ISectoresRepository {
   crear(sector: CrearSectorDto): Promise<SectorEstadioEntidad>;
   obtenerTodos(): Promise<SectorEstadioEntidad[]>;
   obtenerUno(id: string): Promise<SectorEstadioEntidad>;
+  obtenerPorPartido(idPartido: string): Promise<SectorEstadioEntidad[]>;
 }

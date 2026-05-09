@@ -1,67 +1,144 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { UserButton, useUser } from '@clerk/nextjs';
 import { ThemeToggle } from './ThemeToggle';
+import Bandera from './Bandera';
+
+const ENLACES = [
+  { name: 'INICIO', href: '/' },
+  { name: 'PARTIDOS', href: '/matches' },
+  { name: 'SOBRE NOSOTROS', href: '/about' },
+  { name: 'FAQ', href: '/faq' },
+  { name: 'MIS ENTRADAS', href: '/my-tickets', color: 'text-blue-100' },
+  { name: 'MIS DATOS', href: '/profile', color: 'text-emerald-100' },
+];
 
 export default function Navbar() {
   const { isSignedIn, isLoaded } = useUser();
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Evitar errores de hidratación asegurando que el contenido dependiente del cliente
+  // solo se renderice después del montaje.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   return (
-    <nav className="relative sticky top-0 z-50 w-full border-b border-slate-700 bg-slate-950 backdrop-blur-md shadow-sm overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-y-0 left-0 w-[33.34%] overflow-hidden">
-          <div className="absolute inset-0 -skew-x-12 -translate-x-[7%] bg-[linear-gradient(90deg,#006847_0%,#006847_34%,#ffffff_34%,#ffffff_66%,#ce1126_66%,#ce1126_100%)] opacity-80" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-black text-slate-900/80">◉</div>
+    <nav className="sticky top-0 z-50 w-full border-b border-white/30 bg-black transition-all duration-300 h-24">
+
+      {/* 🚩 FONDO DE BANDERAS ANFITRIONAS */}
+      <div className="absolute inset-0 flex opacity-90 pointer-events-none overflow-hidden">
+        <div className="flex-1 transform -skew-x-12 scale-110"><Bandera pais="MÉXICO" fill={true} /></div>
+        <div className="flex-1 transform -skew-x-12 scale-110 border-x border-white/40"><Bandera pais="ESTADOS UNIDOS" fill={true} /></div>
+        <div className="flex-1 transform -skew-x-12 scale-110"><Bandera pais="CANADÁ" fill={true} /></div>
+        <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px]"></div>
+      </div>
+
+      <div className="container mx-auto flex h-full items-center justify-between px-6 relative z-10">
+
+        {/* LADO IZQUIERDO: LOGO */}
+        <div className="flex items-center md:w-1/4">
+          <Link href="/" className="flex items-center group">
+            <span className="text-2xl md:text-3xl font-black italic tracking-tighter text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-105">
+              TICKETAR
+            </span>
+          </Link>
         </div>
 
-        <div className="absolute inset-y-0 left-[33.33%] w-[33.34%] overflow-hidden">
-          <div className="absolute inset-0 opacity-82 [clip-path:polygon(6%_0,100%_0,94%_100%,0_100%)]">
-            <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,#b22234_0%,#b22234_7.7%,#ffffff_7.7%,#ffffff_15.4%)]" />
-            <div className="absolute left-0 top-0 h-[54%] w-[40%] bg-[#3c3b6e]" />
-            <div className="absolute left-[3%] top-[6%] h-[40%] w-[32%] opacity-90 bg-[radial-gradient(circle,rgba(255,255,255,0.9)_1.2px,transparent_1.3px)] [background-size:8px_8px]" />
+        {/* CENTRO: SECCIONES (Escritorio) */}
+        <div className="hidden md:flex items-center justify-center flex-1">
+          <div className="flex items-center space-x-8">
+            {ENLACES.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`text-sm font-black italic tracking-tighter text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] hover:scale-110 transition-all hover:text-white/80 ${link.color || 'text-white'}`}
+              >
+                {link.name}
+              </Link>
+            ))}
           </div>
         </div>
 
-        <div className="absolute inset-y-0 left-[66.66%] w-[33.34%] overflow-hidden">
-          <div className="absolute inset-0 -skew-x-12 translate-x-[7%] bg-[linear-gradient(90deg,#d80621_0%,#d80621_32%,#ffffff_32%,#ffffff_68%,#d80621_68%,#d80621_100%)] opacity-80" />
-          <svg viewBox="0 0 64 64" className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-[#d80621] drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">
-            <path fill="currentColor" d="M31.8 6.5l3.2 7.8 8-2.9-2 8.2h8.6l-6.5 5.5 6.2 4.9-8.1 2.2 3.7 8-7.7-2.4-1.8 11.8h-3.1l-1.9-11.8-7.7 2.4 3.7-8-8.1-2.2 6.2-4.9-6.5-5.5h8.6l-2-8.2 8 2.9 3.2-7.8z" />
-          </svg>
+        {/* LADO DERECHO: ACCIONES */}
+        <div className="flex items-center justify-end gap-3 md:gap-6 md:w-1/4">
+          <ThemeToggle />
+
+          <div className="hidden sm:block min-w-[100px] flex justify-end">
+            {mounted && isLoaded && (
+              isSignedIn ? (
+                <div className="bg-white/20 p-1 rounded-full backdrop-blur-md border border-white/30 shadow-lg hover:scale-110 transition-transform">
+                  <UserButton />
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="bg-white text-black px-6 py-2 rounded-lg text-xs font-black italic tracking-tighter hover:scale-105 transition-all shadow-xl"
+                >
+                  INGRESAR
+                </Link>
+              )
+            )}
+          </div>
+
+          {/* BOTÓN MENÚ MÓVIL */}
+          <button
+            type="button"
+            onClick={() => { setMenuAbierto(!menuAbierto); }}
+            className="md:hidden text-white p-2 focus:outline-none z-[70]"
+            aria-label="Abrir menú"
+          >
+            <div className="space-y-1.5">
+              <span className={`block w-8 h-1 bg-white transition-all ${menuAbierto ? 'rotate-45 translate-y-2.5' : ''}`}></span>
+              <span className={`block w-8 h-1 bg-white transition-all ${menuAbierto ? 'opacity-0' : ''}`}></span>
+              <span className={`block w-8 h-1 bg-white transition-all ${menuAbierto ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
+            </div>
+          </button>
         </div>
-        <div className="absolute inset-0 bg-slate-950/45" />
       </div>
 
-      <div className="relative z-10 container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold tracking-tighter text-slate-100 uppercase italic">
-            Ticket<span className="text-blue-500">AR</span>
-          </span>
-        </Link>
-
-        {/* Menú Dinámico */}
-        <div className="hidden items-center gap-8 md:flex">
-          <Link href="/" className="text-[10px] font-black uppercase tracking-widest text-slate-100 hover:text-white">Inicio</Link>
-          <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-slate-100 hover:text-white">Partidos</Link>
-          <Link href="/about" className="text-[10px] font-black uppercase tracking-widest text-slate-100 hover:text-white">Sobre Nosotros</Link>
-          
-          {isLoaded && isSignedIn && (
-            <>
-              <Link href="/my-tickets" className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300">Mis Entradas</Link>
-              <Link href="/profile" className="text-[10px] font-black uppercase tracking-widest text-green-400 hover:text-green-300">Mis Datos</Link>
-            </>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          {isLoaded && (
-            isSignedIn ? <UserButton /> : (
-              <Link href="/login" className="rounded-full bg-blue-600 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white hover:bg-blue-700 shadow-xl shadow-blue-900/20 transition-all">
-                Ingresar
-              </Link>
-            )
-          )}
+      {/* MENÚ MÓVIL (Overlay) */}
+      <div className={`fixed inset-0 bg-black/95 z-[60] flex flex-col items-center justify-center transition-all duration-500 ${menuAbierto ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+        <button
+          type="button"
+          onClick={() => { setMenuAbierto(false); }}
+          className="absolute top-8 right-8 text-white text-4xl font-light hover:rotate-90 transition-transform"
+          aria-label="Cerrar menú"
+        >
+          ✕
+        </button>
+        <div className="flex flex-col items-center space-y-8">
+          {ENLACES.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              onClick={() => { setMenuAbierto(false); }}
+              className={`text-4xl font-black italic tracking-tighter text-white hover:text-blue-500 transition-all ${link.color || 'text-white'}`}
+            >
+              {link.name}
+            </Link>
+          ))}
+          <div className="pt-8 border-t border-white/10 w-full flex justify-center min-h-[80px]">
+            {mounted && isLoaded && (
+              !isSignedIn ? (
+                <Link
+                  href="/login"
+                  onClick={() => { setMenuAbierto(false); }}
+                  className="bg-white text-black px-12 py-4 rounded-xl text-xl font-black italic tracking-tighter shadow-2xl"
+                >
+                  INGRESAR
+                </Link>
+              ) : (
+                <div className="scale-150">
+                  <UserButton />
+                </div>
+              )
+            )}
+          </div>
         </div>
       </div>
     </nav>

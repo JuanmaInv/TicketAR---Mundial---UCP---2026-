@@ -18,8 +18,12 @@ export class CanceladoState implements TicketState {
     return TicketStatus.CANCELADO;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  pagar(_paymentsService: PaymentsService): Promise<PaymentResult> {
+  async pagar(
+    paymentsService: PaymentsService,
+    amount: number,
+  ): Promise<PaymentResult> {
+    void paymentsService;
+    void amount;
     return Promise.reject(
       new BadRequestException(
         'No se puede pagar un ticket que ha sido cancelado.',

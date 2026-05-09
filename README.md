@@ -16,7 +16,7 @@ Para cumplir con los estándares de ingeniería de software, se han implementado
 2.  **Strategy Pattern**: Define los diferentes métodos de pago (y otras funcionalidades que requieran distintos comportamientos).
 3.  **Repository Pattern**: Realiza las operaciones (CRUD) sobre la Base de Datos (a través de Supabase).
 4.  **Factory Pattern**: Centraliza y parametrisa la creación de objetos.
-
+Posible Observer (a implementar)
 ## Instalación y Ejecución
 
 ### Requisitos Previos
