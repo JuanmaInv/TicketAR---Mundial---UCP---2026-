@@ -22,7 +22,9 @@ class CheckoutEventBus {
   emit(evento: CheckoutEvent): void {
     const listenersEvento = this.listeners.get(evento);
     if (!listenersEvento) return;
-    listenersEvento.forEach((listener) => listener());
+    listenersEvento.forEach((listener) => {
+      listener();
+    });
   }
 }
 
