@@ -24,6 +24,7 @@ export default function MatchesPage() {
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [disponibilidad, setDisponibilidad] = useState<Record<string, number>>({});
   const [cargando, setCargando] = useState(true);
+  const [mensajeError, setMensajeError] = useState("");
   
   const [filtroSeleccion, setFiltroSeleccion] = useState<string>("");
   const [faseSeleccionada, setFaseSeleccionada] = useState<string>("Todas");
@@ -50,8 +51,8 @@ export default function MatchesPage() {
         setPartidos(dataPartidos);
         setSectores(dataSectores);
         setDisponibilidad(Object.fromEntries(disponibilidadPorPartido));
-      } catch (err) {
-        console.error("Error:", err);
+      } catch {
+        setMensajeError("No pudimos cargar los partidos. Intentá nuevamente en unos minutos.");
       } finally {
         setCargando(false);
       }
@@ -163,6 +164,11 @@ export default function MatchesPage() {
               Cronograma <span className="text-primary">Oficial FIFA</span>
             </h1>
           </div>
+          {mensajeError && (
+            <div className="mb-8 rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm font-bold text-red-500">
+              {mensajeError}
+            </div>
+          )}
 
           <div className="space-y-12">
             {filteredPartidos.map((match) => {

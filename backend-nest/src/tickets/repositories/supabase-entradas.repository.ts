@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { IEntradasRepository } from './entradas.repository.interface';
+import {
+  DatosCrearEntrada,
+  EntradaExpirada,
+  IEntradasRepository,
+} from './entradas.repository.interface';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { TicketEntity } from '../entities/ticket.entity';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
@@ -57,7 +61,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return Number(data.asientos_disponibles);
   }
 
-  async crear(datos: any): Promise<TicketEntity> {
+  async crear(datos: DatosCrearEntrada): Promise<TicketEntity> {
     const { data, error } = (await this.supabase
       .from('entradas')
       .insert([datos])
@@ -101,7 +105,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return this.mapearTicket(data);
   }
 
-  async obtenerExpiradas(fechaReferencia: string): Promise<any[]> {
+  async obtenerExpiradas(fechaReferencia: string): Promise<EntradaExpirada[]> {
     const { data, error } = await this.supabase
       .from('entradas')
       .select('id, id_sector, id_partido')
@@ -109,7 +113,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
       .lt('fecha_expiracion_reserva', fechaReferencia);
 
     if (error) return [];
-    return data;
+    return data as EntradaExpirada[];
   }
 
   async decrementarStock(idPartido: string, idSector: string): Promise<void> {

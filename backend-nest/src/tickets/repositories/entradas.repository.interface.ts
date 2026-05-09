@@ -1,6 +1,20 @@
 import { TicketEntity } from '../entities/ticket.entity';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
 
+export interface DatosCrearEntrada {
+  id_usuario: string;
+  id_partido: string;
+  id_sector: string;
+  estado: TicketStatus;
+  fecha_expiracion_reserva: string;
+}
+
+export interface EntradaExpirada {
+  id: string;
+  id_sector: string;
+  id_partido: string;
+}
+
 export interface IEntradasRepository {
   // Consultas de negocio
   validarPasaporteUsuario(idUsuario: string): Promise<boolean>;
@@ -15,13 +29,13 @@ export interface IEntradasRepository {
   ): Promise<number | null>;
 
   // CRUD y Estados
-  crear(datos: any): Promise<TicketEntity>;
+  crear(datos: DatosCrearEntrada): Promise<TicketEntity>;
   obtenerTodas(): Promise<TicketEntity[]>;
   obtenerUna(id: string): Promise<TicketEntity | null>;
   actualizarEstado(id: string, estado: TicketStatus): Promise<TicketEntity>;
 
   // Lógica de expiración (para el Cron)
-  obtenerExpiradas(fechaReferencia: string): Promise<any[]>;
+  obtenerExpiradas(fechaReferencia: string): Promise<EntradaExpirada[]>;
   decrementarStock(idPartido: string, idSector: string): Promise<void>;
   incrementarStock(idPartido: string, idSector: string): Promise<void>;
 }

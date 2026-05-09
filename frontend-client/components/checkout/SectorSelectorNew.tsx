@@ -10,7 +10,7 @@ interface Sector {
 }
 
 interface SectorSelectorProps {
-  onComprar: (sector: string, cantidad: number, total: number) => void;
+  alContinuarCompra: (sector: string, cantidad: number, total: number) => void;
 }
 
 const SECTORES: Sector[] = [
@@ -20,23 +20,30 @@ const SECTORES: Sector[] = [
   { nombre: 'Prensa', precio: 45, color: 'bg-green-500', capacidad: 2000 },
 ];
 
-export default function SectorSelector({ onComprar }: SectorSelectorProps) {
+export default function SectorSelector({ alContinuarCompra }: SectorSelectorProps) {
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string>('General');
   const [cantidad, setCantidad] = useState(1);
+  const [mensajeError, setMensajeError] = useState('');
 
   const sectorActual = SECTORES.find(s => s.nombre === sectorSeleccionado);
   const precioTotal = sectorActual ? sectorActual.precio * cantidad : 0;
 
-  const handleComprar = () => {
+  const continuarCompra = () => {
     if (!sectorSeleccionado) {
-      alert('Por favor selecciona un sector');
+      setMensajeError('Por favor seleccioná un sector.');
       return;
     }
-    onComprar(sectorSeleccionado, cantidad, precioTotal);
+    setMensajeError('');
+    alContinuarCompra(sectorSeleccionado, cantidad, precioTotal);
   };
 
   return (
     <div className="w-full space-y-8">
+      {mensajeError && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-bold text-red-500">
+          {mensajeError}
+        </div>
+      )}
       {/* Mapa Visual del Estadio */}
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(27,27,31,0.98),rgba(14,14,16,0.98))] p-4 md:p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
         <div className="flex flex-col md:flex-row gap-6 items-stretch">
@@ -129,7 +136,7 @@ export default function SectorSelector({ onComprar }: SectorSelectorProps) {
 
       {/* Botón Comprar */}
       <button
-        onClick={handleComprar}
+        onClick={continuarCompra}
         className="w-full py-5 rounded-xl font-bold text-xl transition-all transform bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:scale-105 shadow-lg active:scale-95"
       >
         Comprar {cantidad} Entrada{cantidad > 1 ? 's' : ''} → ${precioTotal.toLocaleString()}

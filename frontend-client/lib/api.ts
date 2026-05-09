@@ -29,9 +29,9 @@ export interface Usuario {
   localidad?: string;
 }
 
-export interface PaymentResponse {
-  ticket: Ticket;
-  paymentResult?: {
+export interface RespuestaPago {
+  entrada: Ticket;
+  resultadoPago?: {
     success: boolean;
     transactionId?: string;
     paymentUrl?: string;
@@ -39,7 +39,7 @@ export interface PaymentResponse {
   };
 }
 
-type ApiSector = {
+type SectorApi = {
   id: string;
   nombre: string;
   precio: number;
@@ -48,13 +48,13 @@ type ApiSector = {
   capacidad_disponible?: number;
 };
 
-const parseApiError = async (res: Response, fallback: string) => {
+const obtenerMensajeErrorApi = async (respuesta: Response, mensajePorDefecto: string) => {
   try {
-    const data = (await res.json()) as { message?: string | string[] };
-    if (Array.isArray(data.message)) return data.message.join(' ');
-    return data.message || fallback;
+    const datos = (await respuesta.json()) as { message?: string | string[] };
+    if (Array.isArray(datos.message)) return datos.message.join(' ');
+    return datos.message || mensajePorDefecto;
   } catch {
-    return fallback;
+    return mensajePorDefecto;
   }
 };
 
@@ -77,12 +77,12 @@ export async function getPartidos(): Promise<Partido[]> {
 }
 
 export async function getSectores(partidoId?: string): Promise<Sector[]> {
-  const endpoint = partidoId ? `/sectores/partido/${partidoId}` : '/sectores';
-  const res = await fetch(`${API_URL}${endpoint}`);
-  if (!res.ok) throw new Error(await parseApiError(res, 'Error al traer sectores'));
+  const ruta = partidoId ? `/sectores/partido/${partidoId}` : '/sectores';
+  const res = await fetch(`${API_URL}${ruta}`);
+  if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores'));
   const data = await res.json();
   const lista = Array.isArray(data) ? data : (data.data ?? []);
-  return lista.map((s: ApiSector) => ({
+  return lista.map((s: SectorApi) => ({
     id: s.id,
     nombre: s.nombre,
     precio: s.precio,
@@ -92,20 +92,20 @@ export async function getSectores(partidoId?: string): Promise<Sector[]> {
 }
 
 
-export async function createTicket(ticket: { idUsuario: string, idPartido: string, idSector: string }): Promise<Ticket> {
+export async function createTicket(entrada: { idUsuario: string, idPartido: string, idSector: string }): Promise<Ticket> {
   const res = await fetch(`${API_URL}/entradas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ticket),
+    body: JSON.stringify(entrada),
   });
   if (!res.ok) {
-    throw new Error(await parseApiError(res, 'No pudimos reservar la entrada. Intentá nuevamente.'));
+    throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos reservar la entrada. Intentá nuevamente.'));
   }
   return res.json();
 }
 
 export async function getUsuario(email: string): Promise<Usuario | null> {
-  const res = await fetch(`${API_URL}/usuarios/buscar?email=${email}`);
+  const res = await fetch(`${API_URL}/usuarios/buscar?email=${encodeURIComponent(email)}`);
   if (!res.ok) return null;
   return res.json();
 }
@@ -120,7 +120,7 @@ export async function createUsuario(usuario: Usuario): Promise<boolean> {
 }
 
 export async function updateUsuario(email: string, usuario: Usuario): Promise<boolean> {
-  const res = await fetch(`${API_URL}/usuarios/${email}`, {
+  const res = await fetch(`${API_URL}/usuarios/${encodeURIComponent(email)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(usuario),
@@ -130,7 +130,7 @@ export async function updateUsuario(email: string, usuario: Usuario): Promise<bo
 
 export async function getTickets(): Promise<Ticket[]> {
   const res = await fetch(`${API_URL}/entradas`);
-  if (!res.ok) throw new Error('Error al traer tickets');
+  if (!res.ok) throw new Error('Error al traer entradas');
   return res.json();
 }
 
@@ -141,10 +141,14 @@ export async function getTicketQr(id: string): Promise<string> {
   return data.qrDataUrl;
 }
 
-export async function pagarTicket(id: string): Promise<PaymentResponse> {
+export async function pagarTicket(id: string): Promise<RespuestaPago> {
   const res = await fetch(`${API_URL}/entradas/${id}/pagar`, {
     method: 'POST',
   });
-  if (!res.ok) throw new Error(await parseApiError(res, 'No pudimos procesar el pago.'));
-  return res.json();
+  if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos procesar el pago.'));
+  const respuesta = await res.json();
+  return {
+    entrada: respuesta.ticket,
+    resultadoPago: respuesta.paymentResult,
+  };
 }

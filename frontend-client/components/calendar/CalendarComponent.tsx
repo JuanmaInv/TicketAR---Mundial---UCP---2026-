@@ -10,6 +10,7 @@ export default function CalendarComponent() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mensajeError, setMensajeError] = useState('');
 
   useEffect(() => {
     async function loadData() {
@@ -17,8 +18,8 @@ export default function CalendarComponent() {
         const [p, s] = await Promise.all([getPartidos(), getSectores()]);
         setPartidos(p);
         setSectores(s);
-      } catch (e) {
-        console.error(e);
+      } catch {
+        setMensajeError('No pudimos cargar el calendario de partidos.');
       } finally {
         setLoading(false);
       }
@@ -44,6 +45,14 @@ export default function CalendarComponent() {
   };
 
   if (loading) return null;
+
+  if (mensajeError) {
+    return (
+      <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm font-bold text-red-500">
+        {mensajeError}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-2xl transition-colors duration-700">

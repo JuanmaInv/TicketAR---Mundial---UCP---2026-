@@ -7,7 +7,7 @@ import { getTickets, getUsuario, getTicketQr, getSectores, getPartidos, pagarTic
 import WorldCupLoader from '@/components/WorldCupLoader';
 import { Partido, Ticket } from '@/types/ticket';
 
-type TicketApi = Ticket & {
+type EntradaApi = Ticket & {
   idUsuario?: string;
   id_usuario?: string;
   idSector?: string;
@@ -18,7 +18,7 @@ type TicketApi = Ticket & {
 
 export default function MyTicketsPage() {
   const { user, isLoaded } = useUser();
-  const [tickets, setTickets] = useState<TicketApi[]>([]);
+  const [entradas, setEntradas] = useState<EntradaApi[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -27,26 +27,26 @@ export default function MyTicketsPage() {
     if (!user?.emailAddresses[0]?.emailAddress) return;
     
     try {
-      const [userData, allTickets, allSectores, allPartidos] = await Promise.all([
+      const [datosUsuario, entradasApi, sectoresApi, partidosApi] = await Promise.all([
         getUsuario(user.emailAddresses[0].emailAddress),
         getTickets(),
         getSectores(),
         getPartidos()
       ]);
 
-      if (userData?.id) {
-        setSectores(allSectores);
-        setPartidos(allPartidos);
+      if (datosUsuario?.id) {
+        setSectores(sectoresApi);
+        setPartidos(partidosApi);
         
-        // Filtramos tickets del usuario que estén PAGADOS
-        const myTickets = (allTickets as TicketApi[]).filter(t =>
-          (t.idUsuario === userData.id || t.id_usuario === userData.id) && 
+        // Filtramos entradas del usuario que estén PAGADAS.
+        const misEntradas = (entradasApi as EntradaApi[]).filter(t =>
+          (t.idUsuario === datosUsuario.id || t.id_usuario === datosUsuario.id) &&
           (t.estado === 'PAGADO' || t.estado === 'vendido')
         );
-        setTickets(myTickets);
+        setEntradas(misEntradas);
       }
-    } catch (error) {
-      console.error('Error cargando datos de tickets:', error);
+    } catch {
+      setEntradas([]);
     } finally {
       setCargando(false);
     }
@@ -73,7 +73,7 @@ export default function MyTicketsPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-        <h1 className="text-3xl font-black uppercase italic mb-4 text-foreground">Inicia sesión para ver tus tickets</h1>
+        <h1 className="text-3xl font-black uppercase italic mb-4 text-foreground">Inicia sesión para ver tus entradas</h1>
         <Link href="/login" className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">Ir al Login</Link>
       </div>
     );
@@ -94,7 +94,7 @@ export default function MyTicketsPage() {
           </button>
         </header>
 
-        {tickets.length === 0 ? (
+        {entradas.length === 0 ? (
           <div className="bg-card border border-border rounded-[2.5rem] p-12 text-center shadow-xl">
             <div className="text-6xl mb-6">🎟️</div>
             <h2 className="text-2xl font-black text-foreground mb-4 italic uppercase tracking-tight">Tu billetera está vacía</h2>
@@ -107,13 +107,13 @@ export default function MyTicketsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8">
-            {tickets.map((ticket) => (
+            {entradas.map((entrada) => (
               <TicketCard 
-                key={ticket.id} 
-                ticket={ticket} 
+                key={entrada.id}
+                entrada={entrada}
                 sectores={sectores} 
                 partidos={partidos}
-                onUpdate={cargarDatos}
+                alActualizar={cargarDatos}
               />
             ))}
           </div>
@@ -123,46 +123,46 @@ export default function MyTicketsPage() {
   );
 }
 
-function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: TicketApi, sectores: Sector[], partidos: Partido[], onUpdate: () => void }) {
+function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: EntradaApi, sectores: Sector[], partidos: Partido[], alActualizar: () => void }) {
   const [qr, setQr] = useState<string | null>(null);
   const [verQr, setVerQr] = useState(false);
   const [pagando, setPagando] = useState(false);
+  const [mensajeAccion, setMensajeAccion] = useState('');
 
-  const sector = sectores.find(s => s.id === (ticket.idSector || ticket.id_sector));
-  const partido = partidos.find(p => p.id === (ticket.idPartido || ticket.id_partido));
+  const sector = sectores.find(s => s.id === (entrada.idSector || entrada.id_sector));
+  const partido = partidos.find(p => p.id === (entrada.idPartido || entrada.id_partido));
 
-  const handlePago = async () => {
-    if (!confirm('¿Deseas proceder con el pago de esta entrada? (Simulación de pasarela)')) return;
-    
+  const pagarEntrada = async () => {
     setPagando(true);
+    setMensajeAccion('');
     try {
-      const response = await pagarTicket(ticket.id);
+      const respuesta = await pagarTicket(entrada.id);
       
-      if (response.paymentResult?.paymentUrl) {
-        window.location.href = response.paymentResult.paymentUrl;
+      if (respuesta.resultadoPago?.paymentUrl) {
+        window.location.href = respuesta.resultadoPago.paymentUrl;
         return;
       }
 
-      alert('¡Pago procesado con éxito! Tu ticket ahora es válido.');
-      onUpdate();
+      setMensajeAccion('Pago procesado con éxito. Tu entrada ahora es válida.');
+      alActualizar();
     } catch {
-      alert('Error al procesar el pago. Inténtalo de nuevo.');
+      setMensajeAccion('No pudimos procesar el pago. Intentá nuevamente o probá otro medio de pago.');
     } finally {
       setPagando(false);
     }
   };
 
   const cargarQr = async () => {
-    if (ticket.estado === 'PAGADO' || ticket.estado === 'vendido') {
+    if (entrada.estado === 'PAGADO' || entrada.estado === 'vendido') {
       try {
-        const dataUrl = await getTicketQr(ticket.id);
+        const dataUrl = await getTicketQr(entrada.id);
         setQr(dataUrl);
         setVerQr(true);
       } catch {
-        alert('Error al generar el QR. Contacta a soporte.');
+        setMensajeAccion('No pudimos generar el QR. Contactá a soporte si el problema continúa.');
       }
     } else {
-      alert('Esta entrada aún no ha sido abonada. Completa el pago para ver tu QR.');
+      setMensajeAccion('Esta entrada todavía no fue abonada. Completá el pago para ver tu QR.');
     }
   };
 
@@ -170,21 +170,21 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: TicketAp
     <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row relative group hover:border-blue-600/30 transition-all duration-500 shadow-lg">
       {/* Decoración de Estado */}
       <div className={`absolute top-0 left-0 w-full h-1 ${
-        ticket.estado === 'PAGADO' || ticket.estado === 'vendido' ? 'bg-emerald-500' : 
-        ticket.estado === 'CANCELADO' ? 'bg-red-500' : 'bg-amber-500'
+        entrada.estado === 'PAGADO' || entrada.estado === 'vendido' ? 'bg-emerald-500' :
+        entrada.estado === 'CANCELADO' ? 'bg-red-500' : 'bg-amber-500'
       }`} />
 
       <div className="p-8 flex-1 border-b md:border-b-0 md:border-r border-border">
         <div className="flex justify-between items-start mb-8">
           <div className="flex flex-col gap-1">
             <span className={`w-fit px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${
-              ticket.estado === 'PAGADO' || ticket.estado === 'vendido' ? 'bg-emerald-500/10 text-emerald-500' : 
-              ticket.estado === 'CANCELADO' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'
+              entrada.estado === 'PAGADO' || entrada.estado === 'vendido' ? 'bg-emerald-500/10 text-emerald-500' :
+              entrada.estado === 'CANCELADO' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'
             }`}>
-              {ticket.estado}
+              {entrada.estado}
             </span>
           </div>
-          <span className="text-muted-foreground text-[10px] font-mono tracking-widest uppercase">TICKET #{ticket.id.substring(0, 8)}</span>
+          <span className="text-muted-foreground text-[10px] font-mono tracking-widest uppercase">ENTRADA #{entrada.id.substring(0, 8)}</span>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center gap-8">
@@ -215,9 +215,9 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: TicketAp
               <p className="text-foreground text-xs font-bold italic">Acceso validado via Pasaporte</p>
            </div>
            
-           {(ticket.estado === 'RESERVADO' || ticket.estado === 'reservado') && (
+           {(entrada.estado === 'RESERVADO' || entrada.estado === 'reservado') && (
              <button 
-                onClick={handlePago}
+                onClick={pagarEntrada}
                 disabled={pagando}
                 className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 animate-pulse"
              >
@@ -225,6 +225,11 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: TicketAp
              </button>
            )}
         </div>
+        {mensajeAccion && (
+          <p className="mt-4 rounded-xl border border-border bg-background p-3 text-xs font-bold text-foreground">
+            {mensajeAccion}
+          </p>
+        )}
       </div>
 
       <div className="p-10 bg-slate-100 dark:bg-black/40 flex flex-col items-center justify-center min-w-[280px] border-l border-border">
@@ -239,7 +244,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: TicketAp
             className="flex flex-col items-center gap-4 group"
           >
             <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all shadow-2xl ${
-               ticket.estado === 'PAGADO' || ticket.estado === 'vendido' 
+               entrada.estado === 'PAGADO' || entrada.estado === 'vendido'
                ? 'bg-blue-600 group-hover:bg-blue-500 group-hover:scale-110' 
                : 'bg-muted opacity-40 cursor-not-allowed'
             }`}>
@@ -247,11 +252,11 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: TicketAp
             </div>
             <div className="text-center">
               <span className={`text-[10px] font-black uppercase tracking-widest block transition-all ${
-                ticket.estado === 'PAGADO' || ticket.estado === 'vendido' ? 'text-muted-foreground group-hover:text-foreground' : 'text-muted-foreground/60'
+                entrada.estado === 'PAGADO' || entrada.estado === 'vendido' ? 'text-muted-foreground group-hover:text-foreground' : 'text-muted-foreground/60'
               }`}>
-                {ticket.estado === 'PAGADO' || ticket.estado === 'vendido' ? 'Ver Código QR' : 'Esperando Pago'}
+                {entrada.estado === 'PAGADO' || entrada.estado === 'vendido' ? 'Ver Código QR' : 'Esperando Pago'}
               </span>
-              {ticket.estado !== 'PAGADO' && ticket.estado !== 'vendido' && (
+              {entrada.estado !== 'PAGADO' && entrada.estado !== 'vendido' && (
                 <span className="text-[8px] text-muted-foreground/40 font-bold uppercase mt-1 block tracking-tighter">Bloqueado por seguridad</span>
               )}
             </div>

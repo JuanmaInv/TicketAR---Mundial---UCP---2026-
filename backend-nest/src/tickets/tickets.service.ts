@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
@@ -25,6 +26,8 @@ interface TicketExpirado {
 
 @Injectable()
 export class EntradasService {
+  private readonly logger = new Logger(EntradasService.name);
+
   constructor(
     @Inject('IEntradasRepository')
     private readonly entradasRepository: IEntradasRepository,
@@ -212,7 +215,7 @@ export class EntradasService {
             TicketStatus.CANCELADO,
           );
         } catch (err) {
-          console.error(
+          this.logger.error(
             `[Cron] Error procesando ticket ${row.id}:`,
             (err as Error).message,
           );

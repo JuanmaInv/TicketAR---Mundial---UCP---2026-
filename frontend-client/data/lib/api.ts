@@ -13,8 +13,6 @@ export async function getTickets(): Promise<Ticket[]> {
 }
 
 export async function createTicket(ticket: Omit<Ticket, 'id'>): Promise<Ticket> {
-  console.log('Enviando ticket al servidor (Simulado):', ticket);
-
   // Simulación de respuesta del servidor
   return {
     id: String(Math.floor(Math.random() * 1000)),

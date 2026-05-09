@@ -25,6 +25,7 @@ function FormularioPerfil() {
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
   const [existeEnDB, setExisteEnDB] = useState(false);
+  const [mensajeError, setMensajeError] = useState("");
 
   // Cargar datos existentes
   useEffect(() => {
@@ -72,6 +73,7 @@ function FormularioPerfil() {
   const guardarDatos = async (e: React.FormEvent) => {
     e.preventDefault();
     setEnviando(true);
+    setMensajeError("");
     
     try {
       const payload = {
@@ -96,7 +98,7 @@ function FormularioPerfil() {
       }, 1500);
     } catch (error) {
       const mensaje = error instanceof Error ? error.message : "Intentá nuevamente en unos minutos.";
-      alert("No pudimos guardar tus datos. " + mensaje);
+      setMensajeError("No pudimos guardar tus datos. " + mensaje);
     } finally {
       setEnviando(false);
     }
@@ -120,6 +122,11 @@ function FormularioPerfil() {
           {exito && (
             <div className="bg-emerald-500/10 border border-emerald-500 text-emerald-500 p-6 rounded-2xl text-center font-black animate-bounce">
               ¡DATOS GUARDADOS CON ÉXITO!
+            </div>
+          )}
+          {mensajeError && (
+            <div className="bg-red-500/10 border border-red-500 text-red-500 p-6 rounded-2xl text-center font-bold">
+              {mensajeError}
             </div>
           )}
           

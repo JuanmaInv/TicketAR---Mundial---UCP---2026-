@@ -23,14 +23,14 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [procesando, setProcesando] = useState(false);
   const [fechaExpiracion] = useState<Date>(() => {
     if (typeof window === 'undefined') return new Date(Date.now() + 15 * 60 * 1000);
-    const storageKey = `ticketar-reserva-${partidoId}`;
-    const guardada = window.sessionStorage.getItem(storageKey);
+    const claveAlmacenamiento = `ticketar-reserva-${partidoId}`;
+    const guardada = window.sessionStorage.getItem(claveAlmacenamiento);
     if (guardada && Number(guardada) > Date.now()) return new Date(Number(guardada));
     const nuevaFecha = Date.now() + 15 * 60 * 1000;
-    window.sessionStorage.setItem(storageKey, String(nuevaFecha));
+    window.sessionStorage.setItem(claveAlmacenamiento, String(nuevaFecha));
     return new Date(nuevaFecha);
   });
-  const [userData, setUserData] = useState<Usuario | null>(null);
+  const [datosUsuario, setDatosUsuario] = useState<Usuario | null>(null);
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
   const [seleccionCompra, setSeleccionCompra] = useState<SeleccionCompra | null>(null);
   const [mensajeError, setMensajeError] = useState('');
@@ -39,27 +39,27 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   useEffect(() => {
     if (user?.emailAddresses[0]?.emailAddress) {
       getUsuario(user.emailAddresses[0].emailAddress)
-        .then(data => {
-          if (data && data.id) {
-            setUserData(data);
+        .then(datos => {
+          if (datos && datos.id) {
+            setDatosUsuario(datos);
           } else {
             router.push('/profile?error=not_registered');
           }
           setCargandoUsuario(false);
         })
-        .catch(err => {
-          console.error('Error:', err);
+        .catch(() => {
+          setMensajeError('No pudimos cargar tus datos. Revisá tu conexión e intentá nuevamente.');
           setCargandoUsuario(false);
         });
     }
   }, [user, router]);
 
-  const perfilIncompleto = !userData?.nombre || 
-                           !userData?.apellido || 
-                           !userData?.numeroPasaporte || 
-                           !userData?.telefono || 
-                           !userData?.provincia || 
-                           !userData?.localidad;
+  const perfilIncompleto = !datosUsuario?.nombre ||
+                           !datosUsuario?.apellido ||
+                           !datosUsuario?.numeroPasaporte ||
+                           !datosUsuario?.telefono ||
+                           !datosUsuario?.provincia ||
+                           !datosUsuario?.localidad;
 
   // Bloqueo de seguridad
   useEffect(() => {
@@ -68,13 +68,13 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
   }, [paso, perfilIncompleto, cargandoUsuario, router, partidoId]);
 
-  const handleSeleccionarCompra = (sector: Sector, cantidad: number, total: number) => {
+  const seleccionarCompra = (sector: Sector, cantidad: number, total: number) => {
     setSeleccionCompra({ sector, cantidad, total });
     setMensajeError('');
     setPaso(3);
   };
 
-  const getMensajePago = (error: unknown) => {
+  const obtenerMensajePago = (error: unknown) => {
     const mensaje = error instanceof Error ? error.message : 'No pudimos procesar el pago.';
     if (mensaje.includes('400')) {
       return 'Tu pago fue rechazado. Revisá los datos del medio de pago o intentá con otra tarjeta.';
@@ -85,33 +85,33 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     return mensaje;
   };
 
-  const handleConfirmarPago = async () => {
+  const confirmarPago = async () => {
     if (!seleccionCompra) return;
     setProcesando(true);
     setMensajeError('');
     try {
-      if (!userData?.id) throw new Error('Necesitamos validar tu perfil antes de reservar.');
+      if (!datosUsuario?.id) throw new Error('Necesitamos validar tu perfil antes de reservar.');
 
-      const tickets = [];
+      const entradasReservadas = [];
       for (let i = 0; i < seleccionCompra.cantidad; i += 1) {
-        const ticket = await createTicket({
-          idUsuario: userData.id,
+        const entrada = await createTicket({
+          idUsuario: datosUsuario.id,
           idPartido: partidoId,
           idSector: seleccionCompra.sector.id
         });
-        tickets.push(ticket);
+        entradasReservadas.push(entrada);
       }
 
-      const paymentResponse = await pagarTicket(tickets[0].id);
+      const respuestaPago = await pagarTicket(entradasReservadas[0].id);
       window.sessionStorage.removeItem(`ticketar-reserva-${partidoId}`);
       
-      if (paymentResponse.paymentResult?.paymentUrl) {
-        window.location.href = paymentResponse.paymentResult.paymentUrl;
+      if (respuestaPago.resultadoPago?.paymentUrl) {
+        window.location.href = respuestaPago.resultadoPago.paymentUrl;
       } else {
         router.push('/my-tickets');
       }
     } catch (error) {
-      setMensajeError(getMensajePago(error));
+      setMensajeError(obtenerMensajePago(error));
       setProcesando(false);
     }
   };
@@ -185,35 +185,35 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Nombre Completo</label>
                       <p className="text-2xl font-black text-foreground italic uppercase">
-                        {userData?.nombre || '---'} {userData?.apellido || '---'}
+                        {datosUsuario?.nombre || '---'} {datosUsuario?.apellido || '---'}
                       </p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Documento (DNI/Pasaporte)</label>
-                      <p className={`text-2xl font-black italic uppercase ${userData?.numeroPasaporte ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
-                        {userData?.numeroPasaporte || '❌ No cargado'}
+                      <p className={`text-2xl font-black italic uppercase ${datosUsuario?.numeroPasaporte ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
+                        {datosUsuario?.numeroPasaporte || '❌ No cargado'}
                       </p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Email de Contacto</label>
-                      <p className="text-2xl font-black text-foreground italic uppercase">{userData?.email || user?.emailAddresses[0]?.emailAddress}</p>
+                      <p className="text-2xl font-black text-foreground italic uppercase">{datosUsuario?.email || user?.emailAddresses[0]?.emailAddress}</p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Teléfono</label>
-                      <p className={`text-2xl font-black italic uppercase ${userData?.telefono ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
-                        {userData?.telefono || '❌ No cargado'}
+                      <p className={`text-2xl font-black italic uppercase ${datosUsuario?.telefono ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
+                        {datosUsuario?.telefono || '❌ No cargado'}
                       </p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Provincia</label>
-                      <p className={`text-2xl font-black italic uppercase ${userData?.provincia ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
-                        {userData?.provincia || '❌ No cargado'}
+                      <p className={`text-2xl font-black italic uppercase ${datosUsuario?.provincia ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
+                        {datosUsuario?.provincia || '❌ No cargado'}
                       </p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Localidad</label>
-                      <p className={`text-2xl font-black italic uppercase ${userData?.localidad ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
-                        {userData?.localidad || '❌ No cargado'}
+                      <p className={`text-2xl font-black italic uppercase ${datosUsuario?.localidad ? 'text-foreground' : 'text-red-500 animate-pulse'}`}>
+                        {datosUsuario?.localidad || '❌ No cargado'}
                       </p>
                     </div>
                   </div>
@@ -262,7 +262,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                   Elige tu lugar en el estadio
                 </p>
 
-                <SectorSelector partidoId={partidoId} onComprar={handleSeleccionarCompra} />
+                <SectorSelector partidoId={partidoId} alContinuarCompra={seleccionarCompra} />
               </div>
             )}
 
@@ -304,11 +304,11 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Titular</p>
-                      <p className="font-black uppercase text-foreground">{userData?.nombre} {userData?.apellido}</p>
+                      <p className="font-black uppercase text-foreground">{datosUsuario?.nombre} {datosUsuario?.apellido}</p>
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Documento</p>
-                      <p className="font-black uppercase text-foreground">{userData?.numeroPasaporte}</p>
+                      <p className="font-black uppercase text-foreground">{datosUsuario?.numeroPasaporte}</p>
                     </div>
                   </div>
                 </section>
@@ -321,7 +321,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                     Modificar
                   </button>
                   <button
-                    onClick={handleConfirmarPago}
+                    onClick={confirmarPago}
                     disabled={procesando}
                     className="sm:w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs disabled:opacity-60"
                   >

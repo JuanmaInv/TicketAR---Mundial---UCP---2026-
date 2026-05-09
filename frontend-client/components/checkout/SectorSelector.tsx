@@ -5,10 +5,10 @@ import { getSectores, Sector, formatPrice } from '@/lib/api';
 
 interface SectorSelectorProps {
   partidoId: string;
-  onComprar: (sector: Sector, cantidad: number, total: number) => void;
+  alContinuarCompra: (sector: Sector, cantidad: number, total: number) => void;
 }
 
-export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
+export default function SectorSelector({ partidoId, alContinuarCompra }: SectorSelectorProps) {
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
@@ -30,9 +30,8 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
         if (!primerDisponible) setError('No quedan entradas disponibles para este partido.');
         setCargando(false);
       })
-      .catch(err => {
-        console.error('Error cargando sectores:', err);
-        setError(err instanceof Error ? err.message : 'No pudimos consultar la disponibilidad.');
+      .catch(errorCarga => {
+        setError(errorCarga instanceof Error ? errorCarga.message : 'No pudimos consultar la disponibilidad.');
         setCargando(false);
       });
   }, [partidoId]);
@@ -49,7 +48,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
     return 'bg-zinc-600 shadow-black';
   };
 
-  const handleComprar = () => {
+  const continuarCompra = () => {
     if (!sectorActual) {
       setError('Elegí un sector disponible para continuar.');
       return;
@@ -59,7 +58,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
       return;
     }
     setError('');
-    onComprar(sectorActual, cantidad, precioTotal);
+    alContinuarCompra(sectorActual, cantidad, precioTotal);
   };
 
   if (cargando) {
@@ -151,7 +150,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
             </div>
             <button
               disabled={sectorActual.capacidadDisponible <= 0}
-              onClick={handleComprar}
+              onClick={continuarCompra}
               className={`px-8 py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all transform ${
                 sectorActual.capacidadDisponible <= 0 
                 ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed' 
