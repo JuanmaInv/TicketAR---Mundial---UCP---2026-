@@ -13,9 +13,10 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const { user } = useUser();
 
   const stepFromUrl = parseInt(searchParams.get('step') || '1');
-  const [paso, setPaso] = useState(stepFromUrl); // 1: Datos, 2: Sectores
+  const [paso, setPaso] = useState(stepFromUrl); // 1: Datos, 2: Sectores, 3: Resumen
   const [procesando, setProcesando] = useState(false);
   const [fechaExpiracion, setFechaExpiracion] = useState<Date | null>(null);
+  const [resumenCompra, setResumenCompra] = useState<{sectorId: string, cantidad: number, total: number} | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
 
@@ -38,10 +39,51 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
   }, [user, router]);
 
+  // Persistencia de Timer y Paso con LocalStorage
   useEffect(() => {
-    const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
-    setFechaExpiracion(nuevaFecha);
+    if (typeof window !== 'undefined') {
+      const savedTimer = localStorage.getItem(`checkout_timer_${partidoId}`);
+      if (savedTimer) {
+        const expirationDate = new Date(savedTimer);
+        if (expirationDate > new Date()) {
+          setFechaExpiracion(expirationDate);
+        } else {
+          localStorage.removeItem(`checkout_timer_${partidoId}`);
+          const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
+          setFechaExpiracion(nuevaFecha);
+          localStorage.setItem(`checkout_timer_${partidoId}`, nuevaFecha.toISOString());
+        }
+      } else {
+        const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
+        setFechaExpiracion(nuevaFecha);
+        localStorage.setItem(`checkout_timer_${partidoId}`, nuevaFecha.toISOString());
+      }
+      
+      const savedPaso = localStorage.getItem(`checkout_paso_${partidoId}`);
+      if (savedPaso) setPaso(parseInt(savedPaso));
+      
+      const savedResumen = localStorage.getItem(`checkout_resumen_${partidoId}`);
+      if (savedResumen) setResumenCompra(JSON.parse(savedResumen));
+    }
   }, [partidoId]);
+
+  // Guardar estado actual
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`checkout_paso_${partidoId}`, paso.toString());
+      if (resumenCompra) {
+        localStorage.setItem(`checkout_resumen_${partidoId}`, JSON.stringify(resumenCompra));
+      }
+    }
+  }, [paso, partidoId, resumenCompra]);
+
+  const limpiarCheckout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`checkout_paso_${partidoId}`);
+      localStorage.removeItem(`checkout_timer_${partidoId}`);
+      localStorage.removeItem(`checkout_resumen_${partidoId}`);
+    }
+  };
 
   const perfilIncompleto = !userData?.nombre || 
                            !userData?.apellido || 
@@ -57,24 +99,33 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
   }, [paso, perfilIncompleto, cargandoUsuario, router, partidoId]);
 
-  const handleComprar = async (sectorId: string, cantidad: number, total: number) => {
+  const handleSeleccionarSector = (sectorId: string, cantidad: number, total: number) => {
+    setResumenCompra({ sectorId, cantidad, total });
+    setPaso(3); // Avanzamos al Resumen
+  };
+
+  const handleComprarFinal = async () => {
+    if (!resumenCompra) return;
     setProcesando(true);
     try {
       const ticketResponse = await createTicket({
         idUsuario: userData.id,
         idPartido: partidoId,
-        idSector: sectorId
+        idSector: resumenCompra.sectorId
       });
       
       const paymentResponse = await pagarTicket(ticketResponse.id);
       
       if (paymentResponse.paymentResult?.paymentUrl) {
+        limpiarCheckout();
         window.location.href = paymentResponse.paymentResult.paymentUrl;
       } else {
+        limpiarCheckout();
         router.push('/my-tickets');
       }
     } catch (error: any) {
-      alert('Error: ' + error.message);
+      // Mostrar el error real y claro
+      alert('Atención: ' + (error.message || 'Hubo un error al procesar la reserva.'));
       setProcesando(false);
     }
   };
@@ -106,8 +157,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
              </div>
              <div className="w-12 h-[2px] bg-border"></div>
              <div className="flex items-center gap-3">
-                <span className={`w-10 h-10 flex items-center justify-center rounded-full font-black text-sm ${paso >= 3 ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}`}>3</span>
-                <span className={`text-xs font-black uppercase tracking-widest ${paso === 3 ? 'text-foreground' : 'text-muted-foreground'}`}>Pago</span>
+                <span className={`w-10 h-10 flex items-center justify-center rounded-full font-black text-sm ${paso >= 3 ? 'bg-blue-600 text-white' : 'bg-muted text-muted-foreground'}`}>3</span>
+                <span className={`text-xs font-black uppercase tracking-widest ${paso === 3 ? 'text-foreground' : 'text-muted-foreground'}`}>Resumen</span>
              </div>
           </div>
 
@@ -115,7 +166,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
             <div className="bg-black text-white p-2 rounded-2xl border-4 border-red-500/20 shadow-2xl">
               <div className="px-6 py-4 rounded-xl flex flex-col items-center">
                 <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-red-400">Tiempo restante para abonar:</p>
-                <CountdownTimer tiempoExpiracion={fechaExpiracion} onExpirar={() => router.push('/')} />
+                <CountdownTimer tiempoExpiracion={fechaExpiracion} onExpirar={() => { limpiarCheckout(); router.push('/'); }} />
               </div>
             </div>
           )}
@@ -227,7 +278,68 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                   Elige tu lugar en el estadio
                 </p>
 
-                <SectorSelector partidoId={partidoId} onComprar={handleComprar} />
+                <SectorSelector partidoId={partidoId} onComprar={handleSeleccionarSector} />
+              </div>
+            )}
+
+            {/* PASO 3: RESUMEN Y PAGO */}
+            {paso === 3 && (
+              <div className="animate-in fade-in slide-in-from-right-8 duration-700">
+                <button 
+                  onClick={() => setPaso(2)} 
+                  className="text-muted-foreground hover:text-foreground text-[10px] font-black uppercase tracking-[0.3em] mb-12 flex items-center gap-2 transition-colors group"
+                >
+                  <span className="group-hover:-translate-x-2 transition-transform">←</span> Volver a Cambiar Ubicación
+                </button>
+
+                <h1 className="text-5xl md:text-7xl font-black text-foreground mb-4 uppercase italic tracking-tighter leading-none">
+                  PASO 3: <span className="text-emerald-600">CONFIRMACIÓN</span>
+                </h1>
+                <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest mb-12 italic border-l-4 border-emerald-600 pl-4">
+                  Revisá los detalles de tu compra antes de abonar
+                </p>
+
+                <div className="bg-zinc-950 border border-white/10 rounded-[2.5rem] p-10 md:p-14 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <span className="text-9xl">🎟️</span>
+                  </div>
+                  
+                  <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-8 border-b border-white/10 pb-4">
+                    Resumen de Operación
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
+                    <div>
+                      <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-1">Titular de Entradas</p>
+                      <p className="text-xl font-bold text-white uppercase">{userData?.nombre} {userData?.apellido}</p>
+                      <p className="text-sm text-zinc-400 mt-1">DNI/Pasaporte: {userData?.numeroPasaporte}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-1">Cantidad Seleccionada</p>
+                      <p className="text-xl font-bold text-white uppercase">{resumenCompra?.cantidad} Entrada(s)</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-1">Importe Final</p>
+                      <p className="text-5xl font-black text-emerald-400 tracking-tighter italic">
+                        ${resumenCompra?.total?.toLocaleString('es-AR')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-12 pt-10 border-t border-white/10 flex flex-col items-center">
+                    <button 
+                      onClick={handleComprarFinal}
+                      className="w-full md:w-auto px-16 py-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-4"
+                    >
+                      <span>Ir a Pagar</span>
+                      <span className="text-2xl">💳</span>
+                    </button>
+                    <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mt-6 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Serás redirigido a Mercado Pago
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

@@ -159,8 +159,8 @@ export default function MatchesPage() {
                 <div key={match.id} className="world-cup-border rounded-[3.5rem] p-[3px]">
                   <div className="group relative bg-card rounded-[3.4rem] overflow-hidden transition-all duration-500 min-h-[350px] flex flex-col md:flex-row shadow-2xl">
                     
-                    {/* 🚩 ANIMACIÓN DE REVELADO: Banderas aparecen al Hover */}
-                    <div className="absolute inset-0 flex opacity-0 group-hover:opacity-30 pointer-events-none transition-all duration-700 transform scale-110 group-hover:scale-100">
+                    {/* 🚩 ANIMACIÓN DE REVELADO: Banderas aparecen al Hover (Desktop) o siempre visibles atenuadas (Mobile) */}
+                    <div className="absolute inset-0 flex opacity-20 md:opacity-0 md:group-hover:opacity-30 pointer-events-none transition-all duration-700 transform scale-100 md:scale-110 md:group-hover:scale-100">
                       <div className="w-1/2 h-full overflow-hidden border-r border-white/10">
                         <Bandera pais={local} fill={true} className="object-cover" />
                       </div>
