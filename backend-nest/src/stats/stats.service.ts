@@ -5,10 +5,16 @@ import { TicketStatus } from '../common/enums/ticket-status.enum';
 
 interface EntradaConSector {
   estado: TicketStatus;
-  sectores_estadio: {
-    nombre: string;
-    precio: number;
-  } | null;
+  sectores_estadio:
+    | {
+        nombre: string;
+        precio: number;
+      }
+    | {
+        nombre: string;
+        precio: number;
+      }[]
+    | null;
 }
 
 interface ProximoPartidoRow {
@@ -19,9 +25,45 @@ interface ProximoPartidoRow {
 
 interface PartidoSectorRow {
   asientos_disponibles: number;
-  sectores_estadio: {
-    capacidad: number;
-  } | null;
+  sectores_estadio:
+    | {
+        capacidad: number;
+      }
+    | {
+        capacidad: number;
+      }[]
+    | null;
+}
+
+function obtenerSectorSimple(
+  sector:
+    | {
+        nombre: string;
+        precio: number;
+      }
+    | {
+        nombre: string;
+        precio: number;
+      }[]
+    | null,
+): { nombre: string; precio: number } | null {
+  if (!sector) return null;
+  return Array.isArray(sector) ? (sector[0] ?? null) : sector;
+}
+
+function obtenerCapacidadSector(
+  sector:
+    | {
+        capacidad: number;
+      }
+    | {
+        capacidad: number;
+      }[]
+    | null,
+): number {
+  if (!sector) return 0;
+  const sectorNormalizado = Array.isArray(sector) ? sector[0] : sector;
+  return sectorNormalizado?.capacidad ?? 0;
 }
 
 @Injectable()
@@ -65,8 +107,9 @@ export class StatsService {
     const sectorMap = new Map<string, SectorStats>();
 
     (entradas ?? []).forEach((entry: EntradaConSector) => {
-      const sectorNombre = entry.sectores_estadio?.nombre || 'Desconocido';
-      const precio = entry.sectores_estadio?.precio || 0;
+      const sector = obtenerSectorSimple(entry.sectores_estadio);
+      const sectorNombre = sector?.nombre ?? 'Desconocido';
+      const precio = sector?.precio ?? 0;
 
       if (entry.estado === TicketStatus.PAGADO) {
         stats.ingresosTotales += precio;
@@ -112,7 +155,7 @@ export class StatsService {
         let totalCapacidad = 0;
         let totalDisponibles = 0;
         sectores.forEach((sectorRow) => {
-          totalCapacidad += sectorRow.sectores_estadio?.capacidad || 0;
+          totalCapacidad += obtenerCapacidadSector(sectorRow.sectores_estadio);
           totalDisponibles += sectorRow.asientos_disponibles || 0;
         });
 
