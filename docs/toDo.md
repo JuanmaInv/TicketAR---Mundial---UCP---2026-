@@ -4,3 +4,5 @@
 
 
 3) Ver si decrementa la cantidad de asientos disponibles al comprar tickets en la tabla de partidos_sectores. 
+
+4) Implementar darse de baja para eliminar la cuenta de la base de datos. 
