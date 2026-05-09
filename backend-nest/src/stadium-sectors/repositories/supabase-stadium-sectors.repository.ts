@@ -7,6 +7,24 @@ import { CrearSectorDto } from '../dto/create-stadium-sector.dto';
 @Injectable()
 export class SupabaseSectoresRepository implements ISectoresRepository {
   private readonly TABLE_NAME = 'sectores_estadio';
+  private static readonly mapearSectorDb = (
+    sector: unknown,
+  ): {
+    id: string;
+    nombre: string;
+    capacidad: number;
+    capacidad_disponible: number;
+    precio: number;
+    fecha_creacion: Date;
+  } =>
+    sector as {
+      id: string;
+      nombre: string;
+      capacidad: number;
+      capacidad_disponible: number;
+      precio: number;
+      fecha_creacion: Date;
+    };
 
   constructor(private readonly supabaseService: SupabaseService) {}
 
@@ -62,26 +80,56 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
   }
 
   async obtenerPorPartido(idPartido: string): Promise<SectorEstadioEntidad[]> {
-    const { data, error } = await this.supabaseService
-      .getClient()
-      .from('partido_sectores')
-      .select('asientos_disponibles, sectores_estadio(*)')
-      .eq('id_partido', idPartido);
+    const { data: disponibilidad, error: errorDisponibilidad } =
+      await this.supabaseService
+        .getClient()
+        .from('partido_sectores')
+        .select('id_sector, asientos_disponibles')
+        .eq('id_partido', idPartido);
 
-    if (error) {
-      throw new Error(`Error al obtener disponibilidad: ${error.message}`);
+    if (errorDisponibilidad) {
+      throw new Error(
+        `Error al obtener disponibilidad: ${errorDisponibilidad.message}`,
+      );
     }
 
-    return data.map((item) => {
-      const row = item as {
-        asientos_disponibles: number;
-        sectores_estadio: unknown;
-      };
-      return this.mapToEntity({
-        ...(row.sectores_estadio as object),
-        capacidad_disponible: row.asientos_disponibles,
-      });
-    });
+    const filasDisponibilidad = (disponibilidad ?? []) as Array<{
+      id_sector: string;
+      asientos_disponibles: number;
+    }>;
+
+    if (!filasDisponibilidad.length) return [];
+
+    const idsSectores = filasDisponibilidad.map((fila) => fila.id_sector);
+    const { data: sectores, error: errorSectores } = await this.supabaseService
+      .getClient()
+      .from(this.TABLE_NAME)
+      .select('*')
+      .in('id', idsSectores);
+
+    if (errorSectores) {
+      throw new Error(
+        `Error al obtener sectores de partido: ${errorSectores.message}`,
+      );
+    }
+
+    const sectoresDb = (sectores ?? []).map(
+      SupabaseSectoresRepository.mapearSectorDb,
+    );
+    const mapaSectores = new Map(
+      sectoresDb.map((sector) => [sector.id, sector]),
+    );
+
+    return filasDisponibilidad
+      .map((fila) => {
+        const sector = mapaSectores.get(fila.id_sector);
+        if (!sector) return null;
+        return this.mapToEntity({
+          ...sector,
+          capacidad_disponible: fila.asientos_disponibles,
+        });
+      })
+      .filter((sector): sector is SectorEstadioEntidad => sector !== null);
   }
 
   private mapToEntity(dbData: unknown): SectorEstadioEntidad {

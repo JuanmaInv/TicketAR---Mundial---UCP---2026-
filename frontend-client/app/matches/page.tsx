@@ -22,7 +22,9 @@ export default function MatchesPage() {
   const { user } = useUser();
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
-  const [disponibilidad, setDisponibilidad] = useState<Record<string, number>>({});
+  const [disponibilidad, setDisponibilidad] = useState<
+    Record<string, number | null>
+  >({});
   const [cargando, setCargando] = useState(true);
   const [mensajeError, setMensajeError] = useState("");
   
@@ -44,7 +46,7 @@ export default function MatchesPage() {
               );
               return [partido.id, disponibles] as const;
             } catch {
-              return [partido.id, 0] as const;
+              return [partido.id, null] as const;
             }
           }),
         );
@@ -175,8 +177,9 @@ export default function MatchesPage() {
               const precio = getPrecioReal(match.id, match.precio_base);
               const local = normalizeTeamLabel(match.equipo_local);
               const visitante = normalizeTeamLabel(match.equipo_visitante);
-              const disponibles = disponibilidad[match.id] ?? 0;
-              const agotado = disponibles <= 0;
+              const disponibles = disponibilidad[match.id];
+              const disponibilidadDesconocida = disponibles === null || disponibles === undefined;
+              const agotado = !disponibilidadDesconocida && disponibles <= 0;
 
               return (
                 /* BORDE DINÁMICO APLICADO AQUÍ */
@@ -240,6 +243,10 @@ export default function MatchesPage() {
                           {agotado ? (
                             <span className="bg-zinc-300 text-zinc-600 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
                               Entradas agotadas
+                            </span>
+                          ) : disponibilidadDesconocida ? (
+                            <span className="bg-amber-300 text-amber-900 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
+                              Disponibilidad no disponible
                             </span>
                           ) : (
                             <Link
