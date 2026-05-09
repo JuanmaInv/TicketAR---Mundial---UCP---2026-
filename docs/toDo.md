@@ -13,12 +13,12 @@
 - [x] Proteger endpoints de creación de partidos (`POST /partidos`).
 
 ### 3. Endpoints de Administración ⚙️
-- [ ] Implementar `DELETE /partidos/:id`.
-- [ ] Implementar `PATCH /partidos/:id`.
+- [x] Implementar `DELETE /partidos/:id`.
+- [x] Implementar `PATCH /partidos/:id`.
 - [ ] Implementar `GET /estadisticas` (Reporte de ventas e ingresos).
 
 ### 4. Privacidad y Cuenta 🗑️
-- [ ] Implementar "Darse de Baja" (`DELETE /usuarios/me`).
+- [x] Implementar "Darse de Baja" (`DELETE /usuarios/me`).
 - [x] Asegurar eliminación en cascada de entradas del usuario en la DB.
 
 ---

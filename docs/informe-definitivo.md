@@ -323,8 +323,9 @@ El proyecto TicketAR no solo se trata de código, sino de un proceso de aprendiz
 - [x] **DB:** Incorporación de la columna `rol` en la tabla `usuarios` (Mayúsculas: `ADMINISTRADOR`, `CLIENTE`).
 - [x] **Security:** Implementación de `RolesGuard` y el decorador `@Roles()` para proteger acciones sensibles.
 - [x] **Audit:** Trigger de respaldo de usuarios actualizado para incluir el rol.
-- [ ] **Endpoints:** Completar gestión de partidos (`PATCH` / `DELETE`) y panel de estadísticas de ventas.
+- [x] **Endpoints:** Completar gestión de partidos (`PATCH` / `DELETE`).
+- [ ] **Estadísticas:** Implementar panel de estadísticas de ventas (Pendiente).
 
 ### 2. Cumplimiento de Privacidad y Gestión de Cuenta
-- [ ] **Baja de Usuario:** Implementación de `DELETE /usuarios/me`. Al borrar un usuario, se deben anular sus registros de entradas para mantener la consistencia del inventario y cumplir con el "Derecho al Olvido".
+- [x] **Baja de Usuario:** Implementación de `DELETE /usuarios/me`. Al borrar un usuario, se anulan sus registros de entradas en cascada para cumplir con el "Derecho al Olvido".
 - [ ] **Validación de Stock:** Asegurar que el decremento de asientos sea consistente en transacciones concurrentes.

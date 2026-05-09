@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { PartidosService } from './matches.service';
 import { CrearPartidoDto } from './dto/create-match.dto';
+import { ActualizarPartidoDto } from './dto/update-match.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolUsuario } from '../common/enums/rol-usuario.enum';
@@ -29,5 +40,33 @@ export class PartidosController {
   @Get()
   async obtenerTodos() {
     return await this.partidosService.obtenerTodos();
+  }
+
+  /**
+   * Endpoint PATCH /partidos/:id
+   * Actualiza campos específicos de un partido existente.
+   * PROTEGIDO: Solo accesible por ADMINISTRADORES.
+   */
+  @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RolUsuario.ADMINISTRADOR)
+  async actualizar(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() actualizarPartidoDto: ActualizarPartidoDto,
+  ) {
+    return await this.partidosService.actualizar(id, actualizarPartidoDto);
+  }
+
+  /**
+   * Endpoint DELETE /partidos/:id
+   * Elimina un partido y su inventario asociado (cascada en DB).
+   * PROTEGIDO: Solo accesible por ADMINISTRADORES.
+   */
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RolUsuario.ADMINISTRADOR)
+  async eliminar(@Param('id', ParseUUIDPipe) id: string) {
+    await this.partidosService.eliminar(id);
+    return { mensaje: `Partido con ID ${id} eliminado correctamente` };
   }
 }
