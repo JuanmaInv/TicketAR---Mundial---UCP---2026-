@@ -43,7 +43,7 @@ export default function MatchesPage() {
     cargarDatos();
   }, []);
 
-  const getPrecioReal = (matchId: string, precioBase: number) => {
+  function getPrecioReal(matchId: string, precioBase: number) {
     const sectoresValidos = sectores.filter(s => {
        const n = s.nombre.toLowerCase();
        return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
@@ -56,14 +56,29 @@ export default function MatchesPage() {
     return precioBase;
   };
 
-  const normalizeTeamLabel = (label: string) => {
+  function normalizeTeamLabel(label: string) {
     if (!label) return "TBD";
     return label.replace(/_/g, " ").toUpperCase();
   };
 
-  const filteredPartidos = partidos.filter((p) => {
-    const local = p.equipo_local.toLowerCase();
-    const visitante = p.equipo_visitante.toLowerCase();
+  function isMatchSoldOut() {
+    // Si no hay sectores cargados, no asumimos agotado
+    if (sectores.length === 0) return false;
+    
+    // Filtramos sectores de venta (Palco, Platea, Popular)
+    // Nota: Como el API actual no filtra por matchId, esta es una lógica simplificada
+    const sectoresVenta = sectores.filter(s => {
+      const n = s.nombre.toLowerCase();
+      return n.includes('palco') || n.includes('platea') || n.includes('popular');
+    });
+
+    // Si todos los sectores de venta tienen capacidad 0, está agotado
+    return sectoresVenta.length > 0 && sectoresVenta.every(s => s.capacidadDisponible <= 0);
+  };
+
+    const filteredPartidos = partidos.filter((p) => {
+    const local = p.equipoLocal.toLowerCase();
+    const visitante = p.equipoVisitante.toLowerCase();
     const filtro = filtroSeleccion.toLowerCase();
     
     const matchFiltro = !filtroSeleccion || local.includes(filtro) || visitante.includes(filtro);
@@ -149,14 +164,14 @@ export default function MatchesPage() {
           </div>
 
           <div className="space-y-12">
-            {filteredPartidos.map((match) => {
-              const precio = getPrecioReal(match.id, match.precio_base);
-              const local = normalizeTeamLabel(match.equipo_local);
-              const visitante = normalizeTeamLabel(match.equipo_visitante);
+            {filteredPartidos.map((partido) => {
+              const precio = getPrecioReal(partido.id, partido.precioBase);
+              const local = normalizeTeamLabel(partido.equipoLocal);
+              const visitante = normalizeTeamLabel(partido.equipoVisitante);
 
               return (
                 /* BORDE DINÁMICO APLICADO AQUÍ */
-                <div key={match.id} className="world-cup-border rounded-[3.5rem] p-[3px]">
+                <div key={partido.id} className="world-cup-border rounded-[3.5rem] p-[3px]">
                   <div className="group relative bg-card rounded-[3.4rem] overflow-hidden transition-all duration-500 min-h-[350px] flex flex-col md:flex-row shadow-2xl">
                     
                     {/* 🚩 ANIMACIÓN DE REVELADO: Banderas aparecen al Hover */}
@@ -174,7 +189,7 @@ export default function MatchesPage() {
                     <div className="p-12 relative z-10 w-full flex flex-col justify-between">
                       <div className="flex justify-between items-center mb-8">
                         <span className="bg-primary/10 text-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors">
-                          Mundial 2026 • {match.fase}
+                          Mundial 2026 • {partido.fase}
                         </span>
                         <span className="text-muted text-xs font-bold uppercase italic tracking-widest">10 / JUN / 2026</span>
                       </div>
@@ -198,27 +213,34 @@ export default function MatchesPage() {
                       <div className="flex flex-col lg:flex-row justify-between items-center pt-10 border-t border-border gap-8">
                         <div className="flex flex-col gap-2">
                           <p className="text-foreground font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-2">
-                            <span className="text-xl">📍</span> {match.nombre_estadio}
+                            <span className="text-xl">📍</span> {partido.nombreEstadio}
                           </p>
                           <div className="flex items-center gap-2">
                             <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse"></div>
-                            <p className="text-success text-[10px] font-black uppercase tracking-widest italic">{match.estado}</p>
+                            <p className="text-success text-[10px] font-black uppercase tracking-widest italic">{partido.estado}</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-10">
-                          <div className="text-right">
+                        <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-10">
+                          <div className="text-center sm:text-right">
                             <p className="text-muted text-[9px] font-black uppercase tracking-widest mb-1">Tickets desde</p>
-                            <p className="text-5xl font-black text-foreground tracking-tighter transition-colors">
+                            <p className="text-4xl md:text-5xl font-black text-foreground tracking-tighter transition-colors">
                               {formatPrice(precio)}
                             </p>
                           </div>
-                          <Link 
-                            href={user ? `/profile?matchId=${match.id}` : "/login"} 
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
-                          >
-                            Comprar Ahora
-                          </Link>
+                          {isMatchSoldOut() ? (
+                            <div className="bg-zinc-200 dark:bg-zinc-800 text-zinc-500 px-10 md:px-14 py-4 md:py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
+                              AGOTADO
+                            </div>
+                          ) : (
+                            <Link 
+                              href={user ? `/profile?partidoId=${partido.id}` : "/login"} 
+                              className="relative group/btn overflow-hidden bg-emerald-600 hover:bg-emerald-500 text-white px-10 md:px-14 py-4 md:py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-[0_10px_40px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95 w-full sm:w-auto text-center"
+                            >
+                              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-shimmer"></span>
+                              COMPRAR AHORA
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>

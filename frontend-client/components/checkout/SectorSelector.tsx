@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { getSectores, Sector, formatPrice } from '@/lib/api';
 
 interface SectorSelectorProps {
   partidoId: string;
-  onComprar: (sectorId: string, cantidad: number, total: number) => void;
+  onComprar: (sectorId: string, sectorNombre: string, cantidad: number, total: number) => void;
 }
 
-export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
+export default function SectorSelector({ onComprar }: Omit<SectorSelectorProps, 'partidoId'> & { partidoId: string }) {
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
@@ -46,11 +47,11 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
   };
 
   const handleComprar = () => {
-    if (!sectorSeleccionado) {
+    if (!sectorSeleccionado || !sectorActual) {
       alert('Por favor selecciona un sector');
       return;
     }
-    onComprar(sectorSeleccionado, cantidad, precioTotal);
+    onComprar(sectorSeleccionado, sectorActual.nombre, cantidad, precioTotal);
   };
 
   if (cargando) {
@@ -66,10 +67,11 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
           <div className="flex flex-col md:flex-row gap-8 items-center">
             {/* Mapa del Estadio (3 Colores) */}
             <div className="w-full md:w-3/5 aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black relative">
-              <img 
+              <Image 
                 src="/stadium_3_sectors_2026_1777906767323.png" 
                 alt="Mapa del Estadio" 
-                className="w-full h-full object-cover opacity-90"
+                fill
+                className="object-cover opacity-90"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
@@ -134,12 +136,13 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
             <button
               disabled={sectorActual.capacidadDisponible <= 0}
               onClick={handleComprar}
-              className={`px-8 py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all transform ${
+              className={`relative group/buybtn overflow-hidden px-8 py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all transform ${
                 sectorActual.capacidadDisponible <= 0 
                 ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed' 
                 : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30'
               }`}
             >
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/buybtn:animate-shimmer"></span>
               {sectorActual.capacidadDisponible <= 0 ? 'AGOTADO' : 'COMPRAR AHORA →'}
             </button>
           </div>

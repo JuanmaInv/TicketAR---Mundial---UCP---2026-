@@ -5,38 +5,69 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createUsuario, getUsuario, updateUsuario } from "@/lib/api";
 import { useUser } from "@clerk/nextjs";
 
+type CampoFormulario = 'nombre' | 'apellido' | 'documentacion' | 'telefono' | 'provincia' | 'localidad';
+
+function validarCampo(nombre: CampoFormulario, valor: string): string {
+  switch (nombre) {
+    case 'nombre':
+    case 'apellido':
+      if (!valor.trim()) return 'Este campo es obligatorio';
+      if (valor.trim().length < 2) return 'Mínimo 2 caracteres';
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor)) return 'Solo letras y espacios';
+      return '';
+    case 'documentacion':
+      if (!valor.trim()) return 'El documento es obligatorio para ingresar al estadio';
+      if (valor.trim().length < 6) return 'Mínimo 6 caracteres';
+      if (valor.trim().length > 20) return 'Máximo 20 caracteres';
+      if (!/^[a-zA-Z0-9]+$/.test(valor.trim())) return 'Sin espacios ni caracteres especiales (solo letras y números)';
+      return '';
+    case 'telefono': {
+      const soloDigitos = valor.replace(/[\s\-\(\)\+]/g, '');
+      if (!valor.trim()) return 'El teléfono es obligatorio';
+      if (!/^\d+$/.test(soloDigitos)) return 'Solo números (puede incluir +, espacios o guiones)';
+      if (soloDigitos.length < 8) return 'Mínimo 8 dígitos';
+      if (soloDigitos.length > 15) return 'Máximo 15 dígitos';
+      return '';
+    }
+    case 'provincia':
+    case 'localidad':
+      if (!valor.trim()) return 'Este campo es obligatorio';
+      if (valor.trim().length < 2) return 'Mínimo 2 caracteres';
+      return '';
+    default:
+      return '';
+  }
+};
+
 function FormularioPerfil() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
-  const matchId = searchParams.get("matchId");
-  const redirectUrl = matchId ? `/checkout/${matchId}?step=2` : (searchParams.get("redirect") || "/");
+  const partidoId = searchParams.get("partidoId");
+  const redirectUrl = partidoId ? `/checkout/${partidoId}` : (searchParams.get("redirect") || "/");
 
   const [datos, setDatos] = useState({
     nombre: "",
     apellido: "",
-    email: "", 
+    email: "",
     documentacion: "",
     telefono: "",
     localidad: "",
     provincia: "",
   });
 
-  const [errores, setErrores] = useState<Record<string, boolean>>({});
+  const [errores, setErrores] = useState<Partial<Record<CampoFormulario, string>>>({});
+  const [tocados, setTocados] = useState<Partial<Record<CampoFormulario, boolean>>>({});
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
   const [existeEnDB, setExisteEnDB] = useState(false);
 
-  // Cargar datos existentes
   useEffect(() => {
     async function cargarPerfil() {
       if (isLoaded && user) {
-        // Forma robusta de obtener el email en Clerk v7
         const emailClerk = user.emailAddresses[0]?.emailAddress || "";
-        
         try {
           const usuarioDB = await getUsuario(emailClerk);
-          
           if (usuarioDB) {
             setDatos({
               nombre: usuarioDB.nombre || user.firstName || "",
@@ -57,8 +88,7 @@ function FormularioPerfil() {
             }));
             setExisteEnDB(false);
           }
-        } catch (e) {
-          // Si falla la búsqueda, al menos tenemos el email de Clerk
+        } catch {
           setDatos(prev => ({ ...prev, email: emailClerk }));
         }
       }
@@ -66,169 +96,211 @@ function FormularioPerfil() {
     cargarPerfil();
   }, [isLoaded, user]);
 
-  const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDatos({ ...datos, [e.target.name]: e.target.value });
-  };
-
-  const guardarDatos = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setEnviando(true);
+  function manejarCambio(e: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    setDatos({ ...datos, [name]: value });
     
+    const n = name as CampoFormulario;
+    let isTocado = false;
+    switch (n) {
+      case 'nombre': isTocado = !!tocados.nombre; break;
+      case 'apellido': isTocado = !!tocados.apellido; break;
+      case 'documentacion': isTocado = !!tocados.documentacion; break;
+      case 'telefono': isTocado = !!tocados.telefono; break;
+      case 'provincia': isTocado = !!tocados.provincia; break;
+      case 'localidad': isTocado = !!tocados.localidad; break;
+    }
+
+    if (isTocado) {
+      const error = validarCampo(n, value);
+      setErrores(prev => ({ ...prev, [name]: error }));
+    }
+  }
+
+  function manejarBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    setTocados(prev => ({ ...prev, [name]: true }));
+    const error = validarCampo(name as CampoFormulario, value);
+    setErrores(prev => ({ ...prev, [name]: error }));
+  }
+
+  async function guardarDatos(e: React.FormEvent) {
+    e.preventDefault();
+    
+    const eNombre = validarCampo('nombre', datos.nombre);
+    const eApellido = validarCampo('apellido', datos.apellido);
+    const eDoc = validarCampo('documentacion', datos.documentacion);
+    const eTel = validarCampo('telefono', datos.telefono);
+    const eProv = validarCampo('provincia', datos.provincia);
+    const eLoc = validarCampo('localidad', datos.localidad);
+
+    const nuevosErrores: Partial<Record<CampoFormulario, string>> = {
+      ...(eNombre && { nombre: eNombre }),
+      ...(eApellido && { apellido: eApellido }),
+      ...(eDoc && { documentacion: eDoc }),
+      ...(eTel && { telefono: eTel }),
+      ...(eProv && { provincia: eProv }),
+      ...(eLoc && { localidad: eLoc }),
+    };
+
+    setErrores(nuevosErrores);
+    setTocados({ nombre: true, apellido: true, documentacion: true, telefono: true, provincia: true, localidad: true });
+    
+    if (Object.keys(nuevosErrores).length > 0) return;
+
+    setEnviando(true);
     try {
       const payload = {
         email: datos.email,
-        nombre: datos.nombre,
-        apellido: datos.apellido,
-        numeroPasaporte: datos.documentacion,
-        telefono: datos.telefono,
-        localidad: datos.localidad,
-        provincia: datos.provincia
+        nombre: datos.nombre.trim(),
+        apellido: datos.apellido.trim(),
+        numeroPasaporte: datos.documentacion.trim().toUpperCase(),
+        telefono: datos.telefono.trim(),
+        localidad: datos.localidad.trim(),
+        provincia: datos.provincia.trim()
       };
-
       if (existeEnDB) {
         await updateUsuario(datos.email, payload);
       } else {
         await createUsuario(payload);
       }
-      
       setExito(true);
-      setTimeout(() => {
-        router.push(redirectUrl);
-      }, 1500);
-    } catch (error: any) {
+      setTimeout(() => { router.push(redirectUrl); }, 1500);
+    } catch (err) {
+      const error = err as Error;
       alert("Error al guardar: " + error.message);
     } finally {
       setEnviando(false);
     }
   };
+
   if (!isLoaded) return <div className="text-center py-10 text-foreground">Conectando con Clerk...</div>;
+
+  function campo(
+    nombre: string,
+    label: string,
+    valor: string,
+    error: string | undefined,
+    tocado: boolean | undefined,
+    tipo: string = 'text',
+    placeholder: string = ''
+  ) {
+    return (
+      <div className="space-y-2">
+        <label htmlFor={nombre} className="block text-[10px] font-black uppercase tracking-widest text-foreground">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <input
+          id={nombre}
+          type={tipo}
+          name={nombre}
+          placeholder={placeholder}
+          className={`w-full px-6 py-4 border-2 rounded-[1.2rem] bg-card text-foreground font-bold outline-none text-base transition-all duration-200 ${
+            error
+              ? 'border-red-500 focus:border-red-400 bg-red-500/5'
+              : tocado && !error
+              ? 'border-emerald-500 focus:border-emerald-400'
+              : 'border-border focus:border-blue-500'
+          }`}
+          value={valor}
+          onChange={manejarCambio}
+          onBlur={manejarBlur}
+        />
+        {error && (
+          <p className="text-red-500 text-[11px] font-bold flex items-center gap-1 animate-in fade-in duration-200">
+            <span>⚠</span> {error}
+          </p>
+        )}
+        {tocado && !error && valor.trim() && (
+          <p className="text-emerald-500 text-[11px] font-bold flex items-center gap-1">
+            <span>✓</span> Correcto
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-background py-16 px-4 transition-colors duration-500 flex flex-col items-center justify-center">
       <div className="w-full max-w-3xl">
-        
-        {/* TÍTULO Y HEADER */}
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-black italic tracking-tighter uppercase mb-2">
             <span className="text-foreground">MI</span> <span className="text-blue-600">PERFIL</span>
           </h1>
           <p className="text-muted-foreground text-xs md:text-sm font-bold uppercase tracking-[0.2em]">
-            Verifica tu identidad para emitir tus tickets
+            Verifica tu identidad para emitir tus tickets oficiales
           </p>
         </div>
 
-        <form className="space-y-8" onSubmit={guardarDatos}>
+        {/* Info banner */}
+        <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 mb-8 flex items-start gap-3">
+          <span className="text-xl shrink-0">🪪</span>
+          <p className="text-blue-400 text-xs font-bold leading-relaxed">
+            <strong>Importante:</strong> El DNI o Pasaporte que cargues aquí será verificado físicamente en la entrada del estadio. Asegúrate de que coincida exactamente con tu documento oficial.
+          </p>
+        </div>
+
+        <form className="space-y-6" onSubmit={(e) => { void guardarDatos(e); }} noValidate>
           {exito && (
-            <div className="bg-emerald-500/10 border border-emerald-500 text-emerald-500 p-6 rounded-2xl text-center font-black animate-bounce">
-              ¡DATOS GUARDADOS CON ÉXITO!
+            <div className="bg-emerald-500/10 border border-emerald-500 text-emerald-500 p-6 rounded-2xl text-center font-black animate-in slide-in-from-top-4 duration-500">
+              ✅ ¡DATOS GUARDADOS CON ÉXITO! Redirigiendo...
             </div>
           )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* NOMBRE */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Nombre</label>
-              <input 
-                type="text" 
-                name="nombre" 
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
-                value={datos.nombre} 
-                onChange={manejarCambio} 
-                required 
-              />
+
+          <div className="bg-card border border-border rounded-[2rem] p-6 md:p-10 space-y-6">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-4">
+              Datos Personales
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {campo('nombre', 'Nombre', datos.nombre, errores.nombre, tocados.nombre, 'text', 'Ej: Juan')}
+              {campo('apellido', 'Apellido', datos.apellido, errores.apellido, tocados.apellido, 'text', 'Ej: Pérez')}
             </div>
-            
-            {/* APELLIDO */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Apellido</label>
-              <input 
-                type="text" 
-                name="apellido" 
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
-                value={datos.apellido} 
-                onChange={manejarCambio} 
-                required 
+
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-[10px] font-black uppercase tracking-widest text-foreground">
+                Correo Electrónico
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="w-full px-6 py-4 border-2 border-border rounded-[1.2rem] bg-card text-foreground font-bold opacity-60 cursor-not-allowed text-base"
+                value={datos.email}
+                readOnly
               />
+              <p className="text-muted-foreground text-[10px]">El email está vinculado a tu cuenta de Clerk y no se puede modificar aquí.</p>
             </div>
           </div>
 
-          {/* EMAIL (FULL WIDTH) */}
-          <div className="space-y-3">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Correo Electrónico (Vínculo Clerk)</label>
-            <input 
-              type="email" 
-              className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold opacity-70 cursor-not-allowed text-lg" 
-              value={datos.email} 
-              readOnly 
-            />
+          <div className="bg-card border border-border rounded-[2rem] p-6 md:p-10 space-y-6">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-4">
+              Documento &amp; Contacto
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {campo('documentacion', 'DNI / Pasaporte', datos.documentacion, errores.documentacion, tocados.documentacion, 'text', 'Ej: 44196097 o AAB12345')}
+              {campo('telefono', 'Teléfono', datos.telefono, errores.telefono, tocados.telefono, 'tel', 'Ej: 3794613813')}
+            </div>
+            <p className="text-muted-foreground text-[10px] font-bold">
+              El DNI/Pasaporte debe ser alfanumérico, sin espacios. El teléfono solo acepta dígitos (mín. 8).
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* DNI */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">DNI / Documento</label>
-              <input 
-                type="text" 
-                name="documentacion" 
-                placeholder="Ej: 44196097"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
-                value={datos.documentacion} 
-                onChange={manejarCambio} 
-                required 
-              />
-            </div>
-
-            {/* TELÉFONO */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Teléfono</label>
-              <input 
-                type="tel" 
-                name="telefono" 
-                placeholder="Ej: 3794613813"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
-                value={datos.telefono} 
-                onChange={manejarCambio} 
-                required 
-              />
+          <div className="bg-card border border-border rounded-[2rem] p-6 md:p-10 space-y-6">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-4">
+              Ubicación
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {campo('provincia', 'Provincia', datos.provincia, errores.provincia, tocados.provincia, 'text', 'Ej: Corrientes')}
+              {campo('localidad', 'Localidad', datos.localidad, errores.localidad, tocados.localidad, 'text', 'Ej: Capital')}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* PROVINCIA */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Provincia</label>
-              <input 
-                type="text" 
-                name="provincia" 
-                placeholder="Ej: Corrientes"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
-                value={datos.provincia} 
-                onChange={manejarCambio} 
-                required 
-              />
-            </div>
-
-            {/* LOCALIDAD */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-foreground">Localidad</label>
-              <input 
-                type="text" 
-                name="localidad" 
-                placeholder="Ej: Ciudad de Corrientes"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
-                value={datos.localidad} 
-                onChange={manejarCambio} 
-                required 
-              />
-            </div>
-          </div>
-
-          {/* BOTÓN DE ACCIÓN DINÁMICO */}
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={enviando}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-950/20 text-lg hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-12"
+            className="relative group w-full overflow-hidden bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] italic transition-all shadow-2xl shadow-emerald-500/30 text-lg disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
           >
-            {enviando ? 'GUARDANDO...' : (matchId ? 'CONFIRMAR Y ELEGIR UBICACIÓN →' : 'GUARDAR CAMBIOS')}
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+            {enviando ? '⏳ GUARDANDO...' : '✅ GUARDAR Y CONTINUAR'}
           </button>
         </form>
       </div>
@@ -238,17 +310,8 @@ function FormularioPerfil() {
 
 export default function ProfilePage() {
   return (
-    <div className="min-h-screen py-20 px-4 bg-background transition-colors duration-500 flex items-center justify-center">
-      <div className="w-full max-w-2xl bg-card p-10 rounded-[3rem] shadow-2xl border border-border relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="relative z-10 text-center mb-10">
-          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-foreground">MI <span className="text-blue-600">PERFIL</span></h2>
-          <p className="mt-3 text-muted-foreground font-medium text-xs uppercase tracking-widest">Verifica tu identidad para emitir tus tickets</p>
-        </div>
-        <Suspense fallback={<div className="text-center text-foreground">Cargando datos...</div>}>
-          <FormularioPerfil />
-        </Suspense>
-      </div>
-    </div>
+    <Suspense fallback={<div className="text-center py-20 text-foreground">Cargando...</div>}>
+      <FormularioPerfil />
+    </Suspense>
   );
 }
