@@ -1,21 +1,18 @@
 import { Module } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { UsuariosModule } from '../usuarios/usuarios.module';
-import { QrService } from '../tickets/qr.service';
+import { EntradasModule } from '../tickets/tickets.module';
 
 /**
  * Módulo de Notificaciones.
  *
  * Importa UsuariosModule para poder buscar el email del usuario.
- * Registra el QrService directamente ya que solo necesita ese servicio
- * del módulo de tickets (evita dependencia circular).
+ * Importa EntradasModule para usar el QrService (exportado como singleton).
  */
 @Module({
-  imports: [UsuariosModule],
+  imports: [UsuariosModule, EntradasModule],
   providers: [
     NotificationsService,
-    // Se registra QrService aquí directamente para evitar importar todo EntradasModule
-    QrService,
   ],
 })
 export class NotificationsModule {}

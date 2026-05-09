@@ -25,6 +25,6 @@ import { QrService } from './qr.service';
     // Servicio del Cron Job que libera reservas vencidas cada minuto
     ReservasExpiradasService,
   ],
-  exports: [EntradasService],
+  exports: [EntradasService, QrService],
 })
 export class EntradasModule {}

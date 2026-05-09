@@ -115,14 +115,23 @@ export class EntradasService {
     // Validamos que el ticket se pueda confirmar (ej: que no esté cancelado o expirado)
     estadoActual.confirmarPago();
 
-    const ticketPagado = await this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    return this.finalizarProcesoDePago(id);
+  }
+
+  private async finalizarProcesoDePago(id: string): Promise<TicketEntity> {
+    const ticketPagado = await this.entradasRepository.actualizarEstado(
+      id,
+      TicketStatus.PAGADO,
+    );
 
     // Emitir evento para que los listeners (ej: NotificationsService) reaccionen
     this.eventEmitter.emit('ticket.pagado', {
       ticketId: ticketPagado.id,
       idUsuario: ticketPagado.idUsuario,
     });
-    this.logger.log(`Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`);
+    this.logger.log(
+      `Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`,
+    );
 
     return ticketPagado;
   }
@@ -171,18 +180,7 @@ export class EntradasService {
 
     // Si NO hay paymentUrl y el pago fue exitoso, es un pago inmediato (Simulado)
     if (!paymentResult.paymentUrl && paymentResult.success) {
-      const ticketPagado = await this.entradasRepository.actualizarEstado(
-        id,
-        TicketStatus.PAGADO,
-      );
-
-      // Emitir evento para que los listeners (ej: NotificationsService) reaccionen
-      this.eventEmitter.emit('ticket.pagado', {
-        ticketId: ticketPagado.id,
-        idUsuario: ticketPagado.idUsuario,
-      });
-      this.logger.log(`Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`);
-
+      const ticketPagado = await this.finalizarProcesoDePago(id);
       return { ticket: ticketPagado, paymentResult };
     }
 
