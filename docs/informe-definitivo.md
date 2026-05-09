@@ -308,6 +308,26 @@ El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones d
 
 ---
 
+## 🏗️ Principios de Diseño Aplicados
+
+Para asegurar que el backend de TicketAR sea robusto y escalable, hemos aplicado los siguientes principios durante la implementación de los módulos de administración y usuarios:
+
+1. **Principio de Responsabilidad Única (SRP):**
+   - Hemos separado la **Seguridad** de la **Lógica de Negocio**. 
+   - El `RolesGuard` se encarga exclusivamente de verificar permisos (Quién puede entrar).
+   - El `PartidosService` se encarga exclusivamente de la integridad de los datos (Qué se puede hacer con el partido).
+   - *Beneficio:* Si en el futuro cambiamos el sistema de autenticación (ej: de Headers a JWT), el código de los servicios no se ve afectado.
+
+2. **Validación de Estado y Fallo Elegante (Graceful Failure):**
+   - Antes de cualquier operación de mutación (`PATCH` o `DELETE`), el servicio valida la existencia del recurso mediante un check previo.
+   - *Beneficio:* Evita que el sistema responda con éxito (`200 OK`) ante operaciones que no surtieron efecto, devolviendo en su lugar un `404 Not Found` preciso.
+
+3. **Trazabilidad y Auditoría:**
+   - La arquitectura está preparada para identificar al "actor" de cada acción administrativa. 
+   - El uso de parámetros y headers específicos permite llevar un seguimiento de qué administrador modificó o eliminó un evento, garantizando la transparencia del sistema.
+
+---
+
 ## 🤖 Protocolo Erwin (Cultura de Equipo)
 
 El proyecto TicketAR no solo se trata de código, sino de un proceso de aprendizaje continuo.
