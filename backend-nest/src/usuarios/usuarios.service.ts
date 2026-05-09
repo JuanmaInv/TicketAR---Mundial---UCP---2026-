@@ -25,7 +25,10 @@ export class UsuariosService {
     return this.usuariosRepository.buscarPorId(id);
   }
 
-  async actualizar(email: string, datos: any): Promise<UsuarioEntidad> {
+  async actualizar(
+    email: string,
+    datos: Partial<CrearUsuarioDto>,
+  ): Promise<UsuarioEntidad> {
     return this.usuariosRepository.actualizar(email, datos);
   }
 
