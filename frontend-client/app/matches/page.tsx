@@ -93,12 +93,12 @@ export default function MatchesPage() {
   if (cargando) return <WorldCupLoader />;
 
   return (
-    <main className="min-h-screen py-16 px-6 bg-background text-foreground transition-all duration-300">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
+    <main className="min-h-screen py-10 md:py-16 px-4 md:px-6 bg-background text-foreground transition-all duration-300">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 md:gap-12">
         
         {/* FILTROS */}
         <aside className="lg:w-[340px] shrink-0">
-          <div className="bg-card rounded-[2.5rem] p-10 shadow-2xl sticky top-28 border border-border">
+          <div className="bg-card rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl lg:sticky lg:top-28 border border-border">
              <h2 className="text-xl font-black italic uppercase text-primary mb-10 tracking-tight">
                Filtros <span className="text-foreground">Avanzados</span>
              </h2>
@@ -161,8 +161,8 @@ export default function MatchesPage() {
 
         {/* CRONOGRAMA */}
         <section className="flex-1">
-          <div className="mb-12">
-            <h1 className="text-5xl font-black italic text-foreground uppercase tracking-tighter">
+          <div className="mb-8 md:mb-12">
+            <h1 className="text-3xl md:text-5xl font-black italic text-foreground uppercase tracking-tighter">
               Cronograma <span className="text-primary">Oficial FIFA</span>
             </h1>
           </div>
@@ -183,8 +183,8 @@ export default function MatchesPage() {
 
               return (
                 /* BORDE DINÁMICO APLICADO AQUÍ */
-                <div key={match.id} className="world-cup-border rounded-[3.5rem] p-[3px]">
-                  <div className="group relative bg-card rounded-[3.4rem] overflow-hidden transition-all duration-500 min-h-[350px] flex flex-col md:flex-row shadow-2xl">
+                <div key={match.id} className="world-cup-border rounded-[2rem] md:rounded-[3.5rem] p-[3px]">
+                  <div className="group relative bg-card rounded-[1.9rem] md:rounded-[3.4rem] overflow-hidden transition-all duration-500 min-h-[350px] flex flex-col md:flex-row shadow-2xl">
                     
                     {/* 🚩 ANIMACIÓN DE REVELADO: Banderas aparecen al Hover */}
                     <div className="absolute inset-0 flex opacity-0 group-hover:opacity-30 pointer-events-none transition-all duration-700 transform scale-110 group-hover:scale-100">
@@ -198,31 +198,31 @@ export default function MatchesPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-card/40"></div>
                     </div>
 
-                    <div className="p-12 relative z-10 w-full flex flex-col justify-between">
-                      <div className="flex justify-between items-center mb-8">
+                    <div className="p-6 md:p-12 relative z-10 w-full flex flex-col justify-between">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 md:mb-8">
                         <span className="bg-primary/10 text-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors">
                           Mundial 2026 • {match.fase}
                         </span>
                         <span className="text-muted text-xs font-bold uppercase italic tracking-widest">10 / JUN / 2026</span>
                       </div>
 
-                      <div className="flex flex-col lg:flex-row items-center justify-center gap-16 mb-12">
+                      <div className="flex flex-col lg:flex-row items-center justify-center gap-8 md:gap-16 mb-8 md:mb-12">
                         <div className="flex flex-col items-center gap-4 flex-1">
                           <Bandera pais={local} className="w-28 h-20 rounded-2xl shadow-2xl transition-transform hover:scale-110" />
-                          <h3 className="text-4xl font-black text-foreground italic tracking-tight text-center">{local}</h3>
+                          <h3 className="text-2xl md:text-4xl font-black text-foreground italic tracking-tight text-center">{local}</h3>
                         </div>
                         
                         <div className="flex flex-col items-center">
-                           <span className="text-primary font-black italic text-5xl opacity-30">VS</span>
+                           <span className="text-primary font-black italic text-3xl md:text-5xl opacity-30">VS</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-4 flex-1">
                           <Bandera pais={visitante} className="w-28 h-20 rounded-2xl shadow-2xl transition-transform hover:scale-110" />
-                          <h3 className="text-4xl font-black text-foreground italic tracking-tight text-center">{visitante}</h3>
+                          <h3 className="text-2xl md:text-4xl font-black text-foreground italic tracking-tight text-center">{visitante}</h3>
                         </div>
                       </div>
 
-                      <div className="flex flex-col lg:flex-row justify-between items-center pt-10 border-t border-border gap-8">
+                      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center pt-6 md:pt-10 border-t border-border gap-6 md:gap-8">
                         <div className="flex flex-col gap-2">
                           <p className="text-foreground font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-2">
                             <span className="text-xl">📍</span> {match.nombre_estadio}
@@ -233,10 +233,10 @@ export default function MatchesPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-10">
-                          <div className="text-right">
+                        <div className="w-full lg:w-auto flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 md:gap-10">
+                          <div className="text-left sm:text-right">
                             <p className="text-muted text-[9px] font-black uppercase tracking-widest mb-1">Tickets desde</p>
-                            <p className="text-5xl font-black text-foreground tracking-tighter transition-colors">
+                            <p className="text-3xl md:text-5xl font-black text-foreground tracking-tighter transition-colors">
                               {formatPrice(precio)}
                             </p>
                           </div>

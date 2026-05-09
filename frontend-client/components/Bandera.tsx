@@ -101,6 +101,8 @@ export default function Bandera({ pais, fill = false, className = "" }: BanderaP
         alt={`Bandera de ${pais}`}
         fill={true}
         className="rounded-sm shadow-sm object-cover"
+        sizes={fill ? '(max-width: 768px) 50vw, 33vw' : '44px'}
+        loading={fill ? 'eager' : 'lazy'}
         unoptimized={!fill} // Unoptimized for small flags to avoid processing
       />
     </div>

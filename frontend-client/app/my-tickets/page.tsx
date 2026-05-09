@@ -96,11 +96,11 @@ export default function MyTicketsPage() {
   }
 
   return (
-    <main className="min-h-screen py-20 px-4 bg-background transition-colors duration-500">
+    <main className="min-h-screen py-10 md:py-20 px-3 md:px-4 bg-background transition-colors duration-500">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-12 flex justify-between items-end">
+        <header className="mb-8 md:mb-12 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
           <div>
-            <h1 className="text-5xl font-black italic tracking-tighter uppercase text-foreground mb-2">
+            <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase text-foreground mb-2">
               Mis <span className="text-blue-500">Entradas</span>
             </h1>
             <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Acreditaciones oficiales FIFA 2026</p>
@@ -252,7 +252,7 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
         )}
       </div>
 
-      <div className="p-10 bg-slate-100 dark:bg-black/40 flex flex-col items-center justify-center min-w-[280px] border-l border-border">
+      <div className="p-6 md:p-10 bg-slate-100 dark:bg-black/40 flex flex-col items-center justify-center min-w-[220px] md:min-w-[280px] border-l border-border">
         {verQr && qr ? (
           <div className="bg-white p-3 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300">
             <Image src={qr} alt="QR Access" width={160} height={160} unoptimized />
