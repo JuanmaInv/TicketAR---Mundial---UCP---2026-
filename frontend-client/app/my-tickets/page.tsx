@@ -41,7 +41,10 @@ export default function MyTicketsPage() {
     
     try {
       const [datosUsuario, entradasApi, sectoresApi, partidosApi] = await Promise.all([
-        getUsuario(user.emailAddresses[0].emailAddress),
+        getUsuario(user.emailAddresses[0].emailAddress, {
+          userId: user.id,
+          userEmail: user.emailAddresses[0].emailAddress,
+        }),
         getTickets(),
         getSectores(),
         getPartidos()
