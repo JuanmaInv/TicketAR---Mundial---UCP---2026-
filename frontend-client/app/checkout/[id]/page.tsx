@@ -7,6 +7,17 @@ import SectorSelector from '@/components/checkout/SectorSelector';
 import CountdownTimer from '@/components/CountdownTimer';
 import { createTicket, getUsuario, pagarTicket, updateUsuario } from '@/lib/api';
 
+interface Usuario {
+  id: string;
+  nombre?: string;
+  apellido?: string;
+  numeroPasaporte?: string;
+  email?: string;
+  telefono?: string;
+  provincia?: string;
+  localidad?: string;
+}
+
 function CheckoutContent({ partidoId }: { partidoId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -17,7 +28,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [procesando, setProcesando] = useState(false);
   const [fechaExpiracion, setFechaExpiracion] = useState<Date | null>(null);
   const [resumenCompra, setResumenCompra] = useState<{sectorId: string, cantidad: number, total: number} | null>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<Usuario | null>(null);
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
   const [editandoDatos, setEditandoDatos] = useState(false);
   const [formData, setFormData] = useState({ telefono: '', provincia: '', localidad: '' });
@@ -44,8 +55,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
           }
           setCargandoUsuario(false);
         })
-        .catch(err => {
-          console.error('Error:', err);
+        .catch(() => {
           setCargandoUsuario(false);
         });
     }
@@ -57,25 +67,33 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       const savedTimer = localStorage.getItem(`checkout_timer_${partidoId}`);
       if (savedTimer) {
         const expirationDate = new Date(savedTimer);
-        if (expirationDate > new Date()) {
-          setFechaExpiracion(expirationDate);
-        } else {
-          localStorage.removeItem(`checkout_timer_${partidoId}`);
-          const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
-          setFechaExpiracion(nuevaFecha);
-          localStorage.setItem(`checkout_timer_${partidoId}`, nuevaFecha.toISOString());
-        }
+        setTimeout(() => {
+          if (expirationDate > new Date()) {
+            setFechaExpiracion(expirationDate);
+          } else {
+            localStorage.removeItem(`checkout_timer_${partidoId}`);
+            const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
+            setFechaExpiracion(nuevaFecha);
+            localStorage.setItem(`checkout_timer_${partidoId}`, nuevaFecha.toISOString());
+          }
+        }, 0);
       } else {
         const nuevaFecha = new Date(Date.now() + 15 * 60 * 1000);
-        setFechaExpiracion(nuevaFecha);
-        localStorage.setItem(`checkout_timer_${partidoId}`, nuevaFecha.toISOString());
+        setTimeout(() => {
+          setFechaExpiracion(nuevaFecha);
+          localStorage.setItem(`checkout_timer_${partidoId}`, nuevaFecha.toISOString());
+        }, 0);
       }
       
       const savedPaso = localStorage.getItem(`checkout_paso_${partidoId}`);
-      if (savedPaso) setPaso(parseInt(savedPaso));
+      if (savedPaso) {
+        setTimeout(() => setPaso(parseInt(savedPaso)), 0);
+      }
       
       const savedResumen = localStorage.getItem(`checkout_resumen_${partidoId}`);
-      if (savedResumen) setResumenCompra(JSON.parse(savedResumen));
+      if (savedResumen) {
+        setTimeout(() => setResumenCompra(JSON.parse(savedResumen)), 0);
+      }
     }
   }, [partidoId]);
 
@@ -107,8 +125,10 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   // Bloqueo de seguridad
   useEffect(() => {
     if (!cargandoUsuario && paso === 2 && perfilIncompleto) {
-      setPaso(1);
-      setEditandoDatos(true);
+      setTimeout(() => {
+        setPaso(1);
+        setEditandoDatos(true);
+      }, 0);
     }
   }, [paso, perfilIncompleto, cargandoUsuario]);
 
@@ -120,14 +140,14 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     setGuardandoDatos(true);
     try {
       const email = user?.emailAddresses[0]?.emailAddress || '';
-      const ok = await updateUsuario(email, { ...userData, ...formData });
+      const ok = await updateUsuario(email, { ...userData, ...formData } as Record<string, unknown>);
       if (ok) {
-        setUserData({ ...userData, ...formData });
+        setUserData({ ...(userData as Usuario), ...formData });
         setEditandoDatos(false);
       } else {
         alert("Error al guardar tus datos en el servidor.");
       }
-    } catch (e) {
+    } catch {
       alert("Error de conexión al actualizar el perfil.");
     }
     setGuardandoDatos(false);
@@ -143,23 +163,27 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     setProcesando(true);
     try {
       const ticketResponse = await createTicket({
-        idUsuario: userData.id,
+        idUsuario: userData?.id || '',
         idPartido: partidoId,
         idSector: resumenCompra.sectorId
       });
       
       const paymentResponse = await pagarTicket(ticketResponse.id);
       
-      if (paymentResponse.paymentResult?.paymentUrl) {
+      // Casteo de respuesta de pago
+      const result = paymentResponse as unknown as { paymentResult?: { paymentUrl?: string } };
+      
+      if (result.paymentResult?.paymentUrl) {
         limpiarCheckout();
-        window.location.href = paymentResponse.paymentResult.paymentUrl;
+        window.location.href = result.paymentResult.paymentUrl;
       } else {
         limpiarCheckout();
         router.push('/my-tickets');
       }
-    } catch (error: any) {
+    } catch (error) {
       // Mostrar el error real y claro
-      alert('Atención: ' + (error.message || 'Hubo un error al procesar la reserva.'));
+      const msg = error instanceof Error ? error.message : 'Hubo un error al procesar la reserva.';
+      alert('Atención: ' + msg);
       setProcesando(false);
     }
   };

@@ -8,7 +8,12 @@ interface CountdownTimerProps {
 }
 
 export default function CountdownTimer({ tiempoExpiracion, onExpirar }: CountdownTimerProps) {
-  const [tiempoRestante, setTiempoRestante] = useState<number>(0);
+  const [tiempoRestante, setTiempoRestante] = useState<number>(() => {
+    const ahora = new Date().getTime();
+    const expiracion = tiempoExpiracion.getTime();
+    const diferencia = expiracion - ahora;
+    return diferencia > 0 ? diferencia : 0;
+  });
 
   useEffect(() => {
     // Calculamos el tiempo cada vez que se ejecute la función
@@ -20,9 +25,6 @@ export default function CountdownTimer({ tiempoExpiracion, onExpirar }: Countdow
       // Si la diferencia es menor a 0, devolvemos 0 para que no haya números negativos
       return diferencia > 0 ? diferencia : 0;
     };
-
-    // Actualizamos el estado inicial
-    setTiempoRestante(calcularTiempoRestante());
 
     // Configuramos el temporizador para que se actualice cada segundo (1000 ms)
     const intervalo = setInterval(() => {

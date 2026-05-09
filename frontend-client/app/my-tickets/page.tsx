@@ -6,13 +6,36 @@ import { useUser } from '@clerk/nextjs';
 import { getTickets, getUsuario, getTicketQr, getSectores, getPartidos, pagarTicket } from '@/lib/api';
 import WorldCupLoader from '@/components/WorldCupLoader';
 
+interface Ticket {
+  id: string;
+  idSector?: string;
+  id_sector?: string;
+  idPartido?: string;
+  id_partido?: string;
+  estado: string;
+  idUsuario?: string;
+  id_usuario?: string;
+}
+
+interface Sector {
+  id: string;
+  nombre: string;
+  precio: number;
+}
+
+interface Partido {
+  id: string;
+  equipo_local: string;
+  equipo_visitante: string;
+  nombre_estadio: string;
+}
+
 export default function MyTicketsPage() {
   const { user, isLoaded } = useUser();
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [sectores, setSectores] = useState<any[]>([]);
-  const [partidos, setPartidos] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [partidos, setPartidos] = useState<Partido[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [dbUserId, setDbUserId] = useState<string | null>(null);
 
   const cargarDatos = async () => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
@@ -20,13 +43,12 @@ export default function MyTicketsPage() {
     try {
       const [userData, allTickets, allSectores, allPartidos] = await Promise.all([
         getUsuario(user.emailAddresses[0].emailAddress),
-        getTickets(),
-        getSectores(),
-        getPartidos()
+        getTickets() as unknown as Promise<Ticket[]>,
+        getSectores() as unknown as Promise<Sector[]>,
+        getPartidos() as unknown as Promise<Partido[]>
       ]);
 
       if (userData?.id) {
-        setDbUserId(userData.id);
         setSectores(allSectores);
         setPartidos(allPartidos);
         
@@ -37,8 +59,8 @@ export default function MyTicketsPage() {
         );
         setTickets(myTickets);
       }
-    } catch (err) {
-      console.error('Error cargando datos de tickets:', err);
+    } catch {
+      console.error('Error cargando datos de tickets');
     } finally {
       setCargando(false);
     }
@@ -52,6 +74,7 @@ export default function MyTicketsPage() {
         setCargando(false);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user]);
 
   if (cargando) {
@@ -115,7 +138,7 @@ export default function MyTicketsPage() {
   );
 }
 
-function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sectores: any[], partidos: any[], onUpdate: () => void }) {
+function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: Ticket, sectores: Sector[], partidos: Partido[], onUpdate: () => void }) {
   const [qr, setQr] = useState<string | null>(null);
   const [verQr, setVerQr] = useState(false);
   const [pagando, setPagando] = useState(false);
@@ -130,14 +153,16 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
     try {
       const response = await pagarTicket(ticket.id);
       
-      if (response.paymentResult?.paymentUrl) {
-        window.location.href = response.paymentResult.paymentUrl;
+      const result = response as unknown as { paymentResult?: { paymentUrl?: string } };
+      
+      if (result.paymentResult?.paymentUrl) {
+        window.location.href = result.paymentResult.paymentUrl;
         return;
       }
 
       alert('¡Pago procesado con éxito! Tu ticket ahora es válido.');
       onUpdate();
-    } catch (err) {
+    } catch {
       alert('Error al procesar el pago. Inténtalo de nuevo.');
     } finally {
       setPagando(false);
@@ -150,7 +175,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
         const dataUrl = await getTicketQr(ticket.id);
         setQr(dataUrl);
         setVerQr(true);
-      } catch (err) {
+      } catch {
         alert('Error al generar el QR. Contacta a soporte.');
       }
     } else {
@@ -222,6 +247,7 @@ function TicketCard({ ticket, sectores, partidos, onUpdate }: { ticket: any, sec
       <div className="p-10 bg-slate-100 dark:bg-black/40 flex flex-col items-center justify-center min-w-[280px] border-l border-border">
         {verQr && qr ? (
           <div className="bg-white p-3 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qr} alt="QR Access" className="w-40 h-40" />
             <p className="text-black text-[8px] font-black text-center mt-2 uppercase tracking-[0.3em]">Scannable at Gate</p>
           </div>

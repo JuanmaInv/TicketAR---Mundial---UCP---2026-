@@ -41,12 +41,12 @@ export async function getSectores(): Promise<Sector[]> {
   if (!res.ok) throw new Error('Error al traer sectores');
   const data = await res.json();
   const lista = Array.isArray(data) ? data : (data.data ?? []);
-  return lista.map((s: any) => ({
-    id: s.id,
-    nombre: s.nombre,
-    precio: s.precio,
-    capacidad: s.capacidad,
-    capacidadDisponible: s.capacidadDisponible ?? s.capacidad_disponible
+  return lista.map((s: Record<string, unknown>) => ({
+    id: s.id as string,
+    nombre: s.nombre as string,
+    precio: s.precio as number,
+    capacidad: s.capacidad as number,
+    capacidadDisponible: (s.capacidadDisponible ?? s.capacidad_disponible) as number
   }));
 }
 
@@ -79,7 +79,7 @@ export async function createUsuario(usuario: { email: string, nombre: string, ap
   return res.ok;
 }
 
-export async function updateUsuario(email: string, usuario: any) {
+export async function updateUsuario(email: string, usuario: Record<string, unknown>) {
   const res = await fetch(`${API_URL}/usuarios/${email}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -95,7 +95,7 @@ export async function deleteUsuario(email: string) {
   return res.ok;
 }
 
-export async function getTickets(): Promise<any[]> {
+export async function getTickets(): Promise<Record<string, unknown>[]> {
   const res = await fetch(`${API_URL}/entradas`);
   if (!res.ok) throw new Error('Error al traer tickets');
   return res.json();
@@ -108,7 +108,7 @@ export async function getTicketQr(id: string): Promise<string> {
   return data.qrDataUrl;
 }
 
-export async function pagarTicket(id: string): Promise<any> {
+export async function pagarTicket(id: string): Promise<Record<string, unknown>> {
   const res = await fetch(`${API_URL}/entradas/${id}/pagar`, {
     method: 'POST',
   });

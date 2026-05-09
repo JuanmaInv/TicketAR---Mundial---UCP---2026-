@@ -23,7 +23,7 @@ function FormularioPerfil() {
   });
 
   const { signOut } = useClerk();
-  const [errores, setErrores] = useState<Record<string, boolean>>({});
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
   const [existeEnDB, setExisteEnDB] = useState(false);
@@ -60,7 +60,7 @@ function FormularioPerfil() {
             }));
             setExisteEnDB(false);
           }
-        } catch (e) {
+        } catch {
           // Si falla la búsqueda, al menos tenemos el email de Clerk
           setDatos(prev => ({ ...prev, email: emailClerk }));
         }
@@ -69,8 +69,24 @@ function FormularioPerfil() {
     cargarPerfil();
   }, [isLoaded, user]);
 
+  const validarCampo = (name: string, value: string) => {
+    let error = "";
+    if (value.trim() === "") {
+      error = "Este campo es requerido";
+    } else {
+      if (name === "nombre" && value.length < 2) error = "Nombre muy corto";
+      if (name === "apellido" && value.length < 2) error = "Apellido muy corto";
+      if (name === "documentacion" && value.length < 7) error = "Documento inválido";
+      if (name === "telefono" && value.length < 8) error = "Teléfono inválido";
+      if (name === "provincia" && value.length < 3) error = "Provincia muy corta";
+      if (name === "localidad" && value.length < 3) error = "Localidad muy corta";
+    }
+    setErrores(prev => ({ ...prev, [name]: error }));
+  };
+
   const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
+    validarCampo(e.target.name, e.target.value);
   };
 
   const guardarDatos = async (e: React.FormEvent) => {
@@ -98,8 +114,9 @@ function FormularioPerfil() {
       setTimeout(() => {
         router.push(redirectUrl);
       }, 1500);
-    } catch (error: any) {
-      alert("Error al guardar: " + error.message);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Error desconocido";
+      alert("Error al guardar: " + msg);
     } finally {
       setEnviando(false);
     }
@@ -117,7 +134,7 @@ function FormularioPerfil() {
       } else {
         alert("Hubo un problema. Si el backend aún no implementó la ruta DELETE, esto fallará. (Status != 200)");
       }
-    } catch (e) {
+    } catch {
       alert("Error de conexión al intentar eliminar la cuenta.");
     }
     setEliminando(false);
@@ -152,11 +169,12 @@ function FormularioPerfil() {
               <input 
                 type="text" 
                 name="nombre" 
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                className={`w-full px-6 py-5 border-2 rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 transition-all outline-none text-lg shadow-sm ${errores.nombre ? 'border-red-500 focus:ring-red-500/20' : 'border-border focus:ring-blue-500/20'}`} 
                 value={datos.nombre} 
                 onChange={manejarCambio} 
                 required 
               />
+              {errores.nombre && <p className="text-red-500 text-xs font-bold mt-1 animate-pulse">{errores.nombre}</p>}
             </div>
             
             {/* APELLIDO */}
@@ -165,11 +183,12 @@ function FormularioPerfil() {
               <input 
                 type="text" 
                 name="apellido" 
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                className={`w-full px-6 py-5 border-2 rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 transition-all outline-none text-lg shadow-sm ${errores.apellido ? 'border-red-500 focus:ring-red-500/20' : 'border-border focus:ring-blue-500/20'}`} 
                 value={datos.apellido} 
                 onChange={manejarCambio} 
                 required 
               />
+              {errores.apellido && <p className="text-red-500 text-xs font-bold mt-1 animate-pulse">{errores.apellido}</p>}
             </div>
           </div>
 
@@ -192,11 +211,12 @@ function FormularioPerfil() {
                 type="text" 
                 name="documentacion" 
                 placeholder="Ej: 44196097"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                className={`w-full px-6 py-5 border-2 rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 transition-all outline-none text-lg shadow-sm ${errores.documentacion ? 'border-red-500 focus:ring-red-500/20' : 'border-border focus:ring-blue-500/20'}`} 
                 value={datos.documentacion} 
                 onChange={manejarCambio} 
                 required 
               />
+              {errores.documentacion && <p className="text-red-500 text-xs font-bold mt-1 animate-pulse">{errores.documentacion}</p>}
             </div>
 
             {/* TELÉFONO */}
@@ -206,11 +226,12 @@ function FormularioPerfil() {
                 type="tel" 
                 name="telefono" 
                 placeholder="Ej: 3794613813"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                className={`w-full px-6 py-5 border-2 rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 transition-all outline-none text-lg shadow-sm ${errores.telefono ? 'border-red-500 focus:ring-red-500/20' : 'border-border focus:ring-blue-500/20'}`} 
                 value={datos.telefono} 
                 onChange={manejarCambio} 
                 required 
               />
+              {errores.telefono && <p className="text-red-500 text-xs font-bold mt-1 animate-pulse">{errores.telefono}</p>}
             </div>
           </div>
 
@@ -222,11 +243,12 @@ function FormularioPerfil() {
                 type="text" 
                 name="provincia" 
                 placeholder="Ej: Corrientes"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                className={`w-full px-6 py-5 border-2 rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 transition-all outline-none text-lg shadow-sm ${errores.provincia ? 'border-red-500 focus:ring-red-500/20' : 'border-border focus:ring-blue-500/20'}`} 
                 value={datos.provincia} 
                 onChange={manejarCambio} 
                 required 
               />
+              {errores.provincia && <p className="text-red-500 text-xs font-bold mt-1 animate-pulse">{errores.provincia}</p>}
             </div>
 
             {/* LOCALIDAD */}
@@ -236,11 +258,12 @@ function FormularioPerfil() {
                 type="text" 
                 name="localidad" 
                 placeholder="Ej: Ciudad de Corrientes"
-                className="w-full px-6 py-5 border-2 border-border rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 focus:ring-blue-500/20 transition-all outline-none text-lg shadow-sm" 
+                className={`w-full px-6 py-5 border-2 rounded-[1.5rem] bg-card text-foreground font-bold focus:ring-4 transition-all outline-none text-lg shadow-sm ${errores.localidad ? 'border-red-500 focus:ring-red-500/20' : 'border-border focus:ring-blue-500/20'}`} 
                 value={datos.localidad} 
                 onChange={manejarCambio} 
                 required 
               />
+              {errores.localidad && <p className="text-red-500 text-xs font-bold mt-1 animate-pulse">{errores.localidad}</p>}
             </div>
           </div>
 
