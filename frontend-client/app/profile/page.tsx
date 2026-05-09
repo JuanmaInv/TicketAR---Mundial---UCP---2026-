@@ -2,12 +2,13 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createUsuario, getUsuario, updateUsuario } from "@/lib/api";
+import { createUsuario, eliminarMiCuenta, getUsuario, updateUsuario } from "@/lib/api";
 import { useUser } from "@clerk/nextjs";
 
 function FormularioPerfil() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
   const searchParams = useSearchParams();
   const matchId = searchParams.get("matchId");
   const redirectUrl = matchId ? `/checkout/${matchId}?step=2` : (searchParams.get("redirect") || "/");
@@ -33,9 +34,13 @@ function FormularioPerfil() {
       if (isLoaded && user) {
         // Forma robusta de obtener el email en Clerk v7
         const emailClerk = user.emailAddresses[0]?.emailAddress || "";
+        const userIdClerk = user.id || '';
         
         try {
-          const usuarioDB = await getUsuario(emailClerk);
+          const usuarioDB = await getUsuario(emailClerk, {
+            userId: userIdClerk,
+            userEmail: emailClerk,
+          });
           
           if (usuarioDB) {
             setDatos({
@@ -72,6 +77,10 @@ function FormularioPerfil() {
 
   async function guardarDatos(e: React.FormEvent) {
     e.preventDefault();
+    if (!user) {
+      setMensajeError("Tu sesión no está activa. Iniciá sesión nuevamente.");
+      return;
+    }
     setEnviando(true);
     setMensajeError("");
     
@@ -87,7 +96,10 @@ function FormularioPerfil() {
       };
 
       if (existeEnDB) {
-        await updateUsuario(datos.email, payload);
+        await updateUsuario(datos.email, payload, {
+          userId: user.id,
+          userEmail: datos.email,
+        });
       } else {
         await createUsuario(payload);
       }
@@ -101,6 +113,30 @@ function FormularioPerfil() {
       setMensajeError("No pudimos guardar tus datos. " + mensaje);
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function eliminarCuenta() {
+    if (!user || !datos.email) return;
+    const confirmacion = window.confirm(
+      "Esta accion elimina tu cuenta y tus entradas asociadas de forma permanente. ¿Querés continuar?",
+    );
+    if (!confirmacion) return;
+
+    setEliminandoCuenta(true);
+    setMensajeError("");
+    try {
+      await eliminarMiCuenta({
+        userId: user.id,
+        userEmail: datos.email,
+      });
+      await user.delete();
+      router.push("/");
+    } catch (error) {
+      const mensaje = error instanceof Error ? error.message : "Intentá nuevamente en unos minutos.";
+      setMensajeError("No pudimos eliminar tu cuenta. " + mensaje);
+    } finally {
+      setEliminandoCuenta(false);
     }
   }
   if (!isLoaded) return <div className="text-center py-10 text-foreground">Conectando con Clerk...</div>;
@@ -244,6 +280,22 @@ function FormularioPerfil() {
           >
             {enviando ? 'GUARDANDO...' : (matchId ? 'CONFIRMAR Y ELEGIR UBICACIÓN →' : 'GUARDAR CAMBIOS')}
           </button>
+
+          <div className="mt-8 border border-red-500/40 bg-red-500/10 rounded-2xl p-6">
+            <p className="text-red-500 font-black uppercase tracking-widest text-xs mb-4">
+              Zona de peligro
+            </p>
+            <button
+              type="button"
+              disabled={eliminandoCuenta}
+              onClick={() => { void eliminarCuenta(); }}
+              className="w-full bg-red-600 hover:bg-red-500 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all disabled:opacity-60"
+            >
+              {eliminandoCuenta
+                ? "ELIMINANDO CUENTA..."
+                : "Eliminar mi cuenta permanentemente"}
+            </button>
+          </div>
         </form>
       </div>
     </main>
