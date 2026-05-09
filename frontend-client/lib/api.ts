@@ -23,17 +23,6 @@ function construirUrlApi(ruta: string): string {
   return new URL(ruta, BASE_API_SEGURA).toString();
 }
 
-function construirUrlApiConQuery(
-  path: string,
-  query: Record<string, string>,
-): string {
-  const url = new URL(construirUrlApi(path));
-  Object.entries(query).forEach(([clave, valor]) => {
-    url.searchParams.set(clave, valor);
-  });
-  return url.toString();
-}
-
 export const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -162,14 +151,13 @@ export async function getUsuario(
   auth: AuthHeaders,
 ): Promise<Usuario | null> {
   const emailSeguro = validarEmailSeguro(email);
-  const url = construirUrlApiConQuery('/usuarios/buscar', {
-    email: emailSeguro,
-  });
-  const res = await fetch(url, {
+  const res = await fetch(construirUrlApi('/usuarios/me'), {
     headers: construirHeadersUsuario(auth),
   });
   if (!res.ok) return null;
-  return res.json();
+  const usuario = (await res.json()) as Usuario | null;
+  if (!usuario?.email) return null;
+  return usuario.email.trim().toLowerCase() === emailSeguro ? usuario : null;
 }
 
 export async function createUsuario(usuario: Usuario): Promise<boolean> {
