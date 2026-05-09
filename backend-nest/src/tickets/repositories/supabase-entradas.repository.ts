@@ -6,7 +6,7 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 
 @Injectable()
 export class SupabaseEntradasRepository implements IEntradasRepository {
-  constructor(private readonly supabaseService: SupabaseService) { }
+  constructor(private readonly supabaseService: SupabaseService) {}
 
   private get supabase() {
     return this.supabaseService.getClient();
@@ -27,7 +27,10 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
    * Cuenta todas las entradas activas (RESERVADO o PAGADO) de un usuario para un partido específico.
    * Un usuario puede tener hasta 6 entradas por partido.
    */
-  async contarEntradasActivas(idUsuario: string, idPartido: string): Promise<number> {
+  async contarEntradasActivas(
+    idUsuario: string,
+    idPartido: string,
+  ): Promise<number> {
     const { count, error } = await this.supabase
       .from('entradas')
       .select('id', { count: 'exact', head: true })
@@ -107,6 +110,17 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
 
     if (error) return [];
     return data;
+  }
+
+  async decrementarStock(idPartido: string, idSector: string): Promise<void> {
+    const stock = await this.obtenerStockDisponible(idPartido, idSector);
+    if (stock === null || stock <= 0) return;
+
+    await this.supabase
+      .from('partido_sectores')
+      .update({ asientos_disponibles: stock - 1 })
+      .eq('id_partido', idPartido)
+      .eq('id_sector', idSector);
   }
 
   async incrementarStock(idPartido: string, idSector: string): Promise<void> {

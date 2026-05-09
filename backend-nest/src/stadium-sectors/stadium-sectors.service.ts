@@ -22,6 +22,16 @@ export class SectoresService {
     return await this.sectoresRepository.obtenerTodos();
   }
 
+  async obtenerPorPartido(idPartido: string): Promise<SectorEstadioEntidad[]> {
+    const sectores = await this.sectoresRepository.obtenerPorPartido(idPartido);
+    if (!sectores.length) {
+      throw new NotFoundException(
+        'No hay entradas disponibles para este partido.',
+      );
+    }
+    return sectores;
+  }
+
   async obtenerUno(id: string): Promise<SectorEstadioEntidad> {
     try {
       const sector = await this.sectoresRepository.obtenerUno(id);

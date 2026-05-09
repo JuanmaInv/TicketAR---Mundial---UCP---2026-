@@ -22,5 +22,6 @@ export interface IEntradasRepository {
 
   // Lógica de expiración (para el Cron)
   obtenerExpiradas(fechaReferencia: string): Promise<any[]>;
+  decrementarStock(idPartido: string, idSector: string): Promise<void>;
   incrementarStock(idPartido: string, idSector: string): Promise<void>;
 }

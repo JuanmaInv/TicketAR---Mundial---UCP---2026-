@@ -32,7 +32,7 @@ export class EntradasService {
     private readonly paymentsService: PaymentsService,
     private readonly qrService: QrService,
     private readonly sectoresService: SectoresService,
-  ) { }
+  ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
     // 1. VALIDACIÓN DE PASAPORTE
@@ -82,13 +82,20 @@ export class EntradasService {
     const fechaExpiracion = new Date();
     fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
 
-    return this.entradasRepository.crear({
+    const ticket = await this.entradasRepository.crear({
       id_usuario: crearEntradaDto.idUsuario,
       id_partido: crearEntradaDto.idPartido,
       id_sector: crearEntradaDto.idSector,
       estado: TicketStatus.RESERVADO,
       fecha_expiracion_reserva: fechaExpiracion.toISOString(),
     });
+
+    await this.entradasRepository.decrementarStock(
+      crearEntradaDto.idPartido,
+      crearEntradaDto.idSector,
+    );
+
+    return ticket;
   }
 
   async obtenerTodas(): Promise<TicketEntity[]> {

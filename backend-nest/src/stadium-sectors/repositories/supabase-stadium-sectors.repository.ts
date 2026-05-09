@@ -61,6 +61,29 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
     return this.mapToEntity(data);
   }
 
+  async obtenerPorPartido(idPartido: string): Promise<SectorEstadioEntidad[]> {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('partido_sectores')
+      .select('asientos_disponibles, sectores_estadio(*)')
+      .eq('id_partido', idPartido);
+
+    if (error) {
+      throw new Error(`Error al obtener disponibilidad: ${error.message}`);
+    }
+
+    return data.map((item) => {
+      const row = item as {
+        asientos_disponibles: number;
+        sectores_estadio: unknown;
+      };
+      return this.mapToEntity({
+        ...(row.sectores_estadio as object),
+        capacidad_disponible: row.asientos_disponibles,
+      });
+    });
+  }
+
   private mapToEntity(dbData: unknown): SectorEstadioEntidad {
     const data = dbData as {
       id: string;

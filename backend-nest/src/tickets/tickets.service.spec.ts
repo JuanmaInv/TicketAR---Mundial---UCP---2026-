@@ -3,6 +3,7 @@ import { EntradasService } from './tickets.service';
 import { TicketStateFactory } from './states/ticket-state.factory';
 import { PaymentsService } from '../payments/payments.service';
 import { QrService } from './qr.service';
+import { SectoresService } from '../stadium-sectors/stadium-sectors.service';
 
 describe('EntradasService', () => {
   let service: EntradasService;
@@ -16,6 +17,7 @@ describe('EntradasService', () => {
     obtenerUna: jest.fn(),
     actualizarEstado: jest.fn(),
     obtenerExpiradas: jest.fn(),
+    decrementarStock: jest.fn(),
     incrementarStock: jest.fn(),
   };
 
@@ -38,6 +40,10 @@ describe('EntradasService', () => {
         {
           provide: QrService,
           useValue: { generarQrBase64: jest.fn() },
+        },
+        {
+          provide: SectoresService,
+          useValue: { obtenerUno: jest.fn() },
         },
       ],
     }).compile();
