@@ -5,7 +5,7 @@
 ### 1. Base de Datos y Documentación 🗄️
 - [x] Documentar cambios en nombres de columnas de la base de datos.
 - [x] Explicar funcionamiento de `partido_sectores` (Trigger + stock inicial).
-- [ ] Verificar decremento de asientos al comprar tickets (Validación de lógica de stock).
+- [x] Verificar decremento de asientos al comprar tickets (Validación de lógica de stock).
 
 ### 2. Seguridad y Roles 🛡️
 - [x] Agregar columna `rol` en tabla `usuarios` (Default: 'CLIENTE').
