@@ -15,6 +15,7 @@ import { ActualizarPartidoDto } from './dto/update-match.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolUsuario } from '../common/enums/rol-usuario.enum';
+import { AuthenticatedUserGuard } from '../common/guards/authenticated-user.guard';
 
 @Controller('partidos')
 export class PartidosController {
@@ -26,7 +27,7 @@ export class PartidosController {
    * PROTEGIDO: Solo accesible por ADMINISTRADORES.
    */
   @Post()
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthenticatedUserGuard, RolesGuard)
   @Roles(RolUsuario.ADMINISTRADOR)
   async crear(@Body() crearPartidoDto: CrearPartidoDto) {
     return await this.partidosService.crear(crearPartidoDto);
@@ -48,7 +49,7 @@ export class PartidosController {
    * PROTEGIDO: Solo accesible por ADMINISTRADORES.
    */
   @Patch(':id')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthenticatedUserGuard, RolesGuard)
   @Roles(RolUsuario.ADMINISTRADOR)
   async actualizar(
     @Param('id', ParseUUIDPipe) id: string,
@@ -63,7 +64,7 @@ export class PartidosController {
    * PROTEGIDO: Solo accesible por ADMINISTRADORES.
    */
   @Delete(':id')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthenticatedUserGuard, RolesGuard)
   @Roles(RolUsuario.ADMINISTRADOR)
   async eliminar(@Param('id', ParseUUIDPipe) id: string) {
     await this.partidosService.eliminar(id);
