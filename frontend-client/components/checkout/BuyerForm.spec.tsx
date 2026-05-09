@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/experimental-ct-react';
 import BuyerForm from './BuyerForm';
+import { DatosCompra } from '@/types/ticket';
 
 test.describe('BuyerForm Component Integration', () => {
   
@@ -41,7 +42,7 @@ test.describe('BuyerForm Component Integration', () => {
   });
 
   test('Permite llenar los campos y limpia los errores de validación', async ({ mount }) => {
-    let datosEnviados = null;
+    let datosEnviados: DatosCompra | null = null;
 
     const component = await mount(
       <BuyerForm 
@@ -70,6 +71,7 @@ test.describe('BuyerForm Component Integration', () => {
 
     // Enviamos el formulario
     await component.getByRole('button', { name: /Validar Datos y Continuar/i }).click();
+    expect(datosEnviados?.cantidad).toBe(2);
 
     // En un test CT podemos incluso verificar que las variables mutaron internamente
     // si usamos funciones de envoltura, pero aquí probamos la lógica visual e integración

@@ -11,14 +11,19 @@ test.describe('Flujo E2E - Compra de Entradas', () => {
       await page.goto(`${BASE_URL}/checkout`);
       await expect(page).toHaveURL(/.*\/login|.*\/sign-in/);
 
+      if (!process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD) {
+        await expect(page.locator('input[name="identifier"]')).toBeVisible();
+        return;
+      }
+
       // 2. Simular login con usuario y contraseña (usando variables de entorno por seguridad)
-      await page.locator('input[name="identifier"]').fill(process.env.E2E_TEST_EMAIL || 'test@ticketar.com');
+      await page.locator('input[name="identifier"]').fill(process.env.E2E_TEST_EMAIL);
       // Clerk usa dos pasos: click en Continuar tras el email. (Usamos regex exacto para evitar "Continue with Google")
       await page.getByRole('button', { name: /^Continue$|^Continuar$/i }).click();
       // Esperar a que el campo de password sea interactivo
       const passwordInput = page.locator('input[name="password"]');
       await passwordInput.waitFor({ state: 'visible' });
-      await passwordInput.fill(process.env.E2E_TEST_PASSWORD || 'password123');
+      await passwordInput.fill(process.env.E2E_TEST_PASSWORD);
       await page.getByRole('button', { name: /^Continue$|^Continuar$|^Sign In$|^Iniciar sesi[óo]n$/i }).click();
 
       // Verificar que el login fue exitoso y redirige al home, calendario o al menos avanzó al factor-two
