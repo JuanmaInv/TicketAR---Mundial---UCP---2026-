@@ -7,4 +7,5 @@ export interface IUsuariosRepository {
   buscarPorId(id: string): Promise<UsuarioEntidad | null>;
   actualizar(email: string, datos: any): Promise<UsuarioEntidad>;
   obtenerTodos(): Promise<UsuarioEntidad[]>;
+  eliminar(id: string): Promise<void>;
 }

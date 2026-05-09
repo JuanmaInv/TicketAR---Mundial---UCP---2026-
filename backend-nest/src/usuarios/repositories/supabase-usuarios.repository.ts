@@ -92,6 +92,24 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
     return data.map((u) => this.mapearEntidad(u));
   }
 
+  /**
+   * Elimina un usuario por su ID.
+   * La eliminación en cascada (entradas, reservas) es manejada por ON DELETE CASCADE en la DB.
+   */
+  async eliminar(id: string): Promise<void> {
+    const { error } = await this.supabaseService
+      .getClient()
+      .from('usuarios')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(
+        `Error al eliminar usuario con ID ${id}: ${error.message}`,
+      );
+    }
+  }
+
   private mapearEntidad(data: unknown): UsuarioEntidad {
     const d = data as {
       id: string;
