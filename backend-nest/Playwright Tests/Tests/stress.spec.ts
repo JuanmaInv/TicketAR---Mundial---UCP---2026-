@@ -47,6 +47,13 @@ test.describe('Pruebas de Estrés (Stress Testing)', () => {
     console.log(`   - Éxitos (201): ${exitosas}`);
     console.log(`   - Rechazadas (4xx): ${fallidas}`);
     console.log(`   - Errores Críticos (500): ${errores500}`);
+
+    // VALIDACIONES DE ESTRÉS
+    // 1. El servidor NO debe devolver errores 500 bajo carga
+    expect(errores500).toBe(0);
+
+    // 2. El tiempo total de procesamiento para 50 peticiones no debería exceder los 10 segundos
+    expect(duration).toBeLessThan(10000);
   });
 
 });
