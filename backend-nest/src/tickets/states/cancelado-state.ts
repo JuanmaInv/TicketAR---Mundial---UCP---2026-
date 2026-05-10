@@ -22,6 +22,7 @@ export class CanceladoState implements TicketState {
   async pagar(
     _paymentsService: PaymentsService,
     _amount: number,
+    _cantidad: number,
   /* eslint-enable @typescript-eslint/no-unused-vars */
   ): Promise<PaymentResult> {
     return Promise.reject(

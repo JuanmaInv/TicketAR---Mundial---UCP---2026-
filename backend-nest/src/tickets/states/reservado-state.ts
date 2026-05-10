@@ -21,6 +21,7 @@ export class ReservadoState implements TicketState {
   async pagar(
     paymentsService: PaymentsService,
     amount: number,
+    cantidad: number,
   ): Promise<PaymentResult> {
     const ahora = new Date();
     if (
@@ -37,6 +38,7 @@ export class ReservadoState implements TicketState {
     // Le pasamos el ID real del ticket para que Mercado Pago lo rastree
     const resultado = await paymentsService.processTicketPayment(
       amount,
+      cantidad,
       this.ticket.id,
     );
 
