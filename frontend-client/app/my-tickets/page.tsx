@@ -64,6 +64,7 @@ export default function MyTicketsPage() {
   const [actualizando, setActualizando] = useState(false);
   const [mensajeEstado, setMensajeEstado] = useState('');
   const [esAdmin, setEsAdmin] = useState(false);
+  const [filtroEstado, setFiltroEstado] = useState<'TODAS' | 'PAGADAS' | 'RESERVADAS' | 'CANCELADAS'>('TODAS');
 
   const cargarDatos = useCallback(async () => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
@@ -150,6 +151,21 @@ export default function MyTicketsPage() {
     }
   }, [isLoaded, user, cargarDatos]);
 
+  const conteoPagadas = entradas.filter((e) => {
+    const estado = String(e.estado ?? '').trim().toUpperCase();
+    return estado === 'PAGADO' || estado === 'VENDIDO';
+  }).length;
+  const conteoReservadas = entradas.filter((e) => String(e.estado ?? '').trim().toUpperCase() === 'RESERVADO').length;
+  const conteoCanceladas = entradas.filter((e) => String(e.estado ?? '').trim().toUpperCase() === 'CANCELADO').length;
+
+  const entradasFiltradas = entradas.filter((entrada) => {
+    const estado = String(entrada.estado ?? '').trim().toUpperCase();
+    if (filtroEstado === 'PAGADAS') return estado === 'PAGADO' || estado === 'VENDIDO';
+    if (filtroEstado === 'RESERVADAS') return estado === 'RESERVADO';
+    if (filtroEstado === 'CANCELADAS') return estado === 'CANCELADO';
+    return true;
+  });
+
   if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -213,12 +229,40 @@ export default function MyTicketsPage() {
           </div>
         )}
 
-        {entradas.length === 0 ? (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {[
+            { key: 'TODAS', label: `Todas (${entradas.length})` },
+            { key: 'PAGADAS', label: `Pagadas (${conteoPagadas})` },
+            { key: 'RESERVADAS', label: `Reservadas (${conteoReservadas})` },
+            { key: 'CANCELADAS', label: `Canceladas (${conteoCanceladas})` },
+          ].map((opcion) => (
+            <button
+              key={opcion.key}
+              type="button"
+              onClick={() => {
+                setFiltroEstado(opcion.key as 'TODAS' | 'PAGADAS' | 'RESERVADAS' | 'CANCELADAS');
+              }}
+              className={`rounded-xl border px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-colors ${
+                filtroEstado === opcion.key
+                  ? 'border-blue-500 bg-blue-600 text-white'
+                  : 'border-border bg-card text-foreground hover:border-blue-400'
+              }`}
+            >
+              {opcion.label}
+            </button>
+          ))}
+        </div>
+
+        {entradasFiltradas.length === 0 ? (
           <div className="bg-card border border-border rounded-[2.5rem] p-12 text-center shadow-xl">
             <div className="text-6xl mb-6">T</div>
-            <h2 className="text-2xl font-black text-foreground mb-4 italic uppercase tracking-tight">Tu billetera esta vacia</h2>
+            <h2 className="text-2xl font-black text-foreground mb-4 italic uppercase tracking-tight">
+              {entradas.length === 0 ? 'Tu billetera esta vacia' : 'No hay entradas para este filtro'}
+            </h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto font-medium">
-              No tienes reservas activas. El Mundial te espera, no te quedes afuera.
+              {entradas.length === 0
+                ? 'No tienes reservas activas. El Mundial te espera, no te quedes afuera.'
+                : 'Cambia el filtro para ver entradas en otro estado.'}
             </p>
             <Link href="/matches" className="inline-block bg-blue-600 text-white px-10 py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20">
               Buscar Partidos
@@ -226,7 +270,7 @@ export default function MyTicketsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8">
-            {entradas.map((entrada) => (
+            {entradasFiltradas.map((entrada) => (
               <TicketCard
                 key={entrada.id}
                 entrada={entrada}
