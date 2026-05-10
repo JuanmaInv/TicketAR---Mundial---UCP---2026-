@@ -5,7 +5,16 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import WorldCupLoader from "@/components/WorldCupLoader";
 import Bandera from "@/components/Bandera";
-import { getPartidos, getSectores, formatPrice, Sector } from "@/lib/api";
+import {
+  actualizarPartidoAdmin,
+  actualizarSectorPartidoAdmin,
+  esRolAdmin,
+  formatPrice,
+  getPartidos,
+  getSectores,
+  getUsuario,
+  Sector,
+} from "@/lib/api";
 import { Partido } from "@/types/ticket";
 
 const SELECCIONES_FIFA = [
@@ -19,24 +28,39 @@ const SELECCIONES_FIFA = [
 const FASES = ["Todas", "Grupos", "Octavos", "Cuartos", "Semifinal", "Final"];
 
 export default function MatchesPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sectoresPorPartido, setSectoresPorPartido] = useState<
+    Map<string, Sector[]>
+  >(new Map());
   const [disponibilidad, setDisponibilidad] = useState<
-    Record<string, number | null | undefined>
-  >({});
+    Map<string, number | null | undefined>
+  >(new Map());
   const [cargando, setCargando] = useState(true);
   const [mensajeError, setMensajeError] = useState("");
   
   const [filtroSeleccion, setFiltroSeleccion] = useState<string>("");
   const [faseSeleccionada, setFaseSeleccionada] = useState<string>("Todas");
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [esAdmin, setEsAdmin] = useState(false);
+  const [partidoEditando, setPartidoEditando] = useState<Partido | null>(null);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [mensajeErrorEdicion, setMensajeErrorEdicion] = useState('');
+  const [formEdicion, setFormEdicion] = useState({
+    fechaPartido: '',
+    precioBase: '',
+    fase: '',
+  });
+  const [sectoresEdicion, setSectoresEdicion] = useState<
+    Array<{ id: string; nombre: string; precio: string; capacidadDisponible: string }>
+  >([]);
 
   useEffect(() => {
     async function cargarDatos() {
       try {
         const [dataPartidos, dataSectores] = await Promise.all([getPartidos(), getSectores()]);
-        const disponibilidadPorPartido = await Promise.all(
+        const datosPartidos = await Promise.all(
           dataPartidos.map(async (partido) => {
             try {
               const sectoresPartido = await getSectores(partido.id);
@@ -44,26 +68,50 @@ export default function MatchesPage() {
                 (total, sector) => total + Math.max(0, sector.capacidadDisponible || 0),
                 0,
               );
-              return [partido.id, disponibles] as const;
+              return [partido.id, disponibles, sectoresPartido] as const;
             } catch {
-              return [partido.id, null] as const;
+              return [partido.id, null, [] as Sector[]] as const;
             }
           }),
         );
+        const disponibilidadPorPartido = new Map(
+          datosPartidos.map(([id, disponibles]) => [id, disponibles]),
+        );
+        const sectoresMap = new Map(
+          datosPartidos.map(([id, , sectoresPartido]) => [id, sectoresPartido]),
+        );
         setPartidos(dataPartidos);
         setSectores(dataSectores);
-        setDisponibilidad(Object.fromEntries(disponibilidadPorPartido));
+        setDisponibilidad(disponibilidadPorPartido);
+        setSectoresPorPartido(sectoresMap);
       } catch {
         setMensajeError("No pudimos cargar los partidos. Intentá nuevamente en unos minutos.");
       } finally {
         setCargando(false);
       }
     }
-    cargarDatos();
+    void cargarDatos();
   }, []);
 
+  useEffect(() => {
+    async function cargarRol() {
+      if (!isLoaded || !user?.emailAddresses[0]?.emailAddress) return;
+      try {
+        const perfil = await getUsuario(user.emailAddresses[0].emailAddress, {
+          userId: user.id,
+          userEmail: user.emailAddresses[0].emailAddress,
+        });
+        setEsAdmin(esRolAdmin(perfil?.rol));
+      } catch {
+        setEsAdmin(false);
+      }
+    }
+    void cargarRol();
+  }, [isLoaded, user]);
+
   function getPrecioReal(matchId: string, precioBase: number): number {
-    const sectoresValidos = sectores.filter(s => {
+    const sectoresDelPartido = sectoresPorPartido.get(matchId) ?? sectores;
+    const sectoresValidos = sectoresDelPartido.filter(s => {
        const n = s.nombre.toLowerCase();
        return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
     });
@@ -90,6 +138,129 @@ export default function MatchesPage() {
     return matchFiltro && matchFase;
   });
 
+  function abrirEdicion(partido: Partido) {
+    const fechaValida = new Date(partido.fecha_partido ?? '');
+    const fechaLocal = Number.isNaN(fechaValida.getTime())
+      ? ''
+      : new Date(fechaValida.getTime() - fechaValida.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16);
+    setPartidoEditando(partido);
+    setFormEdicion({
+      fechaPartido: fechaLocal,
+      precioBase: String(partido.precio_base ?? ''),
+      fase: partido.fase ?? '',
+    });
+    const sectoresDelPartido = sectoresPorPartido.get(partido.id) ?? [];
+    setSectoresEdicion(
+      sectoresDelPartido.map((s) => ({
+        id: s.id,
+        nombre: s.nombre,
+        precio: String(s.precio ?? 0),
+        capacidadDisponible: String(s.capacidadDisponible ?? 0),
+      })),
+    );
+    setMensajeError('');
+    setMensajeErrorEdicion('');
+  }
+
+  async function guardarEdicionPartido() {
+    if (!partidoEditando || !user?.emailAddresses[0]?.emailAddress) return;
+    setGuardandoEdicion(true);
+    setMensajeError('');
+    setMensajeErrorEdicion('');
+
+    try {
+      const precio = Number(formEdicion.precioBase);
+      if (!Number.isFinite(precio) || precio <= 0) {
+        throw new Error('El precio base debe ser un numero mayor a 0.');
+      }
+      if (!formEdicion.fechaPartido) {
+        throw new Error('La fecha del partido es obligatoria.');
+      }
+      const fechaIso = new Date(formEdicion.fechaPartido).toISOString();
+
+      await actualizarPartidoAdmin(
+        partidoEditando.id,
+        {
+          fechaPartido: fechaIso,
+          precioBase: precio,
+          fase: formEdicion.fase,
+        },
+        {
+          userId: user.id,
+          userEmail: user.emailAddresses[0].emailAddress,
+        },
+      );
+
+      for (const sector of sectoresEdicion) {
+        const precioSector = Number(sector.precio);
+        const capacidadSector = Number(sector.capacidadDisponible);
+
+        if (!Number.isFinite(precioSector) || precioSector < 0) {
+          throw new Error(
+            `Precio invalido para el sector ${sector.nombre}.`,
+          );
+        }
+        if (!Number.isFinite(capacidadSector) || capacidadSector < 0) {
+          throw new Error(
+            `Cantidad invalida para el sector ${sector.nombre}.`,
+          );
+        }
+
+        await actualizarSectorPartidoAdmin(
+          partidoEditando.id,
+          sector.id,
+          {
+            precio: precioSector,
+            capacidadDisponible: capacidadSector,
+          },
+          {
+            userId: user.id,
+            userEmail: user.emailAddresses[0].emailAddress,
+          },
+        );
+      }
+
+      setPartidos((prev) =>
+        prev.map((p) =>
+          p.id === partidoEditando.id
+            ? {
+                ...p,
+                fecha_partido: fechaIso,
+                precio_base: precio,
+                fase: formEdicion.fase,
+              }
+            : p,
+        ),
+      );
+      setSectoresPorPartido((prev) => {
+        const siguiente = new Map(prev);
+        const sectoresActuales = prev.get(partidoEditando.id) ?? [];
+        const actualizados = sectoresActuales.map((s) => {
+          const editado = sectoresEdicion.find((se) => se.id === s.id);
+          if (!editado) return s;
+          return {
+            ...s,
+            precio: Number(editado.precio),
+            capacidadDisponible: Number(editado.capacidadDisponible),
+          };
+        });
+        siguiente.set(partidoEditando.id, actualizados);
+        return siguiente;
+      });
+      setPartidoEditando(null);
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : 'No se pudo guardar la edicion del partido.';
+      setMensajeErrorEdicion(msg);
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  }
+
   if (cargando) return <WorldCupLoader />;
 
   return (
@@ -104,9 +275,8 @@ export default function MatchesPage() {
              </h2>
              
              <div className="mb-12 relative">
-                <label className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-4 block">Selección Nacional</label>
-                <button 
-                  onClick={() => setMenuAbierto(!menuAbierto)}
+                <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-4 block">Seleccion Nacional</p>
+                <button type="button" onClick={() => { setMenuAbierto(!menuAbierto); }}
                   className="w-full bg-background hover:bg-card text-foreground text-left px-6 py-4 rounded-xl text-sm font-bold transition-all flex justify-between items-center border border-border"
                 >
                   <span className="truncate">{filtroSeleccion || "Todas las naciones"}</span>
@@ -116,17 +286,15 @@ export default function MatchesPage() {
                 {menuAbierto && (
                   <>
                     {/* Backdrop para cerrar al hacer click fuera y asegurar que nada interfiera */}
-                    <div className="fixed inset-0 z-[90]" onClick={() => setMenuAbierto(false)}></div>
+                    <button type="button" className="fixed inset-0 z-[90]" aria-label="Cerrar menu" onClick={() => { setMenuAbierto(false); }}></button>
                     <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] max-h-[350px] overflow-y-auto z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                      <button 
-                        onClick={() => { setFiltroSeleccion(""); setMenuAbierto(false); }}
+                      <button type="button" onClick={() => { setFiltroSeleccion(""); setMenuAbierto(false); }}
                         className="w-full text-left px-6 py-4 text-xs font-black uppercase text-blue-600 dark:text-primary hover:bg-slate-50 dark:hover:bg-white/5 transition-all border-b border-slate-100 dark:border-white/5 sticky top-0 bg-white dark:bg-slate-900 z-10"
                       >
                         🌍 Todas las naciones
                       </button>
                       {SELECCIONES_FIFA.map(s => (
-                        <button 
-                          key={s} 
+                        <button type="button" key={s} 
                           onClick={() => { setFiltroSeleccion(s); setMenuAbierto(false); }}
                           className="w-full text-left px-6 py-3.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all border-b border-slate-100 dark:border-white/5 last:border-0"
                         >
@@ -139,12 +307,11 @@ export default function MatchesPage() {
              </div>
 
              <div>
-                <label className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-4 block">Fase del Torneo</label>
+                <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-4 block">Fase del Torneo</p>
                 <div className="space-y-2">
                   {FASES.map(fase => (
-                    <button 
-                      key={fase} 
-                      onClick={() => setFaseSeleccionada(fase)}
+                    <button type="button" key={fase} 
+                      onClick={() => { setFaseSeleccionada(fase); }}
                       className={`w-full text-left px-6 py-3.5 rounded-xl text-xs font-black transition-all border-2 ${
                         faseSeleccionada === fase 
                         ? 'bg-blue-600 text-white border-blue-600 shadow-[0_10px_20px_rgba(37,99,235,0.3)] scale-105' 
@@ -177,7 +344,7 @@ export default function MatchesPage() {
               const precio = getPrecioReal(match.id, match.precio_base);
               const local = normalizeTeamLabel(match.equipo_local);
               const visitante = normalizeTeamLabel(match.equipo_visitante);
-              const disponibles = disponibilidad[match.id];
+              const disponibles = disponibilidad.get(match.id);
               const disponibilidadDesconocida = disponibles === null || disponibles === undefined;
               const agotado = !disponibilidadDesconocida && disponibles <= 0;
 
@@ -240,7 +407,15 @@ export default function MatchesPage() {
                               {formatPrice(precio)}
                             </p>
                           </div>
-                          {agotado ? (
+                          {esAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => { abrirEdicion(match); }}
+                              className="bg-blue-600 hover:bg-blue-500 text-white px-8 sm:px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-blue-900/20 transition-all hover:scale-105 active:scale-95 text-center"
+                            >
+                              Editar Partido
+                            </button>
+                          ) : agotado ? (
                             <span className="bg-zinc-300 text-zinc-600 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
                               Entradas agotadas
                             </span>
@@ -266,6 +441,149 @@ export default function MatchesPage() {
           </div>
         </section>
       </div>
+      {partidoEditando && (
+        <div className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl rounded-3xl bg-card border border-border p-6 space-y-4">
+            <h2 className="text-2xl font-black italic uppercase">Editar Partido</h2>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+              {partidoEditando.equipo_local} vs {partidoEditando.equipo_visitante}
+            </p>
+            {mensajeErrorEdicion && (
+              <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm font-bold text-red-500">
+                {mensajeErrorEdicion}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <label htmlFor="admin-fecha" className="block text-xs font-bold">
+                Fecha
+              </label>
+              <input
+                id="admin-fecha"
+                type="datetime-local"
+                value={formEdicion.fechaPartido}
+                onChange={(e) => {
+                  setFormEdicion((prev) => ({ ...prev, fechaPartido: e.target.value }));
+                }}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label htmlFor="admin-precio" className="block text-xs font-bold">
+                Precio Base
+              </label>
+              <input
+                id="admin-precio"
+                type="number"
+                min="1"
+                value={formEdicion.precioBase}
+                onChange={(e) => {
+                  setFormEdicion((prev) => ({ ...prev, precioBase: e.target.value }));
+                }}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label htmlFor="admin-fase" className="block text-xs font-bold">
+                Fase
+              </label>
+              <input
+                id="admin-fase"
+                type="text"
+                value={formEdicion.fase}
+                onChange={(e) => {
+                  setFormEdicion((prev) => ({ ...prev, fase: e.target.value }));
+                }}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <p className="block text-xs font-bold">Sectores (precio y cantidad)</p>
+              <div className="space-y-3">
+                {sectoresEdicion.map((sector, index) => (
+                  <div
+                    key={sector.id}
+                    className="rounded-xl border border-border bg-background p-3"
+                  >
+                    <p className="mb-2 text-xs font-black uppercase">{sector.nombre}</p>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div>
+                        <p className="mb-1 block text-[11px] font-bold">Precio</p>
+                        <input
+                          type="number"
+                          min="0"
+                          value={sector.precio}
+                          onChange={(e) => {
+                            setSectoresEdicion((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, precio: e.target.value }
+                                  : item,
+                              ),
+                            );
+                          }}
+                          className="w-full rounded-xl border border-border bg-card px-3 py-2"
+                        />
+                      </div>
+                      <div>
+                        <p className="mb-1 block text-[11px] font-bold">
+                          Cantidad disponible
+                        </p>
+                        <input
+                          type="number"
+                          min="0"
+                          value={sector.capacidadDisponible}
+                          onChange={(e) => {
+                            setSectoresEdicion((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? {
+                                      ...item,
+                                      capacidadDisponible: e.target.value,
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                          className="w-full rounded-xl border border-border bg-card px-3 py-2"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setPartidoEditando(null); }}
+                className="w-1/2 rounded-xl bg-muted py-3 text-sm font-black uppercase"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={guardandoEdicion}
+                onClick={() => {
+                  void guardarEdicionPartido();
+                }}
+                className="w-1/2 rounded-xl bg-blue-600 py-3 text-sm font-black uppercase text-white disabled:opacity-60"
+              >
+                {guardandoEdicion ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
+
+
+
+
+

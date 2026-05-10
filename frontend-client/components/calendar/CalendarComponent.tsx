@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Bandera from '../Bandera';
 import { getPartidos, getSectores, formatPrice, Sector } from '@/lib/api';
 import { Partido } from '@/types/ticket';
@@ -24,7 +24,7 @@ export default function CalendarComponent() {
         setLoading(false);
       }
     }
-    loadData();
+    void loadData();
   }, []);
 
   function getPrecioReal(matchId: string, precioBase: number): number {
@@ -109,3 +109,5 @@ export default function CalendarComponent() {
     </div>
   );
 }
+
+

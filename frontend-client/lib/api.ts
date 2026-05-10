@@ -48,6 +48,36 @@ export interface Usuario {
   telefono?: string;
   provincia?: string;
   localidad?: string;
+  rol?: string;
+}
+
+export function esRolAdmin(rol?: string): boolean {
+  const normalizado = (rol ?? '').trim().toUpperCase();
+  return normalizado === 'ADMINISTRADOR' || normalizado === 'ADMIN';
+}
+
+export interface StatsPorSector {
+  sector: string;
+  cantidad: number;
+  ingresos: number;
+}
+
+export interface StatsPorPartido {
+  partido: string;
+  entradasVendidas: number;
+  ingresos: number;
+}
+
+export interface EstadisticasAdmin {
+  ingresosTotales: number;
+  entradasVendidas: number;
+  entradasPendientes: number;
+  desglosePorSector: StatsPorSector[];
+  ventasPorPartido: StatsPorPartido[];
+  proximoPartidoOcupacion: {
+    partido: string;
+    porcentaje: number;
+  };
 }
 
 interface AuthHeaders {
@@ -90,6 +120,15 @@ function validarEmailSeguro(email: string): string {
   return emailNormalizado;
 }
 
+function validarIdRutaSeguro(id: string, nombre: string): string {
+  const valor = id.trim();
+  const idSeguro = /^[a-zA-Z0-9_-]{1,80}$/;
+  if (!idSeguro.test(valor)) {
+    throw new Error(`El ${nombre} no es valido.`);
+  }
+  return valor;
+}
+
 async function obtenerMensajeErrorApi(respuesta: Response, mensajePorDefecto: string): Promise<string> {
   try {
     const datos = (await respuesta.json()) as { message?: string | string[] };
@@ -119,7 +158,10 @@ export async function getPartidos(): Promise<Partido[]> {
 }
 
 export async function getSectores(partidoId?: string): Promise<Sector[]> {
-  const ruta = partidoId ? `/sectores/partido/${partidoId}` : '/sectores';
+  const partidoIdSeguro = partidoId
+    ? validarIdRutaSeguro(partidoId, 'identificador de partido')
+    : undefined;
+  const ruta = partidoIdSeguro ? `/sectores/partido/${partidoIdSeguro}` : '/sectores';
   const res = await fetch(construirUrlApi(ruta));
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores'));
   const data = await res.json();
@@ -160,20 +202,24 @@ export async function getUsuario(
   return usuario.email.trim().toLowerCase() === emailSeguro ? usuario : null;
 }
 
-export async function createUsuario(usuario: Usuario): Promise<boolean> {
+export async function createUsuario(usuario: Usuario): Promise<void> {
   const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(usuario),
   });
-  return res.ok;
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(res, 'No pudimos crear tu perfil.'),
+    );
+  }
 }
 
 export async function updateUsuario(
   email: string,
   usuario: Usuario,
   auth: AuthHeaders,
-): Promise<boolean> {
+): Promise<void> {
   const emailSeguro = validarEmailSeguro(email);
   const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'PUT',
@@ -186,7 +232,11 @@ export async function updateUsuario(
       email: emailSeguro,
     }),
   });
-  return res.ok;
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(res, 'No pudimos actualizar tu perfil.'),
+    );
+  }
 }
 
 export async function getTickets(): Promise<Ticket[]> {
@@ -211,15 +261,23 @@ export async function eliminarMiCuenta(auth: AuthHeaders): Promise<void> {
 }
 
 export async function getTicketQr(id: string): Promise<string> {
-  const res = await fetch(construirUrlApi(`/entradas/${id}/qr`));
+  const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
+  const res = await fetch('/api/tickets/qr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idSeguro }),
+  });
   if (!res.ok) throw new Error('QR no disponible');
   const data = await res.json();
   return data.qrDataUrl;
 }
 
 export async function pagarTicket(id: string): Promise<RespuestaPago> {
-  const res = await fetch(construirUrlApi(`/entradas/${id}/pagar`), {
+  const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
+  const res = await fetch('/api/tickets/pay', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idSeguro }),
   });
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos procesar el pago.'));
   const respuesta = await res.json();
@@ -227,4 +285,99 @@ export async function pagarTicket(id: string): Promise<RespuestaPago> {
     entrada: respuesta.ticket,
     resultadoPago: respuesta.paymentResult,
   };
+}
+
+export interface ActualizarPartidoPayload {
+  equipoLocal?: string;
+  equipoVisitante?: string;
+  fechaPartido?: string;
+  nombreEstadio?: string;
+  fase?: string;
+  precioBase?: number;
+}
+
+export async function actualizarPartidoAdmin(
+  partidoId: string,
+  payload: ActualizarPartidoPayload,
+  auth: AuthHeaders,
+): Promise<void> {
+  const partidoIdSeguro = validarIdRutaSeguro(
+    partidoId,
+    'identificador de partido',
+  );
+  const res = await fetch('/api/admin/matches/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      partidoId: partidoIdSeguro,
+      payload,
+      auth,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos actualizar el partido en este momento.',
+      ),
+    );
+  }
+}
+
+export async function getEstadisticasAdmin(
+  auth: AuthHeaders,
+): Promise<EstadisticasAdmin> {
+  const res = await fetch(construirUrlApi('/estadisticas'), {
+    headers: construirHeadersUsuario(auth),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos cargar las estadisticas de administrador.',
+      ),
+    );
+  }
+  return (await res.json()) as EstadisticasAdmin;
+}
+
+export interface ActualizarSectorPartidoPayload {
+  precio?: number;
+  capacidadDisponible?: number;
+}
+
+export async function actualizarSectorPartidoAdmin(
+  partidoId: string,
+  sectorId: string,
+  payload: ActualizarSectorPartidoPayload,
+  auth: AuthHeaders,
+): Promise<void> {
+  const partidoIdSeguro = validarIdRutaSeguro(
+    partidoId,
+    'identificador de partido',
+  );
+  const sectorIdSeguro = validarIdRutaSeguro(
+    sectorId,
+    'identificador de sector',
+  );
+  const res = await fetch('/api/admin/matches/sector/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      partidoId: partidoIdSeguro,
+      sectorId: sectorIdSeguro,
+      payload,
+      auth,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos actualizar los datos del sector.',
+      ),
+    );
+  }
 }

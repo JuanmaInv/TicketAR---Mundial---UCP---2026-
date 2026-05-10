@@ -2,6 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
 import type { ISectoresRepository } from './repositories/stadium-sectors.repository.interface';
 import { SectorEstadioEntidad } from './entities/stadium-sector.entity';
+import { ActualizarSectorEnPartidoDto } from './dto/update-sector-in-match.dto';
 
 @Injectable()
 export class SectoresService {
@@ -35,13 +36,22 @@ export class SectoresService {
   async obtenerUno(id: string): Promise<SectorEstadioEntidad> {
     try {
       const sector = await this.sectoresRepository.obtenerUno(id);
-      if (!sector) {
-        throw new NotFoundException('Sector de estadio no encontrado');
-      }
       return sector;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new NotFoundException((error as Error).message);
     }
+  }
+
+  async actualizarEnPartido(
+    idPartido: string,
+    idSector: string,
+    datos: ActualizarSectorEnPartidoDto,
+  ): Promise<SectorEstadioEntidad> {
+    return this.sectoresRepository.actualizarEnPartido(
+      idPartido,
+      idSector,
+      datos,
+    );
   }
 }

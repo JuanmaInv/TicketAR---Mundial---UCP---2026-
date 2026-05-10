@@ -1,24 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { UserButton, useUser } from '@clerk/nextjs';
 import { ThemeToggle } from './ThemeToggle';
 import Bandera from './Bandera';
+import { esRolAdmin, getUsuario } from '@/lib/api';
 
-const ENLACES = [
-  { name: 'INICIO', href: '/' },
-  { name: 'PARTIDOS', href: '/matches' },
-  { name: 'SOBRE NOSOTROS', href: '/about' },
-  { name: 'FAQ', href: '/faq' },
-  { name: 'MIS ENTRADAS', href: '/my-tickets', color: 'text-blue-100' },
-  { name: 'MIS DATOS', href: '/profile', color: 'text-emerald-100' },
-];
+type NavLink = { name: string; href: string; color?: string };
 
 export default function Navbar() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [esAdmin, setEsAdmin] = useState(false);
 
   // Evitar errores de hidratación asegurando que el contenido dependiente del cliente
   // solo se renderice después del montaje.
@@ -26,6 +21,39 @@ export default function Navbar() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    async function cargarRol() {
+      if (!isLoaded || !user?.emailAddresses[0]?.emailAddress) {
+        setEsAdmin(false);
+        return;
+      }
+      try {
+        const perfil = await getUsuario(user.emailAddresses[0].emailAddress, {
+          userId: user.id,
+          userEmail: user.emailAddresses[0].emailAddress,
+        });
+        setEsAdmin(esRolAdmin(perfil?.rol));
+      } catch {
+        setEsAdmin(false);
+      }
+    }
+    void cargarRol();
+  }, [isLoaded, user]);
+
+  const enlaces: NavLink[] = esAdmin
+    ? [
+        { name: 'GESTION PARTIDOS', href: '/matches' },
+        { name: 'ESTADISTICAS', href: '/stats', color: 'text-amber-100' },
+      ]
+    : [
+        { name: 'INICIO', href: '/' },
+        { name: 'PARTIDOS', href: '/matches' },
+        { name: 'SOBRE NOSOTROS', href: '/about' },
+        { name: 'FAQ', href: '/faq' },
+        { name: 'MIS ENTRADAS', href: '/my-tickets', color: 'text-blue-100' },
+        { name: 'MIS DATOS', href: '/profile', color: 'text-emerald-100' },
+      ];
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/30 bg-black transition-all duration-300 h-24">
@@ -52,7 +80,7 @@ export default function Navbar() {
         {/* CENTRO: SECCIONES (Escritorio) */}
         <div className="hidden md:flex items-center justify-center flex-1">
           <div className="flex items-center space-x-8">
-            {ENLACES.map((link) => (
+            {enlaces.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
@@ -112,7 +140,7 @@ export default function Navbar() {
           ✕
         </button>
         <div className="flex flex-col items-center space-y-8">
-          {ENLACES.map((link) => (
+          {enlaces.map((link) => (
             <Link
               key={link.name}
               href={link.href}
@@ -144,3 +172,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

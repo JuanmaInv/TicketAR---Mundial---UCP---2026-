@@ -32,7 +32,10 @@ export class AuthenticatedUserGuard implements CanActivate {
       );
     }
 
-    const usuario = await this.usuariosService.buscarPorId(userId);
+    let usuario = await this.usuariosService.buscarPorId(userId);
+    if (!usuario) {
+      usuario = await this.usuariosService.buscarPorEmail(userEmail);
+    }
     if (!usuario) {
       throw new UnauthorizedException('Usuario no válido.');
     }

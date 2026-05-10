@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SectoresController } from './stadium-sectors.controller';
 import { SectoresService } from './stadium-sectors.service';
+import { AuthenticatedUserGuard } from '../common/guards/authenticated-user.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 describe('SectoresController', () => {
   let controller: SectoresController;
@@ -20,7 +22,12 @@ describe('SectoresController', () => {
           useValue: mockSectoresService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthenticatedUserGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     controller = module.get<SectoresController>(SectoresController);
   });

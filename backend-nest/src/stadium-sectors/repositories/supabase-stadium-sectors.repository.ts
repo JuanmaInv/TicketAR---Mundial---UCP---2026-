@@ -3,6 +3,7 @@ import { ISectoresRepository } from './stadium-sectors.repository.interface';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { SectorEstadioEntidad } from '../entities/stadium-sector.entity';
 import { CrearSectorDto } from '../dto/create-stadium-sector.dto';
+import { ActualizarSectorEnPartidoDto } from '../dto/update-sector-in-match.dto';
 
 @Injectable()
 export class SupabaseSectoresRepository implements ISectoresRepository {
@@ -130,6 +131,48 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
         });
       })
       .filter((sector): sector is SectorEstadioEntidad => sector !== null);
+  }
+
+  async actualizarEnPartido(
+    idPartido: string,
+    idSector: string,
+    datos: ActualizarSectorEnPartidoDto,
+  ): Promise<SectorEstadioEntidad> {
+    if (datos.precio !== undefined) {
+      const { error: errorPrecio } = await this.supabaseService
+        .getClient()
+        .from(this.TABLE_NAME)
+        .update({ precio: datos.precio })
+        .eq('id', idSector);
+
+      if (errorPrecio) {
+        throw new Error(
+          `Error al actualizar precio del sector: ${errorPrecio.message}`,
+        );
+      }
+    }
+
+    if (datos.capacidadDisponible !== undefined) {
+      const { error: errorDisponibilidad } = await this.supabaseService
+        .getClient()
+        .from('partido_sectores')
+        .update({ asientos_disponibles: datos.capacidadDisponible })
+        .eq('id_partido', idPartido)
+        .eq('id_sector', idSector);
+
+      if (errorDisponibilidad) {
+        throw new Error(
+          `Error al actualizar disponibilidad del sector en el partido: ${errorDisponibilidad.message}`,
+        );
+      }
+    }
+
+    const sectoresActualizados = await this.obtenerPorPartido(idPartido);
+    const sector = sectoresActualizados.find((s) => s.id === idSector);
+    if (!sector) {
+      throw new Error('Sector no encontrado para el partido indicado');
+    }
+    return sector;
   }
 
   private mapToEntity(dbData: unknown): SectorEstadioEntidad {

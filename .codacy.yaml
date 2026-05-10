@@ -7,4 +7,3 @@ exclude_paths:
   - "frontend-client/playwright-report/**"
   - "backend-nest/Playwright Tests/**"
   - "frontend-client/bruno/**"
-
