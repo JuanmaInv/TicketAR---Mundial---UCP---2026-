@@ -5,7 +5,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import SectorSelector from '@/components/checkout/SectorSelector';
 import CountdownTimer from '@/components/CountdownTimer';
-import { createTicket, getUsuario, pagarTicket, formatPrice, Sector, Usuario } from '@/lib/api';
+import {
+  createTicket,
+  getPartidos,
+  getUsuario,
+  pagarTicket,
+  formatPrice,
+  Sector,
+  Usuario,
+} from '@/lib/api';
+import { checkoutEventBus } from '@/lib/checkout-event-bus';
+import { Partido } from '@/types/ticket';
 
 interface SeleccionCompra {
   sector: Sector;
@@ -46,6 +56,10 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
   const [seleccionCompra, setSeleccionCompra] = useState<SeleccionCompra | null>(null);
   const [mensajeError, setMensajeError] = useState('');
+  const [reservaExpirada, setReservaExpirada] = useState(false);
+  const [partidoSeleccionado, setPartidoSeleccionado] = useState<Partido | null>(
+    null,
+  );
 
   // Cargar datos del usuario para el Paso 1
   useEffect(() => {
@@ -69,6 +83,29 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
   }, [user, router]);
 
+  useEffect(() => {
+    getPartidos()
+      .then((partidos) => {
+        const partido = partidos.find((item) => item.id === partidoId) ?? null;
+        setPartidoSeleccionado(partido);
+      })
+      .catch(() => {
+        setPartidoSeleccionado(null);
+      });
+  }, [partidoId]);
+
+  useEffect(() => {
+    const unsubscribe = checkoutEventBus.subscribe('TIEMPO_EXPIRADO', () => {
+      setReservaExpirada(true);
+      setMensajeError(
+        'Tu reserva venció. Volvé a seleccionar partido y sector para continuar.',
+      );
+      setProcesando(false);
+      window.sessionStorage.removeItem(`ticketar-reserva-${partidoId}`);
+    });
+    return unsubscribe;
+  }, [partidoId]);
+
   const perfilIncompleto = !datosUsuario?.nombre ||
                            !datosUsuario?.apellido ||
                            !datosUsuario?.numeroPasaporte ||
@@ -84,6 +121,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   }, [paso, perfilIncompleto, cargandoUsuario, router, partidoId]);
 
   function seleccionarCompra(sector: Sector, cantidad: number, total: number) {
+    if (reservaExpirada) return;
     setSeleccionCompra({ sector, cantidad, total });
     setMensajeError('');
     setPaso(3);
@@ -102,6 +140,12 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
 
   async function confirmarPago() {
     if (!seleccionCompra) return;
+    if (reservaExpirada) {
+      setMensajeError(
+        'Tu reserva venció. Volvé a seleccionar partido y sector para continuar.',
+      );
+      return;
+    }
     setProcesando(true);
     setMensajeError('');
     try {
@@ -169,7 +213,12 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
           <div className="bg-black text-white p-2 rounded-2xl border-4 border-red-500/20 shadow-2xl">
               <div className="px-3 md:px-6 py-3 md:py-4 rounded-xl flex flex-col items-center">
                 <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-red-400">Tiempo restante para abonar:</p>
-                <CountdownTimer tiempoExpiracion={fechaExpiracion} onExpirar={() => { router.push('/'); }} />
+                <CountdownTimer
+                  tiempoExpiracion={fechaExpiracion}
+                  onExpirar={() => {
+                    checkoutEventBus.emit('TIEMPO_EXPIRADO');
+                  }}
+                />
               </div>
             </div>
         </div>
@@ -252,9 +301,12 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                   </div>
                 ) : (
                   <button type="button" onClick={() => { setPaso(2); }}
+                  <button 
+                    onClick={() => setPaso(2)}
+                    disabled={reservaExpirada}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    Confirmar Datos y Continuar →
+                    {reservaExpirada ? 'Reserva vencida' : 'Confirmar Datos y Continuar →'}
                   </button>
                 )}
               </div>
@@ -308,6 +360,11 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                       <p className="text-2xl font-black italic text-foreground">
                         {seleccionCompra.cantidad} entradas - Sector {seleccionCompra.sector.nombre}
                       </p>
+                      <p className="text-sm font-bold text-muted-foreground mt-2">
+                        {partidoSeleccionado
+                          ? `${partidoSeleccionado.equipo_local} vs ${partidoSeleccionado.equipo_visitante}`
+                          : 'Partido seleccionado'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Importe total</p>
@@ -334,9 +391,12 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                   </button>
                   <button type="button" onClick={() => { void confirmarPago(); }}
                     disabled={procesando}
+                  <button
+                    onClick={() => { void confirmarPago(); }}
+                    disabled={procesando || reservaExpirada}
                     className="sm:w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs disabled:opacity-60"
                   >
-                    Confirmar y pagar
+                    {reservaExpirada ? 'Reserva vencida' : 'Confirmar y pagar'}
                   </button>
                 </div>
               </div>
