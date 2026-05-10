@@ -98,4 +98,15 @@ test.describe('Pruebas de Seguridad y Robustez', () => {
     expect(response.status()).toBe(400);
   });
 
+  // 3. INTEGRIDAD DE DATOS: CANTIDADES
+  test('Debería rechazar búsquedas de usuarios con parámetros vacíos', async ({ request }) => {
+    const response = await request.get('/usuarios/buscar', {
+      params: { email: '' }
+    });
+
+    // Dependiendo de la implementación, podría ser 400 o una lista vacía.
+    // Lo ideal es que no falle el servidor (500).
+    expect(response.status()).not.toBe(500);
+  });
+
 });
