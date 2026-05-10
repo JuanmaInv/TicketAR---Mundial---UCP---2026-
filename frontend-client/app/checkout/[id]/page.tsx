@@ -300,8 +300,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => { setPaso(2); }}
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setPaso(2)}
                     disabled={reservaExpirada}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98]"
@@ -389,9 +389,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                   >
                     Modificar
                   </button>
-                  <button type="button" onClick={() => { void confirmarPago(); }}
-                    disabled={procesando}
                   <button
+                    type="button"
                     onClick={() => { void confirmarPago(); }}
                     disabled={procesando || reservaExpirada}
                     className="sm:w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs disabled:opacity-60"
