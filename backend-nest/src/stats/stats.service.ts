@@ -1,6 +1,8 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import {
+  DetallePartidoSectorEstado,
+  DetalleSectorEstado,
   EstadisticasVentas,
   PartidoStats,
   SectorStats,
@@ -69,8 +71,10 @@ export class StatsService {
       ingresosTotales: 0,
       entradasVendidas: 0,
       entradasPendientes: 0,
+      entradasCanceladas: 0,
       desglosePorSector: [],
       ventasPorPartido: [],
+      detallePorPartidoSectorEstado: [],
       proximoPartidoOcupacion: {
         partido: 'N/A',
         porcentaje: 0,
@@ -79,6 +83,7 @@ export class StatsService {
 
     const sectorMap = new Map<string, SectorStats>();
     const partidoMap = new Map<string, PartidoStats>();
+    const detalleMap = new Map<string, Map<string, DetalleSectorEstado>>();
 
     const entradasSeguras: EntradaStatsRow[] = Array.isArray(entradas)
       ? (entradas as EntradaStatsRow[])
@@ -148,9 +153,30 @@ export class StatsService {
         ? (sectoresMap.get(entry.id_sector) ?? 'Desconocido')
         : 'Desconocido';
 
+      const partidoId = entry.id_partido ?? 'desconocido';
+      if (!detalleMap.has(partidoId)) {
+        detalleMap.set(partidoId, new Map<string, DetalleSectorEstado>());
+      }
+      const detalleSectorMap = detalleMap.get(partidoId);
+      if (detalleSectorMap && !detalleSectorMap.has(sectorId)) {
+        detalleSectorMap.set(sectorId, {
+          idSector: sectorId,
+          sector: sectorNombre,
+          pagadoCantidad: 0,
+          reservadoCantidad: 0,
+          canceladoCantidad: 0,
+          ingresosPagado: 0,
+        });
+      }
+      const detalleSector = detalleSectorMap?.get(sectorId);
+
       if (entry.estado === TicketStatus.PAGADO) {
         stats.entradasVendidas += cantidad;
         stats.ingresosTotales += ingreso;
+        if (detalleSector) {
+          detalleSector.pagadoCantidad += cantidad;
+          detalleSector.ingresosPagado += ingreso;
+        }
 
         if (!sectorMap.has(sectorId)) {
           sectorMap.set(sectorId, {
@@ -179,12 +205,37 @@ export class StatsService {
         }
       } else if (entry.estado === TicketStatus.RESERVADO) {
         stats.entradasPendientes += cantidad;
+        if (detalleSector) {
+          detalleSector.reservadoCantidad += cantidad;
+        }
+      } else if (entry.estado === TicketStatus.CANCELADO) {
+        stats.entradasCanceladas += cantidad;
+        if (detalleSector) {
+          detalleSector.canceladoCantidad += cantidad;
+        }
       }
     });
 
     stats.desglosePorSector = Array.from(sectorMap.values());
     stats.ventasPorPartido = Array.from(partidoMap.values()).sort(
       (a, b) => b.ingresos - a.ingresos,
+    );
+    const detallePorPartidoSectorEstado: DetallePartidoSectorEstado[] = [];
+    detalleMap.forEach((sectoresMapPorPartido, idPartido) => {
+      const partidoNombre =
+        idPartido === 'desconocido'
+          ? 'Partido desconocido'
+          : (partidosMap.get(idPartido) ?? 'Partido desconocido');
+      detallePorPartidoSectorEstado.push({
+        idPartido,
+        partido: partidoNombre,
+        sectores: Array.from(sectoresMapPorPartido.values()).sort((a, b) =>
+          a.sector.localeCompare(b.sector),
+        ),
+      });
+    });
+    stats.detallePorPartidoSectorEstado = detallePorPartidoSectorEstado.sort(
+      (a, b) => a.partido.localeCompare(b.partido),
     );
 
     const { data: proximoPartido } = await this.supabase

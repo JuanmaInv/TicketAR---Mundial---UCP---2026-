@@ -32,6 +32,15 @@ type EntradaApi = Ticket & {
   precio_total?: number;
 };
 
+function escapeHtml(valor: string): string {
+  return valor
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function redirigirPagoSeguro(urlPago: string): boolean {
   try {
     const url = new URL(urlPago, window.location.origin);
@@ -99,7 +108,8 @@ export default function MyTicketsPage() {
           const estadoVisible =
             estadoNormalizado === 'PAGADO' ||
             estadoNormalizado === 'VENDIDO' ||
-            estadoNormalizado === 'RESERVADO';
+            estadoNormalizado === 'RESERVADO' ||
+            estadoNormalizado === 'CANCELADO';
 
           return esDelUsuario && estadoVisible;
         });
@@ -252,6 +262,7 @@ function TicketCard({
   const [qr, setQr] = useState<string | null>(null);
   const [verQr, setVerQr] = useState(false);
   const [pagando, setPagando] = useState(false);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [mensajeAccion, setMensajeAccion] = useState('');
 
   const cantidad = entrada.cantidad ?? 1;
@@ -267,6 +278,10 @@ function TicketCard({
     nombresSectorPorClave[`${idPartidoEntrada}:partidoSector:${idSectorEntrada}`] ||
     'Sector no identificado';
   const precioUnitario = entrada.precioUnitario ?? entrada.precio_unitario;
+  const estadoNormalizado = String(entrada.estado ?? '').trim().toUpperCase();
+  const esPagado = estadoNormalizado === 'PAGADO' || estadoNormalizado === 'VENDIDO';
+  const esReservado = estadoNormalizado === 'RESERVADO';
+  const esCancelado = estadoNormalizado === 'CANCELADO';
 
   async function pagarEntrada() {
     setPagando(true);
@@ -291,8 +306,101 @@ function TicketCard({
     }
   }
 
+  async function descargarPdf() {
+    if (!esPagado) return;
+
+    setDescargandoPdf(true);
+    setMensajeAccion('');
+    try {
+      const qrData = await getTicketQr(entrada.id);
+      const tituloPartido = partido
+        ? `${partido.equipo_local} vs ${partido.equipo_visitante}`
+        : 'Partido no disponible';
+      const fechaPartido = partido?.fecha_partido
+        ? new Date(partido.fecha_partido).toLocaleString('es-AR')
+        : 'Fecha no disponible';
+      const estadio = partido?.nombre_estadio ?? 'Estadio no disponible';
+      const precioUnitarioTexto =
+        typeof precioUnitario === 'number'
+          ? `ARS $${precioUnitario.toLocaleString()}`
+          : 'No disponible';
+      const totalTexto =
+        typeof totalPagado === 'number'
+          ? `ARS $${totalPagado.toLocaleString()}`
+          : 'No disponible';
+      const nombreSectorSeguro = escapeHtml(nombreSector);
+
+      const html = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Entrada ${entrada.id}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #0f172a; color: #0f172a; }
+    .ticket { width: 860px; margin: 24px auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 2px solid #1d4ed8; }
+    .head { background: linear-gradient(135deg,#1d4ed8,#0f766e); color: #fff; padding: 24px; }
+    .title { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: 1px; }
+    .sub { margin-top: 8px; font-size: 14px; opacity: .95; }
+    .content { display: flex; gap: 24px; padding: 24px; }
+    .left { flex: 1; }
+    .right { width: 250px; text-align: center; border-left: 1px dashed #94a3b8; padding-left: 20px; }
+    .label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-top: 14px; letter-spacing: .08em; }
+    .value { font-size: 16px; font-weight: 800; margin-top: 4px; color: #0f172a; }
+    .badge { display:inline-block; margin-top: 12px; padding: 6px 10px; border-radius: 999px; background:#dcfce7; color:#166534; font-size:11px; font-weight:900; letter-spacing:.08em; }
+    .foot { padding: 16px 24px 24px; font-size: 12px; color: #334155; }
+    .qr { width: 220px; height: 220px; background:#fff; border:1px solid #cbd5e1; border-radius: 12px; padding: 8px; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <div class="ticket">
+    <div class="head">
+      <h1 class="title">TicketAR</h1>
+      <div class="sub">Entrada oficial Mundial 2026</div>
+    </div>
+    <div class="content">
+      <div class="left">
+        <div class="label">ID de entrada</div><div class="value">${escapeHtml(entrada.id)}</div>
+        <div class="label">Estado</div><div class="value">${escapeHtml(estadoNormalizado)}</div>
+        <div class="label">Partido</div><div class="value">${escapeHtml(tituloPartido)}</div>
+        <div class="label">Fecha</div><div class="value">${escapeHtml(fechaPartido)}</div>
+        <div class="label">Estadio</div><div class="value">${escapeHtml(estadio)}</div>
+        <div class="label">Sector</div><div class="value">${nombreSectorSeguro}</div>
+        <div class="label">Cantidad</div><div class="value">${cantidad}</div>
+        <div class="label">Precio unitario</div><div class="value">${escapeHtml(precioUnitarioTexto)}</div>
+        <div class="label">Total abonado</div><div class="value">${escapeHtml(totalTexto)}</div>
+        <div class="label">Titular</div><div class="value">${escapeHtml(dniUsuario ? `DNI ${dniUsuario}` : 'DNI no disponible')}</div>
+      </div>
+      <div class="right">
+        <div class="badge">Ticket valido</div>
+        <img class="qr" src="${qrData}" alt="QR de entrada" />
+      </div>
+    </div>
+    <div class="foot">
+      Presentar este codigo QR al ingresar al estadio.
+    </div>
+  </div>
+</body>
+</html>`;
+
+      const ventana = window.open('', '_blank');
+      if (!ventana) {
+        throw new Error('No pudimos abrir la ventana para descargar el PDF.');
+      }
+      ventana.document.open();
+      ventana.document.write(html);
+      ventana.document.close();
+      ventana.focus();
+      ventana.print();
+      setMensajeAccion('PDF generado. Guarda el archivo desde el dialogo de impresion.');
+    } catch {
+      setMensajeAccion('No pudimos generar el PDF de la entrada. Intenta nuevamente.');
+    } finally {
+      setDescargandoPdf(false);
+    }
+  }
+
   const cargarQr = async () => {
-    if (entrada.estado === 'PAGADO' || entrada.estado === 'vendido') {
+    if (esPagado) {
       try {
         const dataUrl = await getTicketQr(entrada.id);
         setQr(dataUrl);
@@ -309,9 +417,9 @@ function TicketCard({
     <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row relative group hover:border-blue-600/30 transition-all duration-500 shadow-lg">
       <div
         className={`absolute top-0 left-0 w-full h-1 ${
-          entrada.estado === 'PAGADO' || entrada.estado === 'vendido'
+          esPagado
             ? 'bg-emerald-500'
-            : entrada.estado === 'CANCELADO'
+            : esCancelado
               ? 'bg-red-500'
               : 'bg-amber-500'
         }`}
@@ -322,14 +430,14 @@ function TicketCard({
           <div className="flex flex-col gap-1">
             <span
               className={`w-fit px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${
-                entrada.estado === 'PAGADO' || entrada.estado === 'vendido'
+                esPagado
                   ? 'bg-emerald-500/10 text-emerald-500'
-                  : entrada.estado === 'CANCELADO'
+                  : esCancelado
                     ? 'bg-red-500/10 text-red-500'
                     : 'bg-amber-500/10 text-amber-500'
               }`}
             >
-              {entrada.estado}
+              {estadoNormalizado}
             </span>
           </div>
           <span className="text-muted-foreground text-[10px] font-mono tracking-widest uppercase">
@@ -391,7 +499,7 @@ function TicketCard({
             )}
           </div>
 
-          {(entrada.estado === 'RESERVADO' || entrada.estado === 'reservado') && (
+          {esReservado && (
             <button
               type="button"
               onClick={() => {
@@ -400,10 +508,32 @@ function TicketCard({
               disabled={pagando}
               className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 animate-pulse"
             >
-              {pagando ? 'PROCESANDO...' : 'PAGAR AHORA'}
+              {pagando ? 'PROCESANDO...' : 'CONTINUAR PAGO'}
+            </button>
+          )}
+          {esPagado && (
+            <button
+              type="button"
+              onClick={() => {
+                void descargarPdf();
+              }}
+              disabled={descargandoPdf}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {descargandoPdf ? 'GENERANDO PDF...' : 'DESCARGAR PDF'}
             </button>
           )}
         </div>
+        {esReservado && (
+          <p className="mt-2 text-xs font-bold text-amber-500">
+            PDF disponible al completar el pago.
+          </p>
+        )}
+        {esCancelado && (
+          <p className="mt-2 text-xs font-bold text-red-500">
+            Esta reserva fue cancelada o vencio.
+          </p>
+        )}
 
         {mensajeAccion && (
           <p className="mt-4 rounded-xl border border-border bg-background p-3 text-xs font-bold text-foreground">
@@ -428,7 +558,7 @@ function TicketCard({
           >
             <div
               className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all shadow-2xl ${
-                entrada.estado === 'PAGADO' || entrada.estado === 'vendido'
+                esPagado
                   ? 'bg-blue-600 group-hover:bg-blue-500 group-hover:scale-110'
                   : 'bg-muted opacity-40 cursor-not-allowed'
               }`}
@@ -438,14 +568,14 @@ function TicketCard({
             <div className="text-center">
               <span
                 className={`text-[10px] font-black uppercase tracking-widest block transition-all ${
-                  entrada.estado === 'PAGADO' || entrada.estado === 'vendido'
+                  esPagado
                     ? 'text-muted-foreground group-hover:text-foreground'
                     : 'text-muted-foreground/60'
                 }`}
               >
-                {entrada.estado === 'PAGADO' || entrada.estado === 'vendido' ? 'Ver Codigo QR' : 'Esperando Pago'}
+                {esPagado ? 'Ver Codigo QR' : 'Esperando Pago'}
               </span>
-              {entrada.estado !== 'PAGADO' && entrada.estado !== 'vendido' && (
+              {!esPagado && (
                 <span className="text-[8px] text-muted-foreground/40 font-bold uppercase mt-1 block tracking-tighter">
                   Bloqueado por seguridad
                 </span>

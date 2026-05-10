@@ -80,8 +80,21 @@ export interface EstadisticasAdmin {
   ingresosTotales: number;
   entradasVendidas: number;
   entradasPendientes: number;
+  entradasCanceladas: number;
   desglosePorSector: StatsPorSector[];
   ventasPorPartido: StatsPorPartido[];
+  detallePorPartidoSectorEstado: {
+    idPartido: string;
+    partido: string;
+    sectores: {
+      idSector: string;
+      sector: string;
+      pagadoCantidad: number;
+      reservadoCantidad: number;
+      canceladoCantidad: number;
+      ingresosPagado: number;
+    }[];
+  }[];
   proximoPartidoOcupacion: {
     partido: string;
     porcentaje: number;
