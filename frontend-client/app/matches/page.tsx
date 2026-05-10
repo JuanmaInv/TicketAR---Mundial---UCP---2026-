@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import WorldCupLoader from '@/components/WorldCupLoader';
 import Bandera from '@/components/Bandera';
+import MatchManagementModal from '@/components/admin/MatchManagementModal';
 import {
   esRolAdmin,
   formatPrice,
@@ -34,6 +35,8 @@ export default function MatchesPage() {
   const [cargando, setCargando] = useState(true);
   const [mensajeError, setMensajeError] = useState('');
   const [esAdmin, setEsAdmin] = useState(false);
+  const [partidoEnGestion, setPartidoEnGestion] = useState<Partido | null>(null);
+  const [modalGestionAbierto, setModalGestionAbierto] = useState(false);
 
   const [filtroSeleccion, setFiltroSeleccion] = useState('');
   const [faseSeleccionada, setFaseSeleccionada] = useState('Todas');
@@ -133,8 +136,30 @@ export default function MatchesPage() {
 
   if (cargando) return <WorldCupLoader />;
 
+  const authAdmin =
+    isLoaded && user?.emailAddresses[0]?.emailAddress
+      ? {
+          userId: user.id,
+          userEmail: user.emailAddresses[0].emailAddress,
+        }
+      : null;
+
   return (
     <main className="min-h-screen py-10 md:py-16 px-4 md:px-6 bg-background text-foreground transition-all duration-300">
+      <MatchManagementModal
+        abierto={modalGestionAbierto}
+        partido={partidoEnGestion}
+        auth={authAdmin}
+        onCerrar={() => {
+          setModalGestionAbierto(false);
+          setPartidoEnGestion(null);
+        }}
+        onPartidoActualizado={(partidoId, cambios) => {
+          setPartidos((prev) =>
+            prev.map((p) => (p.id === partidoId ? { ...p, ...cambios } : p)),
+          );
+        }}
+      />
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 md:gap-12">
         <aside className="lg:w-[340px] shrink-0">
           <div className="bg-card rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl lg:sticky lg:top-28 border border-border">
@@ -321,8 +346,11 @@ export default function MatchesPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                               <button
                                 type="button"
-                                disabled
-                                className="bg-zinc-800 text-zinc-500 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed border border-zinc-700"
+                                onClick={() => {
+                                  setPartidoEnGestion(match);
+                                  setModalGestionAbierto(true);
+                                }}
+                                className="bg-blue-700 hover:bg-blue-600 text-white px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl border border-blue-500 transition-all hover:scale-105 active:scale-95"
                               >
                                 Gestionar partido
                               </button>

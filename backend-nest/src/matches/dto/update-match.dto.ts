@@ -1,14 +1,8 @@
-import {
-  IsString,
-  IsDateString,
-  IsNumber,
-  Min,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsDateString, IsOptional, IsIn } from 'class-validator';
 
 /**
  * DTO para actualizar un partido existente.
- * Todos los campos son opcionales: solo se actualizan los que se envían.
+ * Todos los campos son opcionales: solo se actualizan los que se envian.
  */
 export class ActualizarPartidoDto {
   @IsOptional()
@@ -22,7 +16,7 @@ export class ActualizarPartidoDto {
   @IsOptional()
   @IsDateString(
     {},
-    { message: 'La fecha del partido debe ser una fecha válida' },
+    { message: 'La fecha del partido debe ser una fecha valida' },
   )
   fechaPartido?: string;
 
@@ -35,7 +29,8 @@ export class ActualizarPartidoDto {
   fase?: string;
 
   @IsOptional()
-  @IsNumber({}, { message: 'El precio base debe ser un número' })
-  @Min(0, { message: 'El precio base no puede ser negativo' })
-  precioBase?: number;
+  @IsIn(['disponible', 'agotado', 'cancelado'], {
+    message: 'El estado debe ser disponible, agotado o cancelado',
+  })
+  estado?: 'disponible' | 'agotado' | 'cancelado';
 }
