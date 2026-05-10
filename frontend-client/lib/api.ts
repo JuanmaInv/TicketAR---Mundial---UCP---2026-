@@ -23,6 +23,16 @@ function construirUrlApi(ruta: string): string {
   return new URL(ruta, BASE_API_SEGURA).toString();
 }
 
+function construirUrlApiPorSegmentos(segmentos: string[]): string {
+  const url = new URL(BASE_API_SEGURA.toString());
+  const segmentosLimpios = segmentos.map((segmento) =>
+    encodeURIComponent(segmento),
+  );
+  url.pathname = `/${segmentosLimpios.join('/')}`;
+  url.search = '';
+  return url.toString();
+}
+
 export const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -262,7 +272,9 @@ export async function eliminarMiCuenta(auth: AuthHeaders): Promise<void> {
 
 export async function getTicketQr(id: string): Promise<string> {
   const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
-  const res = await fetch(construirUrlApi(`/entradas/${idSeguro}/qr`));
+  const res = await fetch(
+    construirUrlApiPorSegmentos(['entradas', idSeguro, 'qr']),
+  );
   if (!res.ok) throw new Error('QR no disponible');
   const data = await res.json();
   return data.qrDataUrl;
@@ -270,7 +282,7 @@ export async function getTicketQr(id: string): Promise<string> {
 
 export async function pagarTicket(id: string): Promise<RespuestaPago> {
   const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
-  const res = await fetch(construirUrlApi(`/entradas/${idSeguro}/pagar`), {
+  const res = await fetch(construirUrlApiPorSegmentos(['entradas', idSeguro, 'pagar']), {
     method: 'POST',
   });
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos procesar el pago.'));
@@ -299,7 +311,7 @@ export async function actualizarPartidoAdmin(
     partidoId,
     'identificador de partido',
   );
-  const res = await fetch(construirUrlApi(`/partidos/${partidoIdSeguro}`), {
+  const res = await fetch(construirUrlApiPorSegmentos(['partidos', partidoIdSeguro]), {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -355,9 +367,13 @@ export async function actualizarSectorPartidoAdmin(
     'identificador de sector',
   );
   const res = await fetch(
-    construirUrlApi(
-      `/sectores/partido/${partidoIdSeguro}/sector/${sectorIdSeguro}`,
-    ),
+    construirUrlApiPorSegmentos([
+      'sectores',
+      'partido',
+      partidoIdSeguro,
+      'sector',
+      sectorIdSeguro,
+    ]),
     {
       method: 'PATCH',
       headers: {

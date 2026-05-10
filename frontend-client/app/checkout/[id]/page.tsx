@@ -327,7 +327,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                 </section>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button type="button" onClick={() => setPaso(2)}
+                  <button type="button" onClick={() => { setPaso(2); }}
                     className="sm:w-1/3 bg-muted text-foreground py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs"
                   >
                     Modificar
