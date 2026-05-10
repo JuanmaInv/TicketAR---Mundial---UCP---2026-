@@ -60,7 +60,6 @@ export interface IEntradasRepository {
 
   // Lógica de expiración (para el Cron)
   obtenerExpiradas(fechaReferencia: string): Promise<EntradaExpirada[]>;
-
   // Recálculo de estado del partido según stock total
   recalcularEstadoPartido(idPartido: string): Promise<void>;
 }

@@ -1,96 +1,137 @@
 'use client';
 
-import React, { useState } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
+
+type FaqItem = {
+  pregunta: string;
+  respuesta: string;
+  icono: string;
+};
+
+const faqs: FaqItem[] = [
+  {
+    pregunta: 'Cuanto dura la reserva durante la compra?',
+    respuesta:
+      'La reserva dura 15 minutos. Durante ese tiempo tus entradas quedan apartadas para que completes tus datos y el pago.',
+    icono: '??',
+  },
+  {
+    pregunta: 'Que pasa si vence el timer?',
+    respuesta:
+      'Si el tiempo llega a cero, la reserva expira y los asientos vuelven al stock general. Debes volver a seleccionar sector y continuar el proceso desde checkout.',
+    icono: '?',
+  },
+  {
+    pregunta: 'Como recibo mi entrada y el codigo QR?',
+    respuesta:
+      'Cuando el pago se confirma, la entrada aparece en Mis Tickets con su QR correspondiente. El ingreso al estadio se valida con tu identidad y ese QR.',
+    icono: '??',
+  },
+  {
+    pregunta: 'Que hago si Mercado Pago rechaza el pago?',
+    respuesta:
+      'Revisa el medio de pago e intenta nuevamente. Si el rechazo persiste, prueba con otro medio y verifica que la reserva siga vigente antes de reintentar.',
+    icono: '??',
+  },
+  {
+    pregunta: 'Puedo cambiar mis datos antes de pagar?',
+    respuesta:
+      'Si. En el checkout puedes volver al paso de datos del comprador y editar la informacion antes de confirmar el pago final.',
+    icono: '??',
+  },
+  {
+    pregunta: 'Que significa que un partido este agotado o cancelado?',
+    respuesta:
+      'Agotado significa que no hay stock disponible para compra. Cancelado significa que el partido fue bloqueado administrativamente y no permite compras.',
+    icono: '??',
+  },
+  {
+    pregunta: 'Como elimino mi cuenta?',
+    respuesta:
+      'Desde tu perfil puedes gestionar la eliminacion de cuenta si la opcion esta habilitada para tu usuario. Si no la encuentras, contacta soporte oficial.',
+    icono: '??',
+  },
+];
 
 export default function FAQPage() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const faqs = [
-    {
-      question: "¿Cuántas entradas puedo comprar por usuario?",
-      answer: "Por disposición oficial y para garantizar equidad, cada usuario validado con su documento (DNI/Pasaporte) puede adquirir un máximo de 6 entradas por partido."
-    },
-    {
-      question: "¿Cómo ingreso al estadio el día del partido?",
-      answer: "El ingreso es estrictamente presentando el documento de identidad registrado en tu cuenta (DNI o Pasaporte) y el Código QR generado en la plataforma. El titular de la compra debe estar presente."
-    },
-    {
-      question: "¿Qué métodos de pago aceptan?",
-      answer: "Actualmente procesamos todos nuestros pagos a través de Mercado Pago, permitiendo el uso de tarjetas de crédito, débito y dinero en cuenta. Tu transacción está totalmente protegida."
-    },
-    {
-      question: "¿Qué pasa si se me acaba el tiempo durante la compra?",
-      answer: "El sistema reserva tu lugar por 15 minutos mientras completás tus datos. Si el reloj llega a cero, las entradas vuelven a liberarse y deberás intentar nuevamente."
-    }
-  ];
+  const [abierto, setAbierto] = useState<number | null>(null);
 
   return (
-    <main className="min-h-screen py-20 px-6 bg-background relative overflow-hidden transition-colors duration-500">
-      {/* Elementos decorativos */}
-      <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-        <span className="text-[20rem] font-black italic">?</span>
-      </div>
-
-      <div className="max-w-4xl mx-auto relative z-10">
-        <div className="mb-16 text-center md:text-left">
-          <Link href="/" className="text-muted-foreground hover:text-foreground text-[10px] font-black uppercase tracking-[0.4em] mb-8 inline-flex items-center gap-3 transition-colors group">
-            <span className="group-hover:-translate-x-3 transition-transform text-xl">←</span> VOLVER AL INICIO
+    <main className="min-h-screen bg-background py-20 px-4">
+      <div className="container mx-auto max-w-4xl">
+        <div className="mb-10">
+          <Link
+            href="/"
+            className="text-muted-foreground hover:text-foreground text-[10px] font-black uppercase tracking-[0.4em] inline-flex items-center gap-3 transition-colors group"
+          >
+            <span className="group-hover:-translate-x-2 transition-transform text-xl">?</span>
+            VOLVER AL INICIO
           </Link>
-          <h1 className="text-6xl md:text-8xl font-black text-foreground uppercase italic tracking-tighter leading-none mb-6">
-            Preguntas <span className="text-blue-600">Frecuentes</span>
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base font-bold uppercase tracking-widest italic md:border-l-4 md:border-blue-600 md:pl-4">
-            Todo lo que necesitas saber sobre TicketAR
-          </p>
         </div>
 
-        <div className="space-y-6">
+        <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter text-foreground uppercase mb-4 leading-none text-center">
+          PREGUNTAS <span className="text-blue-600">FRECUENTES</span>
+        </h1>
+        <p className="text-center text-muted-foreground font-bold uppercase tracking-widest mb-16 italic">
+          Informacion clave para comprar en TicketAR Mundial 2026
+        </p>
+
+        <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <div 
-              key={index} 
-              className={`bg-card border-2 transition-all duration-300 rounded-[2rem] overflow-hidden cursor-pointer shadow-xl ${openIndex === index ? 'border-blue-500 shadow-blue-500/20' : 'border-border hover:border-white/20'}`}
-              onClick={() => setOpenIndex(openIndex === index ? null : index)}
+            <button
+              key={faq.pregunta}
+              type="button"
+              className={`block w-full text-left bg-card border rounded-3xl overflow-hidden transition-all duration-300 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                abierto === index
+                  ? 'border-blue-500 shadow-blue-500/10 shadow-xl'
+                  : 'border-border hover:border-blue-500/40'
+              }`}
+              onClick={() => {
+                setAbierto(abierto === index ? null : index);
+              }}
             >
-              <div className="p-6 md:p-8 flex items-center justify-between gap-6">
-                <h3 className={`text-xl md:text-2xl font-black italic tracking-tight uppercase ${openIndex === index ? 'text-blue-500' : 'text-foreground'}`}>
-                  {faq.question}
-                </h3>
-                <span className={`text-2xl font-black transition-transform duration-500 ${openIndex === index ? 'rotate-180 text-blue-500' : 'text-muted-foreground'}`}>
-                  ▼
+              <div className="flex items-center justify-between p-6 md:p-8">
+                <div className="flex items-center gap-4">
+                  <span className="text-2xl">{faq.icono}</span>
+                  <h3 className="text-base md:text-lg font-black text-foreground uppercase italic">
+                    {faq.pregunta}
+                  </h3>
+                </div>
+                <span
+                  className={`text-blue-600 font-black text-xl transition-transform duration-300 shrink-0 ml-4 ${
+                    abierto === index ? 'rotate-180' : ''
+                  }`}
+                >
+                  ?
                 </span>
               </div>
-              
-              <div 
-                className={`px-6 md:px-8 transition-all duration-500 ease-in-out overflow-hidden ${openIndex === index ? 'max-h-96 pb-8 opacity-100' : 'max-h-0 opacity-0'}`}
-              >
-                <p className="text-muted-foreground text-sm md:text-base font-medium leading-relaxed border-t border-white/10 pt-6">
-                  {faq.answer}
-                </p>
-              </div>
-            </div>
+
+              {abierto === index && (
+                <div className="px-6 md:px-8 pb-6 md:pb-8 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="h-px bg-border mb-5" />
+                  <p className="text-muted-foreground font-medium leading-relaxed pl-10">
+                    {faq.respuesta}
+                  </p>
+                </div>
+              )}
+            </button>
           ))}
         </div>
 
-        <div className="mt-20 text-center bg-card p-12 rounded-[3rem] border border-border shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none"></div>
-          
-          <span className="text-6xl mb-6 block relative z-10">📞</span>
-          <p className="text-foreground text-2xl font-black uppercase tracking-widest italic mb-2 relative z-10">¿Todavía tenés dudas?</p>
-          <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest mb-10 relative z-10">
-            Nuestros canales oficiales de TicketAR están abiertos para reclamos o consultas
+        <div className="mt-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-[3rem] p-12 text-center text-white shadow-2xl shadow-blue-500/20">
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-4">
+            Aun tienes dudas?
+          </h2>
+          <p className="font-bold opacity-90 mb-8">
+            Nuestro equipo de soporte esta disponible para ayudarte con tu compra.
           </p>
-          
-          <div className="flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
-            <div className="bg-background border border-border px-8 py-6 rounded-2xl flex flex-col items-center shadow-lg w-full md:w-auto">
-              <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-2">WhatsApp / Teléfono</span>
-              <span className="text-xl font-black text-foreground">+54 9 11 1234-5678</span>
-            </div>
-            <div className="bg-background border border-border px-8 py-6 rounded-2xl flex flex-col items-center shadow-lg w-full md:w-auto">
-              <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-2">Correo Oficial TicketAR</span>
-              <a href="mailto:soporte@ticketar.com.ar" className="text-xl font-black text-blue-500 hover:text-blue-400 transition-colors">soporte@ticketar.com.ar</a>
-            </div>
-          </div>
+          <a
+            href="/support"
+            className="inline-block bg-white text-blue-600 px-10 py-4 rounded-2xl font-black uppercase tracking-widest italic hover:scale-105 active:scale-95 transition-all shadow-xl"
+          >
+            CONTACTAR SOPORTE
+          </a>
         </div>
       </div>
     </main>

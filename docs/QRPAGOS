@@ -1,0 +1,95 @@
+# Documentación del Sistema de QR y Pagos - TicketAR 2026
+
+Este documento detalla la implementación y la lógica de negocio detrás de la generación de códigos QR y su relación con el flujo de pagos en la plataforma.
+
+## 📌 Estado Actual de Implementación
+
+### 1. Generación de QR (`QrService`)
+- **Ubicación:** `src/tickets/qr.service.ts`
+- **Librería:** `qrcode`
+- **Responsabilidad:** Conversión de un UUID de entrada en una imagen PNG codificada en **Base64**.
+- **Seguridad:** El QR **únicamente** contiene el UUID del ticket. No se almacenan datos sensibles (DNI, pasaporte, nombre) dentro del QR para evitar fugas de información. La validación de identidad se realiza mediante el pasaporte físico en la puerta.
+- **Configuración:**
+  - `errorCorrectionLevel: 'H'`: Alta tolerancia a errores (ideal para condiciones de luz variables).
+  - `width: 300`: Tamaño optimizado para pantallas móviles.
+
+### 2. Lógica de Negocio de Obtención (`EntradasService.obtenerQr`)
+- **Regla Crítica:** Solo se puede generar el QR si el estado del ticket es `PAGADO`.
+- **Validación:** Si un usuario intenta obtener el QR de una entrada en estado `RESERVADO` o `CANCELADO`, el sistema lanza una `BadRequestException`. Esto previene el uso de entradas no validadas.
+
+### 3. Sistema de Eventos y Notificaciones (Patrón Observer)
+- **Motor:** `@nestjs/event-emitter` (EventEmitter2).
+- **Configuración:** `EventEmitterModule.forRoot()` en `AppModule`.
+- **Emisor:** `EntradasService` emite `'ticket.pagado'` en dos puntos:
+  - `marcarComoPagada()` — cuando el webhook de Mercado Pago confirma.
+  - `pagar()` — cuando el pago simulado es exitoso.
+- **Payload del evento:** `{ ticketId: string, idUsuario: string }`.
+
+### 4. Servicio de Notificaciones (`NotificationsService`)
+- **Ubicación:** `src/notifications/notifications.service.ts`
+- **Módulo:** `src/notifications/notifications.module.ts`
+- **Decorador:** `@OnEvent('ticket.pagado')` — se ejecuta automáticamente al recibir el evento.
+- **Flujo interno:**
+  1. Busca el usuario por `idUsuario` usando `UsuariosService.buscarPorId()`.
+  2. Genera el QR con `QrService.generarQrBase64()`.
+  3. Envía el correo con `nodemailer`, con el QR como adjunto incrustado (`cid:ticket_qr`).
+- **Seguridad del correo:** Usa "Contraseña de Aplicación" de Google (no la password real).
+- **Tolerancia a fallos:** Si el envío falla, se loguea el error pero **no se interrumpe** el flujo de pago.
+
+### 5. Método `buscarPorId` (Usuarios)
+- Se agregó `buscarPorId(id: string)` en:
+  - `IUsuariosRepository` (interfaz).
+  - `SupabaseUsuariosRepository` (implementación).
+  - `UsuariosService` (capa de servicio).
+- **Razón:** El ticket tiene `idUsuario` (UUID), no el email. Necesitamos buscar al usuario por ID para obtener su email y nombre.
+
+---
+
+## 📦 Paquetes Instalados
+
+- **`@nestjs/event-emitter`**: Motor de eventos para comunicación entre módulos.
+- **`nodemailer`**: Librería para el envío de correos electrónicos.
+- **`@types/nodemailer`**: Tipado para desarrollo en TypeScript.
+
+---
+
+## 🗂️ Archivos Creados / Modificados
+
+| Archivo | Acción | Descripción |
+|---|---|---|
+| `src/notifications/notifications.service.ts` | ✨ Creado | Listener del evento, genera QR y envía mail |
+| `src/notifications/notifications.module.ts` | ✨ Creado | Módulo que registra el servicio |
+| `src/app.module.ts` | ✏️ Modificado | Import de `EventEmitterModule` y `NotificationsModule` |
+| `src/tickets/tickets.service.ts` | ✏️ Modificado | Inyección de `EventEmitter2`, emisión del evento |
+| `src/usuarios/repositories/usuarios.repository.interface.ts` | ✏️ Modificado | Nuevo método `buscarPorId` |
+| `src/usuarios/repositories/supabase-usuarios.repository.ts` | ✏️ Modificado | Implementación de `buscarPorId` |
+| `src/usuarios/usuarios.service.ts` | ✏️ Modificado | Exposición de `buscarPorId` |
+| `.env.example` | ✏️ Modificado | Variables `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` |
+| `package.json` / `pnpm-lock.yaml` | ✏️ Modificado | Nuevas dependencias |
+
+---
+
+## ⚙️ Variables de Entorno Requeridas
+
+```env
+# --- CONFIGURACIÓN DE CORREO ELECTRÓNICO ---
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=tu-correo@gmail.com
+MAIL_PASS=tu-contraseña-de-aplicacion
+```
+
+> Para obtener la contraseña de aplicación: https://myaccount.google.com/apppasswords
+
+---
+
+## 📝 Registro de Tareas
+
+- [x] Instalar dependencias (`@nestjs/event-emitter`, `nodemailer`, `@types/nodemailer`).
+- [x] Configurar `EventEmitterModule` en `AppModule`.
+- [x] Inyectar `EventEmitter2` en `EntradasService` y emitir el evento en `marcarComoPagada` y `pagar`.
+- [x] Crear el servicio `NotificationsService` para escuchar el evento y enviar el mail.
+- [x] Agregar `buscarPorId` en la capa de usuarios (interfaz, repositorio, servicio).
+- [x] Configurar variables de entorno (`MAIL_HOST`, `MAIL_USER`, `MAIL_PASS`) en `.env.example`.
+- [x] Verificar que el proyecto compila (`pnpm run build` ✅).
+- [ ] Configurar las variables reales en `.env` local y probar el envío de un correo.

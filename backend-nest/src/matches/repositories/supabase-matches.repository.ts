@@ -3,6 +3,7 @@ import { IPartidosRepository } from './matches.repository.interface';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { PartidoEntidad } from '../entities/match.entity';
 import { CrearPartidoDto } from '../dto/create-match.dto';
+import { ActualizarPartidoDto } from '../dto/update-match.dto';
 
 @Injectable()
 export class SupabasePartidosRepository implements IPartidosRepository {
@@ -48,7 +49,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
       throw new Error(`Error al obtener partidos: ${error.message}`);
     }
 
-    return (data || []).map((item) => this.mapToEntity(item));
+    return data.map((item) => this.mapToEntity(item));
   }
 
   async obtenerUno(id: string): Promise<PartidoEntidad> {
@@ -68,6 +69,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
 
   /**
    * Actualiza el estado de un partido (disponible, agotado, cancelado).
+   * Usado por nuestra lógica automática de stock.
    */
   async actualizarEstado(id: string, estado: string): Promise<void> {
     const { error } = await this.supabaseService
@@ -79,6 +81,67 @@ export class SupabasePartidosRepository implements IPartidosRepository {
     if (error) {
       throw new Error(
         `Error al actualizar estado del partido ${id}: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Actualiza un partido existente con los campos proporcionados.
+   * Solo se envían a Supabase los campos que el admin decidió cambiar.
+   */
+  async actualizar(
+    id: string,
+    datos: ActualizarPartidoDto,
+  ): Promise<PartidoEntidad> {
+    // Construimos el objeto de actualización solo con los campos enviados
+    const updatePayload: Record<string, unknown> = {};
+
+    if (datos.equipoLocal !== undefined)
+      updatePayload.equipo_local = datos.equipoLocal;
+    if (datos.equipoVisitante !== undefined)
+      updatePayload.equipo_visitante = datos.equipoVisitante;
+    if (datos.fechaPartido !== undefined)
+      updatePayload.fecha_partido = datos.fechaPartido;
+    if (datos.nombreEstadio !== undefined)
+      updatePayload.nombre_estadio = datos.nombreEstadio;
+    if (datos.fase !== undefined) updatePayload.fase = datos.fase;
+
+    // Soporte para estado
+    if ((datos as any).estado !== undefined) {
+      updatePayload.estado = (datos as any).estado;
+    }
+
+    const { data, error } = (await this.supabaseService
+      .getClient()
+      .from(this.TABLE_NAME)
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single()) as { data: unknown; error: Error | null };
+
+    if (error || !data) {
+      throw new Error(
+        `Error al actualizar partido con ID ${id}: ${error?.message || 'No encontrado'}`,
+      );
+    }
+
+    return this.mapToEntity(data);
+  }
+
+  /**
+   * Elimina un partido por su ID.
+   * La eliminación en cascada de partido_sectores es manejada por la DB.
+   */
+  async eliminar(id: string): Promise<void> {
+    const { error } = await this.supabaseService
+      .getClient()
+      .from(this.TABLE_NAME)
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(
+        `Error al eliminar partido con ID ${id}: ${error.message}`,
       );
     }
   }

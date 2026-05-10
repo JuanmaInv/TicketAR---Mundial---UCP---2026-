@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ComponenteCalendario from '@/components/calendar/CalendarComponent';
 import WorldCupLoader from '@/components/WorldCupLoader';
 import Bandera from '@/components/Bandera';
+import { useUser } from '@clerk/nextjs';
+import { esRolAdmin, getUsuario } from '@/lib/api';
 
 export default function Home() {
+  const { user, isLoaded } = useUser();
   const [cargando, setCargando] = useState(true);
+  const [esAdmin, setEsAdmin] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -15,6 +19,22 @@ export default function Home() {
     }, 1200);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    async function cargarRol() {
+      if (!isLoaded || !user?.emailAddresses[0]?.emailAddress) return;
+      try {
+        const perfil = await getUsuario(user.emailAddresses[0].emailAddress, {
+          userId: user.id,
+          userEmail: user.emailAddresses[0].emailAddress,
+        });
+        setEsAdmin(esRolAdmin(perfil?.rol));
+      } catch {
+        setEsAdmin(false);
+      }
+    }
+    void cargarRol();
+  }, [isLoaded, user]);
 
   if (cargando) {
     return (
@@ -87,14 +107,23 @@ export default function Home() {
                 href="/matches" 
                 className="group relative px-8 py-4 bg-white text-black font-black italic tracking-tighter rounded-xl transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] w-full sm:w-auto"
               >
-                VER PARTIDOS
+                {esAdmin ? 'GESTIONAR PARTIDOS' : 'VER PARTIDOS'}
               </Link>
-              <Link 
-                href="/about" 
-                className="px-8 py-4 bg-transparent border-2 border-white/80 text-white font-black italic tracking-tighter rounded-xl hover:bg-white/10 transition-all w-full sm:w-auto backdrop-blur-sm"
-              >
-                SOBRE EL EQUIPO
-              </Link>
+              {esAdmin ? (
+                <Link
+                  href="/stats"
+                  className="px-8 py-4 bg-transparent border-2 border-white/80 text-white font-black italic tracking-tighter rounded-xl hover:bg-white/10 transition-all w-full sm:w-auto backdrop-blur-sm"
+                >
+                  VER ESTADISTICAS
+                </Link>
+              ) : (
+                <Link 
+                  href="/about" 
+                  className="px-8 py-4 bg-transparent border-2 border-white/80 text-white font-black italic tracking-tighter rounded-xl hover:bg-white/10 transition-all w-full sm:w-auto backdrop-blur-sm"
+                >
+                  SOBRE EL EQUIPO
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -121,8 +150,8 @@ export default function Home() {
               { step: "01", title: "Elige tu Partido", icon: "🗓️", desc: "Selecciona el encuentro y la sede que prefieras en nuestro calendario oficial." },
               { step: "02", title: "Completa Datos", icon: "📝", desc: "Ingresa los datos de los asistentes. Recuerda: máximo 6 entradas por persona." },
               { step: "03", title: "Pago y Ticket", icon: "🎟️", desc: "Paga de forma segura y recibe tu código QR único para ingresar al estadio." }
-            ].map((item, i) => (
-              <div key={i} className="relative p-10 rounded-[2.5rem] bg-background border border-border transition-all duration-500 group overflow-hidden hover:shadow-2xl hover:shadow-blue-500/5 hover:-translate-y-2">
+            ].map((item) => (
+              <div key={item.step} className="relative p-10 rounded-[2.5rem] bg-background border border-border transition-all duration-500 group overflow-hidden hover:shadow-2xl hover:shadow-blue-500/5 hover:-translate-y-2">
                 <div className="absolute top-6 right-8 text-8xl font-black text-blue-600/10 dark:text-white/20 group-hover:text-blue-500/40 group-hover:scale-110 transition-all duration-700 select-none">
                   {item.step}
                 </div>
@@ -179,3 +208,5 @@ export default function Home() {
     </main>
   );
 }
+
+

@@ -22,8 +22,8 @@ async function bootstrap() {
 
   // Configure el CORS para que el front pueda acceder al backend.
   app.enableCors({
-    origin: 'http://localhost:3001', //aqui va el link de tu app si esta en produccion
-    methods: 'GET,POST,PUT,DELETE', // los metodos que permitimos que se usen
+    origin: ['http://localhost:3001', 'http://127.0.0.1:3001'],
+    methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     credentials: true, // permite que el backend guarde cookies del frontend.
   });
 

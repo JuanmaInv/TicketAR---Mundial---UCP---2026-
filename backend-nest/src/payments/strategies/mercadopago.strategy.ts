@@ -68,9 +68,15 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
       this.logger.log(`✅ Preferencia creada exitosamente. ID: ${response.id}`);
       this.logger.log(`🔗 LINK DE PAGO: ${response.init_point}`);
 
+      if (!response.init_point) {
+        throw new Error(
+          'Mercado Pago no devolvio init_point para la preferencia',
+        );
+      }
+
       return {
         success: true,
-        paymentUrl: response.init_point!,
+        paymentUrl: response.init_point,
         transactionId: response.id,
       };
     } catch (error) {
@@ -88,6 +94,25 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
    * @param transactionId ID de la transacción enviado por el Webhook de MP.
    */
   async verifyPayment(transactionId: string): Promise<PaymentResult> {
+    // FIX (HIGH): El bypass se evalúa ANTES de llamar a la API externa.
+    // Si E2E_BYPASS está activo y no estamos en producción, retornamos éxito
+    // inmediatamente sin contactar a Mercado Pago, evitando fallos por tokens inválidos
+    // y garantizando que el bypass cumpla su propósito en entornos de testing.
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.E2E_BYPASS === 'true'
+    ) {
+      this.logger.warn(
+        `[E2E_BYPASS] Verificación de pago omitida para transacción ${transactionId} (entorno no productivo)`,
+      );
+      return {
+        success: true,
+        transactionId,
+        // FIX: Durante el bypass, asumimos que el test inyecta el ticketId como transactionId en el webhook
+        paymentUrl: transactionId,
+      };
+    }
+
     try {
       this.logger.log(
         `Verificando estado del pago ${transactionId} en Mercado Pago`,

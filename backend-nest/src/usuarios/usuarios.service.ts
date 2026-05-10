@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuarioEntidad } from './entities/usuario.entidad';
 import type { IUsuariosRepository } from './repositories/usuarios.repository.interface';
@@ -21,11 +21,33 @@ export class UsuariosService {
     return this.usuariosRepository.buscarPorEmail(email);
   }
 
-  async actualizar(email: string, datos: any): Promise<UsuarioEntidad> {
+  async buscarPorId(id: string): Promise<UsuarioEntidad | null> {
+    return this.usuariosRepository.buscarPorId(id);
+  }
+
+  async actualizar(
+    email: string,
+    datos: Partial<CrearUsuarioDto>,
+  ): Promise<UsuarioEntidad> {
     return this.usuariosRepository.actualizar(email, datos);
   }
 
   async obtenerTodos(): Promise<UsuarioEntidad[]> {
     return this.usuariosRepository.obtenerTodos();
+  }
+
+  /**
+   * Elimina la cuenta del usuario y todos sus registros asociados.
+   * La DB maneja la cascada (entradas, reservas) vía ON DELETE CASCADE.
+   * Cumple con el "Derecho al Olvido".
+   */
+  async eliminar(id: string): Promise<void> {
+    const usuario = await this.usuariosRepository.buscarPorId(id);
+
+    if (!usuario) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+
+    await this.usuariosRepository.eliminar(id);
   }
 }

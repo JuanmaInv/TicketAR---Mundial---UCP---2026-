@@ -11,7 +11,6 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 @Injectable()
 export class SupabaseEntradasRepository implements IEntradasRepository {
   private readonly logger = new Logger(SupabaseEntradasRepository.name);
-
   constructor(private readonly supabaseService: SupabaseService) {}
 
   private get supabase() {
@@ -47,10 +46,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     if (error || !data) return 0;
 
     // Sumar el campo cantidad de cada fila activa
-    return data.reduce(
-      (total, row) => total + (Number(row.cantidad) || 0),
-      0,
-    );
+    return data.reduce((total, row) => total + (Number(row.cantidad) || 0), 0);
   }
 
   async obtenerStockDisponible(
@@ -205,9 +201,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     }
   }
 
-  async obtenerExpiradas(
-    fechaReferencia: string,
-  ): Promise<EntradaExpirada[]> {
+  async obtenerExpiradas(fechaReferencia: string): Promise<EntradaExpirada[]> {
     const { data, error } = await this.supabase
       .from('entradas')
       .select('id, id_sector, id_partido, cantidad')

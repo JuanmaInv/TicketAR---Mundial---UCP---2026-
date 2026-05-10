@@ -8,7 +8,7 @@ import { PaymentResult } from '../../payments/strategies/payment-strategy.interf
 export class ReservadoState implements TicketState {
   private ticket: TicketEntity;
 
-  constructor(private readonly logger: Logger) { }
+  constructor(private readonly logger: Logger) {}
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -52,7 +52,7 @@ export class ReservadoState implements TicketState {
     }
 
     this.logger.log(
-      `Pago procesado para ticket ${this.ticket.id}. Resultado: ${resultado.success ? 'EXITO' : 'FALLO'}.`,
+      `Pago procesado para ticket ${this.ticket.id}. Resultado: EXITO.`,
     );
 
     return resultado;

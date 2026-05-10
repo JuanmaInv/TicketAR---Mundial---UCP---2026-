@@ -6,6 +6,8 @@ import {
   Inject,
   Logger,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CrearEntradaDto } from './dto/create-ticket.dto';
 import { TicketEntity } from './entities/ticket.entity';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
@@ -27,6 +29,7 @@ export class EntradasService {
     private readonly paymentsService: PaymentsService,
     private readonly qrService: QrService,
     private readonly sectoresService: SectoresService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
@@ -151,7 +154,21 @@ export class EntradasService {
       await this.entradasRepository.guardarPaymentId(id, paymentId);
     }
 
-    return this.entradasRepository.actualizarEstado(id, TicketStatus.PAGADO);
+    const ticketPagado = await this.entradasRepository.actualizarEstado(
+      id,
+      TicketStatus.PAGADO,
+    );
+
+    // Emitir evento para que los listeners (ej: NotificationsService) reaccionen
+    this.eventEmitter.emit('ticket.pagado', {
+      ticketId: ticketPagado.id,
+      idUsuario: ticketPagado.idUsuario,
+    });
+    this.logger.log(
+      `Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`,
+    );
+
+    return ticketPagado;
   }
 
   /**
@@ -211,11 +228,65 @@ export class EntradasService {
         id,
         TicketStatus.PAGADO,
       );
+
+      // Emitir evento para que los listeners (ej: NotificationsService) reaccionen
+      this.eventEmitter.emit('ticket.pagado', {
+        ticketId: ticketPagado.id,
+        idUsuario: ticketPagado.idUsuario,
+      });
+      this.logger.log(
+        `Evento 'ticket.pagado' emitido para ticket ${ticketPagado.id}`,
+      );
+
       return { ticket: ticketPagado, paymentResult };
     }
 
     // Si HAY paymentUrl (Mercado Pago), el ticket sigue RESERVADO hasta que el webhook confirme
     return { ticket, paymentResult };
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async manejarReservasExpiradas() {
+    const ahora = new Date().toISOString();
+    const expiradas = await this.entradasRepository.obtenerExpiradas(ahora);
+
+    if (expiradas.length > 0) {
+      for (const row of expiradas) {
+        try {
+          // Mapeamos a entidad para tener el contexto completo
+          const ticket = await this.entradasRepository.obtenerUna(row.id);
+          if (!ticket) continue;
+
+          // Validar con el patrón State antes de cancelar
+          const estadoActual = this.ticketStateFactory.create(ticket.estado);
+          estadoActual.setContext(ticket);
+          estadoActual.cancelar();
+
+          // Devolvemos el stock
+          await this.entradasRepository.incrementarStock(
+            ticket.idPartido,
+            ticket.idSector,
+            ticket.cantidad,
+          );
+
+          // Marcamos como CANCELADO
+          await this.entradasRepository.actualizarEstado(
+            ticket.id,
+            TicketStatus.CANCELADO,
+          );
+
+          // Recalcular estado del partido
+          await this.entradasRepository.recalcularEstadoPartido(
+            ticket.idPartido,
+          );
+        } catch (err) {
+          this.logger.error(
+            `[Cron] Error procesando ticket ${row.id}:`,
+            (err as Error).message,
+          );
+        }
+      }
+    }
   }
 
   /**

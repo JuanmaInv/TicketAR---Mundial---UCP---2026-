@@ -50,12 +50,14 @@ export default function ResumenCompra({ partidoId, datos, onVolver, onConfirmar 
       {/* Botonera de Acción */}
       <div className="flex gap-4">
         <button
+          type="button"
           onClick={onVolver} //para volver al paso anterior y permitir modificar los datos
           className="w-1/3 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold py-4 rounded-xl transition-all"
         >
           Modificar Datos
         </button>
         <button
+          type="button"
           onClick={onConfirmar} //para confirmar y pagar
           className="w-2/3 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-[0_0_20px_rgba(22,163,74,0.5)]"
         >

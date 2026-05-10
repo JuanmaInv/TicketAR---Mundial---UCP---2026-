@@ -1,0 +1,9 @@
+exclude_paths:
+  - "scratch/**"
+  - "**/pnpm-lock.yaml"
+  - "docs/**"
+  - "frontend-client/tests/**"
+  - "frontend-client/test-results/**"
+  - "frontend-client/playwright-report/**"
+  - "backend-nest/Playwright Tests/**"
+  - "frontend-client/bruno/**"

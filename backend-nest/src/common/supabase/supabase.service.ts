@@ -5,23 +5,22 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 /**
  * Servicio centralizado de Supabase (Principio DRY + Singleton).
  *
- * Usamos `SupabaseClient<any>` para que el cliente acepte cualquier tabla
+ * Usamos `SupabaseClient` para mantener tipado del SDK
  * sin restricciones de tipo, permitiendo operaciones como .insert(), .select()
  * sobre tablas definidas en la base de datos real.
  *
- * El cast `as unknown as SupabaseClient<any>` es necesario para evitar el
+ * El cast del SDK se conserva para compatibilidad de tipos.
  * conflicto entre los tipos internos de Supabase y las reglas del linter.
  */
 @Injectable()
 export class SupabaseService {
-  private readonly client: SupabaseClient<any>;
+  private readonly client: ReturnType<typeof createClient>;
 
   constructor(private readonly configService: ConfigService) {
     const url = this.configService.getOrThrow<string>('SUPABASE_URL');
     const key = this.configService.getOrThrow<string>('SUPABASE_KEY');
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    this.client = createClient(url, key) as any;
+    this.client = createClient(url, key);
   }
 
   /**
@@ -31,7 +30,7 @@ export class SupabaseService {
    *     .from('partidos')
    *     .select('*');
    */
-  getClient(): SupabaseClient<any> {
+  getClient(): SupabaseClient {
     return this.client;
   }
 }

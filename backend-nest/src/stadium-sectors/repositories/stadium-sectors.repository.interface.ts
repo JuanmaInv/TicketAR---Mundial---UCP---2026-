@@ -1,5 +1,6 @@
 import { SectorEstadioEntidad } from '../entities/stadium-sector.entity';
 import { CrearSectorDto } from '../dto/create-stadium-sector.dto';
+import { ActualizarSectorEnPartidoDto } from '../dto/update-sector-in-match.dto';
 
 /**
  * Sector disponible por partido — incluye stock de partido_sectores.
@@ -24,5 +25,15 @@ export interface ISectoresRepository {
   /**
    * Retorna los sectores de todos los partidos para poder calcular el precio mínimo.
    */
-  obtenerSectoresTodosLosPartidos(): Promise<{ idPartido: string; sectores: SectorPorPartido[] }[]>;
+  obtenerSectoresTodosLosPartidos(): Promise<
+    { idPartido: string; sectores: SectorPorPartido[] }[]
+  >;
+  /**
+   * Actualiza precio o stock (asientos_disponibles) de un sector en un partido.
+   */
+  actualizarEnPartido(
+    idPartido: string,
+    idSector: string,
+    datos: ActualizarSectorEnPartidoDto,
+  ): Promise<SectorPorPartido>;
 }

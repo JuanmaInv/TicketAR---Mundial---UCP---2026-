@@ -21,6 +21,7 @@ export function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="relative p-2.5 rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900 shadow-sm transition-all hover:scale-110 active:scale-95 group"
       aria-label="Cambiar tema"
@@ -38,3 +39,4 @@ export function ThemeToggle() {
     </button>
   );
 }
+

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { IPaymentStrategy, PaymentResult } from './payment-strategy.interface';
 
 @Injectable()
@@ -23,7 +24,7 @@ export class SimulatedPaymentStrategy implements IPaymentStrategy {
     // Por defecto, siempre aprobamos el pago para la demo
     return {
       success: true,
-      transactionId: `SIM-${Math.random().toString(36).substring(2, 11).toUpperCase()}`,
+      transactionId: `SIM-${randomUUID().replace(/-/g, '').slice(0, 9).toUpperCase()}`,
     };
   }
 

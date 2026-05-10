@@ -5,6 +5,7 @@ import type {
   SectorPorPartido,
 } from './repositories/stadium-sectors.repository.interface';
 import { SectorEstadioEntidad } from './entities/stadium-sector.entity';
+import { ActualizarSectorEnPartidoDto } from './dto/update-sector-in-match.dto';
 
 @Injectable()
 export class SectoresService {
@@ -28,9 +29,6 @@ export class SectoresService {
   async obtenerUno(id: string): Promise<SectorEstadioEntidad> {
     try {
       const sector = await this.sectoresRepository.obtenerUno(id);
-      if (!sector) {
-        throw new NotFoundException('Sector de estadio no encontrado');
-      }
       return sector;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -45,10 +43,31 @@ export class SectoresService {
   async obtenerSectoresPorPartido(
     idPartido: string,
   ): Promise<SectorPorPartido[]> {
-    return await this.sectoresRepository.obtenerSectoresPorPartido(idPartido);
+    const sectores =
+      await this.sectoresRepository.obtenerSectoresPorPartido(idPartido);
+    if (!sectores.length) {
+      throw new NotFoundException(
+        'No hay sectores disponibles para este partido.',
+      );
+    }
+    return sectores;
   }
 
-  async obtenerSectoresTodosLosPartidos(): Promise<{ idPartido: string; sectores: SectorPorPartido[] }[]> {
+  async obtenerSectoresTodosLosPartidos(): Promise<
+    { idPartido: string; sectores: SectorPorPartido[] }[]
+  > {
     return await this.sectoresRepository.obtenerSectoresTodosLosPartidos();
+  }
+
+  async actualizarEnPartido(
+    idPartido: string,
+    idSector: string,
+    datos: ActualizarSectorEnPartidoDto,
+  ): Promise<SectorPorPartido> {
+    return this.sectoresRepository.actualizarEnPartido(
+      idPartido,
+      idSector,
+      datos,
+    );
   }
 }
