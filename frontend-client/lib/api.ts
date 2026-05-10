@@ -15,7 +15,14 @@ export interface Sector {
   nombre: string;
   precio: number;
   capacidad: number;
-  capacidadDisponible: number;
+}
+
+export interface SectorPorPartido {
+  id: string;
+  idSector: string;
+  nombre: string;
+  precio: number;
+  asientosDisponibles: number;
 }
 
 export async function getPartidos(): Promise<Partido[]> {
@@ -29,7 +36,6 @@ export async function getPartidos(): Promise<Partido[]> {
     equipo_visitante: (p.equipo_visitante ?? p.equipoVisitante ?? '') as string,
     fecha_partido: (p.fecha_partido ?? p.fechaPartido ?? '') as string,
     nombre_estadio: (p.nombre_estadio ?? p.nombreEstadio ?? '') as string,
-    precio_base: (p.precio_base ?? p.precioBase ?? 0) as number,
     fase: (p.fase ?? '') as string,
     estado: (p.estado ?? '') as string,
     imagen_url: (p.imagen_url ?? p.imagenUrl ?? undefined) as string | undefined,
@@ -45,13 +51,26 @@ export async function getSectores(): Promise<Sector[]> {
     id: s.id as string,
     nombre: s.nombre as string,
     precio: s.precio as number,
-    capacidad: s.capacidad as number,
-    capacidadDisponible: (s.capacidadDisponible ?? s.capacidad_disponible) as number
+    capacidad: s.capacidad as number
   }));
 }
 
+export async function getSectoresPorPartido(idPartido: string): Promise<SectorPorPartido[]> {
+  const res = await fetch(`${API_URL}/sectores/partido/${idPartido}`);
+  if (!res.ok) throw new Error('Error al traer sectores por partido');
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.data ?? []);
+}
 
-export async function createTicket(ticket: { idUsuario: string, idPartido: string, idSector: string }): Promise<Ticket> {
+export async function getSectoresDeTodosLosPartidos(): Promise<{ idPartido: string; sectores: SectorPorPartido[] }[]> {
+  const res = await fetch(`${API_URL}/sectores/todos-partidos`);
+  if (!res.ok) throw new Error('Error al traer sectores de todos los partidos');
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.data ?? []);
+}
+
+
+export async function createTicket(ticket: { idUsuario: string, idPartido: string, idSector: string, cantidad: number }): Promise<Ticket> {
   const res = await fetch(`${API_URL}/entradas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
