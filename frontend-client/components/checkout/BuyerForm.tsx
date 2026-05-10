@@ -5,6 +5,18 @@ import { DatosCompra } from '@/types/ticket';
 
 type CampoFormulario = Exclude<keyof DatosCompra, 'partidoId'>;
 type ErroresFormulario = Partial<Record<CampoFormulario, string>>;
+type CantidadCompra = DatosCompra['cantidad'];
+
+function normalizarCantidad(valor: string | number): CantidadCompra {
+  const numero = typeof valor === 'number' ? valor : parseInt(valor, 10);
+  if (Number.isNaN(numero)) return 1;
+  if (numero <= 1) return 1;
+  if (numero === 2) return 2;
+  if (numero === 3) return 3;
+  if (numero === 4) return 4;
+  if (numero === 5) return 5;
+  return 6;
+}
 
 function obtenerValorCampo(datos: DatosCompra, campo: CampoFormulario): string | number {
   switch (campo) {
@@ -59,7 +71,7 @@ function actualizarDato(
 ): DatosCompra {
   switch (campo) {
     case 'cantidad':
-      return { ...datos, cantidad: Number(valor) };
+      return { ...datos, cantidad: normalizarCantidad(valor) };
     case 'nombre':
       return { ...datos, nombre: String(valor) };
     case 'apellido':
@@ -159,7 +171,7 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
   const manejarCambioInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const campo = e.target.name as CampoFormulario;
     const value = e.target.value;
-    const nuevoValor = campo === 'cantidad' ? (value === '' ? 0 : parseInt(value, 10)) : value;
+    const nuevoValor = campo === 'cantidad' ? normalizarCantidad(value) : value;
 
     setDatosCompra((prev) => actualizarDato(prev, campo, nuevoValor));
 

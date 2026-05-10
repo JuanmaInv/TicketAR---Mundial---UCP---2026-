@@ -71,9 +71,12 @@ test.describe('BuyerForm Component Integration', () => {
 
     // Enviamos el formulario
     await component.getByRole('button', { name: /Validar Datos y Continuar/i }).click();
-    expect(datosEnviados?.cantidad).toBe(2);
 
     // Verificamos que los datos fueron capturados correctamente
-    expect(datosEnviados).not.toBeNull();
+    if (datosEnviados === null) {
+      throw new Error('No se recibieron datos del formulario');
+    }
+    const datosConfirmados: DatosCompra = datosEnviados;
+    expect(datosConfirmados.cantidad).toBe(2);
   });
 });
