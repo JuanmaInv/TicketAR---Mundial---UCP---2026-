@@ -10,6 +10,7 @@ import {
   getUsuario,
   getTicketQr,
   getSectores,
+  getSectoresDeTodosLosPartidos,
   getPartidos,
   pagarTicket,
   Sector,
@@ -48,6 +49,8 @@ export default function MyTicketsPage() {
   const [entradas, setEntradas] = useState<EntradaApi[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [partidos, setPartidos] = useState<Partido[]>([]);
+  const [dniUsuario, setDniUsuario] = useState<string>('');
+  const [nombresSectorPorClave, setNombresSectorPorClave] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
   const [mensajeEstado, setMensajeEstado] = useState('');
@@ -58,7 +61,7 @@ export default function MyTicketsPage() {
 
     try {
       setMensajeEstado('');
-      const [datosUsuario, entradasApi, sectoresApi, partidosApi] = await Promise.all([
+      const [datosUsuario, entradasApi, sectoresApi, partidosApi, sectoresPorPartidoApi] = await Promise.all([
         getUsuario(user.emailAddresses[0].emailAddress, {
           userId: user.id,
           userEmail: user.emailAddresses[0].emailAddress,
@@ -66,6 +69,7 @@ export default function MyTicketsPage() {
         getTickets(),
         getSectores(),
         getPartidos(),
+        getSectoresDeTodosLosPartidos(),
       ]);
 
       if (datosUsuario?.id) {
@@ -75,8 +79,17 @@ export default function MyTicketsPage() {
           return;
         }
 
+        setDniUsuario(datosUsuario.numeroPasaporte ?? '');
         setSectores(sectoresApi);
         setPartidos(partidosApi);
+        const mapaNombres: Record<string, string> = {};
+        sectoresPorPartidoApi.forEach((item) => {
+          item.sectores.forEach((sector) => {
+            mapaNombres[`${item.idPartido}:real:${sector.idSector}`] = sector.nombre;
+            mapaNombres[`${item.idPartido}:partidoSector:${sector.id}`] = sector.nombre;
+          });
+        });
+        setNombresSectorPorClave(mapaNombres);
 
         const misEntradas = (entradasApi as EntradaApi[]).filter((entrada) =>
           (entrada.idUsuario === datosUsuario.id || entrada.id_usuario === datosUsuario.id) &&
@@ -201,6 +214,8 @@ export default function MyTicketsPage() {
                 entrada={entrada}
                 sectores={sectores}
                 partidos={partidos}
+                dniUsuario={dniUsuario}
+                nombresSectorPorClave={nombresSectorPorClave}
                 alActualizar={cargarDatos}
               />
             ))}
@@ -215,11 +230,15 @@ function TicketCard({
   entrada,
   sectores,
   partidos,
+  dniUsuario,
+  nombresSectorPorClave,
   alActualizar,
 }: {
   entrada: EntradaApi;
   sectores: Sector[];
   partidos: Partido[];
+  dniUsuario: string;
+  nombresSectorPorClave: Record<string, string>;
   alActualizar: () => Promise<void>;
 }) {
   const [qr, setQr] = useState<string | null>(null);
@@ -230,8 +249,16 @@ function TicketCard({
   const cantidad = entrada.cantidad ?? 1;
   const totalPagado = entrada.precioTotal ?? entrada.precio_total;
 
-  const sector = sectores.find((s) => s.id === (entrada.idSector || entrada.id_sector));
+  const idSectorEntrada = entrada.idSector || entrada.id_sector || '';
+  const idPartidoEntrada = entrada.idPartido || entrada.id_partido || '';
+  const sector = sectores.find((s) => s.id === idSectorEntrada);
   const partido = partidos.find((p) => p.id === (entrada.idPartido || entrada.id_partido));
+  const nombreSector =
+    sector?.nombre ||
+    nombresSectorPorClave[`${idPartidoEntrada}:real:${idSectorEntrada}`] ||
+    nombresSectorPorClave[`${idPartidoEntrada}:partidoSector:${idSectorEntrada}`] ||
+    'Sector no identificado';
+  const precioUnitario = entrada.precioUnitario ?? entrada.precio_unitario;
 
   async function pagarEntrada() {
     setPagando(true);
@@ -316,19 +343,39 @@ function TicketCard({
           <div className="flex-1">
             <h3 className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-50">Ubicacion</h3>
             <p className="text-xl font-black text-blue-500 italic uppercase leading-none">
-              {sector ? sector.nombre : 'Sector General'}
+              {nombreSector}
             </p>
-            <p className="text-foreground/60 text-xs font-bold mt-2 uppercase tracking-tighter">
-              {sector ? `ARS $${sector.precio.toLocaleString()}` : 'Precio no disponible'}
-            </p>
+            {typeof precioUnitario === 'number' ? (
+              <p className="text-foreground/60 text-xs font-bold mt-2 uppercase tracking-tighter">
+                Precio unitario: ARS ${precioUnitario.toLocaleString()}
+              </p>
+            ) : typeof totalPagado === 'number' ? (
+              <p className="text-foreground/60 text-xs font-bold mt-2 uppercase tracking-tighter">
+                Total abonado: ARS ${totalPagado.toLocaleString()}
+              </p>
+            ) : (
+              <p className="text-foreground/60 text-xs font-bold mt-2 uppercase tracking-tighter">
+                Precio no disponible
+              </p>
+            )}
           </div>
         </div>
 
         <div className="mt-8 pt-6 border-t border-border flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
           <div>
             <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest">Titular de Cuenta</p>
-            <p className="text-foreground text-xs font-bold italic">Acceso validado via Pasaporte</p>
+            <p className="text-foreground text-xs font-bold italic">Acceso validado via DNI</p>
+            {dniUsuario && (
+              <p className="text-foreground/70 text-[11px] font-black uppercase tracking-wider mt-1">
+                DNI: {dniUsuario}
+              </p>
+            )}
             <p className="text-foreground/70 text-[11px] font-black uppercase tracking-wider mt-2">Cantidad: {cantidad}</p>
+            {typeof precioUnitario === 'number' && (
+              <p className="text-foreground/70 text-[11px] font-black uppercase tracking-wider mt-1">
+                Precio unitario: ARS ${precioUnitario.toLocaleString()}
+              </p>
+            )}
             {typeof totalPagado === 'number' && (
               <p className="text-foreground/70 text-[11px] font-black uppercase tracking-wider mt-1">
                 Total abonado: ARS ${totalPagado.toLocaleString()}
