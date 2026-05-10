@@ -189,7 +189,13 @@ export default function MatchesPage() {
                         <span className="bg-primary/10 text-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors">
                           Mundial 2026 • {match.fase}
                         </span>
-                        <span className="text-muted text-xs font-bold uppercase italic tracking-widest">10 / JUN / 2026</span>
+                        <span className="text-muted text-xs font-bold uppercase italic tracking-widest">
+                          {new Date(match.fecha_partido).toLocaleDateString('es-AR', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          }).replace(/ /g, ' / ').toUpperCase()}
+                        </span>
                       </div>
 
                       <div className="flex flex-col lg:flex-row items-center justify-center gap-16 mb-12">

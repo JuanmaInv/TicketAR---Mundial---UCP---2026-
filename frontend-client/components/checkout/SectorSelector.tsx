@@ -20,7 +20,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
         // FILTRAR SOLO PALCO, PLATEA Y POPULAR (Ignorar Prensa y otros)
         const sectoresFiltrados = datos.filter(s => {
           const n = s.nombre.toLowerCase();
-          return n.includes('palco') || n.includes('platea') || n.includes('popular');
+          return n.includes('palco') || n.includes('platea') || n.includes('popular') || n.includes('vip');
         });
         
         setSectores(sectoresFiltrados);
@@ -40,7 +40,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
   const getSectorColor = (nombre: string) => {
     const n = nombre.toLowerCase();
     if (n.includes('palco')) return 'bg-purple-600 shadow-purple-900/40'; // Púrpura/Magenta
-    if (n.includes('platea')) return 'bg-blue-600 shadow-blue-900/40'; // Azul
+    if (n.includes('platea') || n.includes('vip')) return 'bg-blue-600 shadow-blue-900/40'; // Azul
     if (n.includes('popular')) return 'bg-amber-500 shadow-amber-900/40'; // Amarillo/Oro
     return 'bg-zinc-600 shadow-black';
   };
@@ -50,7 +50,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
       alert('Por favor selecciona un sector');
       return;
     }
-    onComprar(sectorSeleccionado, cantidad, precioTotal);
+    onComprar(sectorActual!.idSector, cantidad, precioTotal);
   };
 
   if (cargando) {
