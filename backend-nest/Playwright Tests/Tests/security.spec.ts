@@ -76,4 +76,26 @@ test.describe('Pruebas de Seguridad y Robustez', () => {
     console.log('Validación de UUID malformado confirmada.');
   });
 
+  test('Debería fallar al crear una entrada con IDs inexistentes (Foreign Key)', async ({ request }) => {
+    const response = await request.post('/entradas', {
+      data: {
+        idUsuario: '00000000-0000-0000-0000-000000000000',
+        idPartido: '00000000-0000-0000-0000-000000000000',
+        idSector: '00000000-0000-0000-0000-000000000000'
+      }
+    });
+
+    // El servidor debe manejar el error de la DB y devolver un error controlado
+    expect(response.status()).toBeGreaterThanOrEqual(400);
+    console.log('Validación de IDs inexistentes controlada.');
+  });
+
+  test('Debería rechazar payloads vacíos en la creación de entradas', async ({ request }) => {
+    const response = await request.post('/entradas', {
+      data: {}
+    });
+
+    expect(response.status()).toBe(400);
+  });
+
 });
