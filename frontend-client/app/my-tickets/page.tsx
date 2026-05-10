@@ -49,12 +49,15 @@ export default function MyTicketsPage() {
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [actualizando, setActualizando] = useState(false);
+  const [mensajeEstado, setMensajeEstado] = useState('');
   const [esAdmin, setEsAdmin] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
 
     try {
+      setMensajeEstado('');
       const [datosUsuario, entradasApi, sectoresApi, partidosApi] = await Promise.all([
         getUsuario(user.emailAddresses[0].emailAddress, {
           userId: user.id,
@@ -83,10 +86,28 @@ export default function MyTicketsPage() {
       }
     } catch {
       setEntradas([]);
+      throw new Error('No pudimos actualizar tus entradas. Intenta nuevamente.');
     } finally {
       setCargando(false);
     }
   }, [user]);
+
+  async function actualizarLista() {
+    setActualizando(true);
+    setMensajeEstado('');
+    try {
+      await cargarDatos();
+      setMensajeEstado('Lista actualizada correctamente.');
+    } catch (error) {
+      setMensajeEstado(
+        error instanceof Error
+          ? error.message
+          : 'No pudimos actualizar tus entradas. Intenta nuevamente.',
+      );
+    } finally {
+      setActualizando(false);
+    }
+  }
 
   useEffect(() => {
     if (isLoaded) {
@@ -147,13 +168,19 @@ export default function MyTicketsPage() {
           <button
             type="button"
             onClick={() => {
-              void cargarDatos();
+              void actualizarLista();
             }}
-            className="text-blue-500 text-[10px] font-black uppercase tracking-widest hover:text-foreground transition-colors"
+            disabled={actualizando}
+            className="text-blue-500 disabled:text-muted-foreground text-[10px] font-black uppercase tracking-widest hover:text-foreground transition-colors disabled:cursor-not-allowed"
           >
-            Actualizar Lista
+            {actualizando ? 'Actualizando...' : 'Actualizar Lista'}
           </button>
         </header>
+        {mensajeEstado && (
+          <div className="mb-6 rounded-xl border border-border bg-card p-3 text-xs font-bold text-foreground">
+            {mensajeEstado}
+          </div>
+        )}
 
         {entradas.length === 0 ? (
           <div className="bg-card border border-border rounded-[2.5rem] p-12 text-center shadow-xl">

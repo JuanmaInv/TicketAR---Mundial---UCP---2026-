@@ -54,6 +54,7 @@ export default function Navbar() {
     : [
         { name: 'INICIO', href: '/' },
         { name: 'PARTIDOS', href: '/matches' },
+        { name: 'SOBRE NOSOTROS', href: '/about' },
         { name: 'MIS TICKETS', href: '/my-tickets', color: 'text-blue-100' },
         { name: 'PERFIL', href: '/profile', color: 'text-emerald-100' },
         { name: 'FAQ', href: '/faq' },
