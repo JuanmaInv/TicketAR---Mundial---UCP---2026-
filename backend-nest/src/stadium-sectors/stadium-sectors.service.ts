@@ -1,6 +1,9 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
-import type { ISectoresRepository } from './repositories/stadium-sectors.repository.interface';
+import type {
+  ISectoresRepository,
+  SectorPorPartido,
+} from './repositories/stadium-sectors.repository.interface';
 import { SectorEstadioEntidad } from './entities/stadium-sector.entity';
 
 @Injectable()
@@ -33,5 +36,19 @@ export class SectoresService {
       if (error instanceof NotFoundException) throw error;
       throw new NotFoundException((error as Error).message);
     }
+  }
+
+  /**
+   * Retorna los sectores disponibles para un partido con su stock real.
+   * Hace join entre partido_sectores y sectores_estadio.
+   */
+  async obtenerSectoresPorPartido(
+    idPartido: string,
+  ): Promise<SectorPorPartido[]> {
+    return await this.sectoresRepository.obtenerSectoresPorPartido(idPartido);
+  }
+
+  async obtenerSectoresTodosLosPartidos(): Promise<{ idPartido: string; sectores: SectorPorPartido[] }[]> {
+    return await this.sectoresRepository.obtenerSectoresTodosLosPartidos();
   }
 }

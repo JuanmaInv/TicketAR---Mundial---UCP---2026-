@@ -11,6 +11,22 @@ export class SectoresController {
     return this.sectoresService.obtenerTodos();
   }
 
+
+
+  /**
+   * Retorna los sectores disponibles para un partido con stock real.
+   * Endpoint usado por el frontend para mostrar sectores en el checkout.
+   */
+  @Get('partido/:idPartido')
+  obtenerSectoresPorPartido(@Param('idPartido') idPartido: string) {
+    return this.sectoresService.obtenerSectoresPorPartido(idPartido);
+  }
+
+  @Get('todos-partidos')
+  obtenerSectoresTodosLosPartidos() {
+    return this.sectoresService.obtenerSectoresTodosLosPartidos();
+  }
+
   @Get(':id')
   obtenerUno(@Param('id') id: string) {
     return this.sectoresService.obtenerUno(id);
