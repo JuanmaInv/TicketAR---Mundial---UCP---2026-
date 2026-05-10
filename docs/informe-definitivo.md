@@ -1,281 +1,156 @@
-# Informe Definitivo: TicketAR - Mundial 2026
+# 📑 Guía Maestra: Arquitectura y Migración de Datos - TicketAR
 
-> **Propósito de este documento:** Guía completa para que cualquier desarrollador nuevo pueda incorporarse al proyecto backend, entender su arquitectura, y extenderlo sin romper nada.
+Este documento define el estándar de ingeniería para el proyecto TicketAR. Sirve como guía completa para que cualquier desarrollador pueda entender la arquitectura, extender el sistema y mantener la integridad del backend del Mundial 2026.
 
 ---
 
 ## 🎯 Visión y Lógica de Negocio
-
 Desarrollar una plataforma de venta de entradas enfocada en la seguridad y eliminación de la reventa ilegal.
-
-- **Validación:** Entrada obligatoria con Pasaporte.
-- **Regla Crítica:** Máximo 1 entrada por sesión por usuario.
-- **Reserva:** El servidor bloquea el lugar por tiempo limitado (15 min) hasta confirmar pago.
+- **Validación:** Entrada obligatoria con Pasaporte del titular.
+- **Regla Crítica:** Máximo 6 entradas por cuenta de usuario (Global Cap). El titular presenta su pasaporte para validar el grupo.
+- **Reserva:** El servidor bloquea el lugar por 15 minutos hasta confirmar el pago.
 - **Sectores:** Control de capacidad estricto por PLATEA, PALCO, POPULAR y PRENSA.
-- **Entregable:** Generación de código QR enviado por correo tras confirmar el pago.
-- **Reventa:** Sistema oficial integrado en la plataforma con comisión.
-- **Inventario Dinámico:** El stock se gestiona por la relación única `Partido-Sector`, permitiendo precios y capacidades independientes por cada encuentro.
+- **Entregable:** Generación de código QR único por entrada enviado por correo tras el pago.
+- **Reventa:** Sistema oficial integrado en la plataforma con comisión controlada.
 
 ---
 
 ## 🛠️ Stack Tecnológico (Monorepo)
-
 | Rol | Tecnología | Carpeta |
-|-----|-----------|---------|
-| Backend | NestJS (Modular) | `/backend-nest` |
-| Frontend | Next.js + Tailwind | `/frontend-client` |
-| Base de Datos (DB) / Auth | Supabase / Clerk | — |
-| Pagos | Stripe (Int) / Mercado Pago (Local) | — |
-| Testing E2E | Playwright | — |
-| Métricas | Grafana | — |
-
-> ⚠️ **Regla de oro:** No almacenar datos de tarjetas. Usar Clerk para Autenticación de UI y Supabase para base de datos.
+| :--- | :--- | :--- |
+| **Backend** | NestJS (Modular) | `/backend-nest` |
+| **Frontend** | Next.js + Tailwind | `/frontend-client` |
+| **Database/Auth**| Supabase | — |
+| **Pagos** | Stripe (Int) / Mercado Pago (Local) | — |
+| **Testing** | Playwright (E2E y Estrés) | — |
+| **Métricas** | Grafana | — |
 
 ---
 
 ## 🌐 Arquitectura de Integración (Fullstack)
-
-Para entender cómo funciona el ecosistema de **TicketAR**, dividimos la responsabilidad en tres pilares fundamentales:
-
-### 1. El Triángulo de Conectividad
-*   **Base de Datos (Supabase):** El corazón del sistema. Almacena tablas de partidos, usuarios y entradas. Gestiona la persistencia real de los datos.
-*   **Backend (NestJS):** El guardián y cerebro. Es el único que tiene la "llave maestra" (`service_role`) para escribir en la base de datos de forma segura. Valida reglas de negocio y procesa pagos.
-*   **Frontend (Next.js):** La cara del proyecto. Captura la intención del usuario y se comunica con el Backend mediante peticiones HTTP (REST) a `http://localhost:3000`.
-
-### 2. Flujo de Datos (Ejemplo: Compra de Entrada)
-1.  **Frontend:** El usuario elige un asiento y el Front envía un `POST /entradas`.
-2.  **Backend:** Recibe el pedido, valida que el partido exista y que el usuario no tenga ya otra entrada para ese partido.
-3.  **Backend ↔ Supabase:** Si todo es válido, el Backend escribe la reserva en la base de datos y activa el bloqueo de 15 minutos.
-4.  **Backend:** Devuelve la confirmación al usuario para que proceda al pago.
-
-### 3. El Rol del "Guardián" (NestJS)
-A diferencia de otros proyectos donde el Front habla directo con la DB, aquí **NestJS actúa como intermediario crítico**:
-*   **Security:** El Front solo conoce la `anon_key`, mientras que el Backend usa la `service_role_key`.
-*   **Integridad:** Centralizamos validaciones complejas (como el chequeo de pasaportes) en un solo lugar.
-*   **Pagos:** El Backend procesa las confirmaciones de pasarelas antes de marcar un ticket como `PAGADO` en la DB.
+Dividimos la responsabilidad en tres pilares fundamentales para garantizar la seguridad:
+1.  **Base de Datos (Supabase):** Corazón del sistema. Gestiona la persistencia real.
+2.  **Backend (NestJS):** El guardián y cerebro. Posee la "llave maestra" (`service_role`) para operaciones críticas y validación de reglas de negocio.
+3.  **Frontend (Next.js):** La cara del proyecto. Captura la intención del usuario y se comunica con el Backend mediante REST.
 
 ---
 
-## 🚀 Inicio Rápido (Para el Desarrollador Nuevo)
+## 🏗️ La Arquitectura (El Inicio)
+*Esta fase define el **"Qué"** y el **"Dónde"**. Decidimos cómo se organiza el código y cómo se estructuran los datos antes de escribir lógica pesada.*
 
-Si acabas de clonar el repositorio, seguí estos pasos en orden:
+### 1. Filosofía de Diseño: Del Código a la Realidad
+Usamos el enfoque **Code-First**: diseñamos las entidades en TypeScript para que el compilador nos proteja antes de tocar la base de datos.
+- **Las Entidades (`.entity.ts`) → El Plano:** Es el esquema técnico de la tabla.
+- **Razón Arquitectónica:** Garantiza que el contrato de datos sea único. Si falta un campo en la entidad, el sistema fallará en compilación, no en producción.
 
-### 1. Instalar dependencias del backend
+### 2. Ciclo de Vida: Modularización y Entidades
+1.  **Modularización (`.module.ts`):** Creamos la caja independiente para cada funcionalidad (Users, Matches, etc.).
+2.  **Entidad (`.entity.ts`):** Definimos el plano de datos esencial para el Mundial.
 
-```bash
-cd backend-nest
-pnpm install
-```
+### 3. Implementación de Base de Datos (Paso a Paso)
+1.  **Diseño en NestJS:** Definimos campos (Pasaporte, Estadio, etc.).
+2.  **Traducción a SQL:** Convertimos camelCase a snake_case para Postgres.
+3.  **Ejecución en Supabase:** Levantamos las tablas físicas.
+4.  **Automatización (Triggers):** Delegamos la integridad crítica al motor de la DB.
 
-### 2. Configurar variables de entorno
-
-```bash
-cp .env.example .env
-# Editar .env con tus credenciales de Supabase y Stripe/MercadoPago
-```
-
-### 3. Levantar el servidor en modo desarrollo
-
-```bash
-pnpm run start:dev
-```
-
-El backend corre en `http://localhost:3000`. El servidor se recarga automáticamente al guardar cambios (hot reload).
-
-### 4. Verificar que funciona
-
-Abrir en el browser o con cualquier cliente HTTP:
-
-```
-GET http://localhost:3000/partidos
-GET http://localhost:3000/sectores
-```
-
-Deben devolver un array JSON con los datos de semilla cargados.
-
-### 5. Correr los tests
-
-```bash
-pnpm run test
-```
-
-Resultado esperado: **6 passed, 0 failed**.
-
-### 6. Verificar que compila sin errores
-
-```bash
-pnpm run build
-```
-
-Si dice `Found 0 errors` o termina sin output de error, el TypeScript está limpio.
+### 4. Analogía de Piezas y Responsabilidades
+| Pieza en NestJS | Aporte a la Base de Datos | Analogía |
+| :--- | :--- | :--- |
+| **Entidad** | Define columnas y tipos. | **La Receta** |
+| **DTO** | Filtra y valida la entrada. | **El Tamiz** |
+| **Servicio** | Ejecuta la lógica. | **El Cocinero** |
+| **Repositorio** | Habla con la DB. | **La Despensa** |
+| **Trigger** | Acción automática en DB. | **El Robot de cocina** |
 
 ---
 
-## 📂 Gestión de Dependencias y Entorno
+## 🧠 La Ingeniería (El Núcleo)
+*Aquí reside el **"Músculo"**. Incluye los servicios y patrones que permiten que la aplicación sea robusta ante fallos.*
 
-- **Instalación:** Ejecutar `pnpm install` **solo dentro de la carpeta del rol** (`/backend-nest` o `/frontend-client`). No instalar desde la raíz del monorepo.
-- **Seguridad:** `.env` está en `.gitignore`. **NUNCA subir llaves privadas al repositorio.**
-- **Plantilla:** Usar `.env.example` para que el equipo sepa qué variables configurar.
-- **Variables necesarias:** Ver `.env.example` para la lista actualizada.
+### 1. El Servicio (`.service.ts`): El Cerebro
+Concentramos toda la lógica aquí para evitar "controladores gordos".
+- **Razón Arquitectónica:** Permite reutilizar lógica y facilita los tests unitarios.
+
+### 2. Patrones de Diseño Aplicados
+- **State Pattern:** Gestiona estados del ticket (`RESERVADO` → `PAGADO`).
+- **Strategy Pattern:** Intercambia pasarelas de pago (Stripe/MP) sin cambiar el código central.
+- **Adapter Pattern:** Mapea el formato de la DB al formato de la aplicación.
+- **Repository Pattern:** Desacopla la lógica de negocio de la tecnología de base de datos.
+
+### 3. Lógica de Negocio y Reglas Críticas
+1.  **Regla de los 15 Minutos:** El servidor libera automáticamente asientos reservados que no fueron pagados.
+2.  **Validación de Pasaporte:** Cruce obligatorio con la DB de identidades autorizadas.
+3.  **Capacidad Global:** Un usuario no puede poseer más de 6 entradas en total para el torneo.
+
+### 4. Inventario Dinámico: El "Molde" y la "Galletita"
+Para gestionar el stock de millones de entradas sin errores:
+1.  **`sectores_estadio` (El Molde):** Capacidad física teórica.
+2.  **`partidos` (La Orden):** Cada encuentro dispara la creación de su propio inventario.
+3.  **`partido_sectores` (La Galletita Real):** Copia independiente del molde para un partido específico.
+
+### 5. Scripts SQL de Ingeniería
+```sql
+-- Gestión de Stock en Tiempo Real
+ALTER TABLE partido_sectores ADD CONSTRAINT chk_stock_positivo CHECK (asientos_disponibles >= 0);
+
+CREATE OR REPLACE FUNCTION funcion_restar_stock_entrada()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE partido_sectores
+    SET asientos_disponibles = asientos_disponibles - 1
+    WHERE id_partido = NEW.id_partido AND id_sector = NEW.id_sector;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_restar_stock AFTER INSERT ON entradas FOR EACH ROW EXECUTE FUNCTION funcion_restar_stock_entrada();
+```
 
 ---
 
-## ⚙️ CI/CD y Workflows de Integración
+## 🚀 La Comunicación (El Cierre)
+*Fase de exposición al mundo exterior y blindaje de acceso.*
 
-- **Integración Continua:** GitHub Actions. El archivo `backend-ci.yml` corre automáticamente en cada Push o PR hacia ramas `feat/**`.
-- **Qué valida:** Instala dependencias, corre `pnpm run build` y `pnpm run test`.
-- **Regla:** Un PR no puede mergearse si la CI falla.
+### 1. Controladores y DTOs
+Actúan como la "Ventanilla de Atención" y el "Filtro de Seguridad".
+- **Razón Arquitectónica:** El DTO asegura que nadie inyecte campos maliciosos en la base de datos.
+
+### 2. Seguridad y Roles (RBAC)
+- **ADMINISTRADOR:** Gestión total de partidos, sectores y auditoría.
+- **CLIENTE:** Compra, reserva y visualización de sus propias entradas.
+- **Eliminación en Cascada:** Al borrar un usuario, se limpian sus registros vinculados (Derecho al Olvido).
+
+### 3. Catálogo Completo de Endpoints (API)
+| Módulo | Método | Ruta | Descripción | Rol |
+| :--- | :--- | :--- | :--- | :--- |
+| **Partidos** | GET | `/partidos` | Lista de encuentros | Público |
+| **Partidos** | POST | `/partidos` | Crea evento | **ADMIN** |
+| **Usuarios** | DELETE | `/usuarios/me` | Baja definitiva | Dueño |
+| **Entradas** | POST | `/entradas` | Reserva (15 min) | CLIENTE |
+| **Entradas** | GET | `/entradas/:id/qr` | Obtiene QR | Dueño |
+| **Pagos** | POST | `/payments/webhook` | Recibe confirmación | Sistema |
+| **Estadísticas**| GET | `/estadisticas` | Reporte de ventas | **ADMIN** |
+
+---
+
+## 🚀 Inicio Rápido (Para Desarrolladores)
+1.  **Instalar:** `cd backend-nest && pnpm install`
+2.  **Configurar:** `cp .env.example .env` (Cargar llaves de Supabase).
+3.  **Levantar:** `pnpm run start:dev`
+4.  **Tests:** `pnpm run test` (Asegurar **6 passed, 0 failed**).
+5.  **Build:** `pnpm run build` (Verificar cero errores de TS).
 
 ---
 
 ## 🌿 Flujo de Git y Colaboración
-
-1. **Branching:** Ramas por tarea: `feat/nombre-feature`, `fix/nombre-bug`, `chore/nombre-tarea`.
-2. **Protección:** `main` está protegida. Todo cambio entra por Pull Request con al menos 1 revisión.
-3. **Issues:** Una tarea = Una Issue en GitHub. Usar "Relationships" para vincular issues relacionadas.
-4. **Sync:** Sincronizar con `main` diariamente (`git pull --rebase origin main`).
-5. **Commits semánticos:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
-6. **Docs-as-Code:** Las reglas de negocio viajan en `/docs` junto al código.
-
----
-
-## 🏗️ Arquitectura del Backend (NestJS por Capas)
-
-El backend usa una **Arquitectura por Capas** organizada en módulos independientes. Cada capa tiene una responsabilidad única y no puede saltarse.
-
-```
-HTTP Request
-     ↓
-[ DTO ]          ← Valida los datos de entrada (escudo protector)
-     ↓
-[ Controller ]   ← Enruta la petición al servicio correcto (Mozo)
-     ↓
-[ Service ]      ← Aplica la lógica de negocio (Cocinero)
-     ↓
-[ Interface ]    ← Contrato universal (IEntradasRepository)
-     ↓
-[ Repository ]   ← Implementación técnica (Supabase/Postgres)
-```
-
-### 1. DTOs (Data Transfer Objects)
-Antes de escribir lógica, definimos DTOs (`.dto.ts`). Son clases de TypeScript que validan los datos que entran a la API (usando `class-validator`). 
-- *Misión:* Actúan como un "escudo" de seguridad. Implementan el principio de **Zero Trust**: el servidor solo acepta los campos definidos (ej. `userId`, `partidoId`, `sectorId`) e ignora el resto (ej. `status`, `qrCode`).
-- *Validación Estricta:* Se utiliza `@IsUUID('4')` para prevenir inyecciones y asegurar que los identificadores sigan el estándar de Supabase.
-- *Configuración Global:* Se utiliza el `ValidationPipe` en `main.ts` with `whitelist: true` para limpiar automáticamente cualquier campo no deseado enviado por el cliente.
-
-### 2. Roles de cada capa
-
-| Archivo | Rol | Regla |
-|---------|-----|-------|
-| `.dto.ts` | Valida el JSON de entrada | Nunca tiene lógica de negocio |
-| `.controller.ts` | Recibe HTTP y delega al servicio | Nunca accede a la DB directamente |
-| `.service.ts` | Toda la lógica de negocio | Única capa que toca la DB |
-| `.entity.ts` | Define la forma de los datos en DB | Refleja exactamente las columnas de Supabase |
-| `.module.ts` | Agrupa y conecta las piezas | Se registra en `AppModule` |
-
----
-
-## 🎨 Patrones de Diseño de Software
-
-Para que el sistema se banque el tráfico del Mundial y no se nos rompa todo cuando querramos escalar, armamos una arquitectura bien profesional con NestJS. La idea es que cada parte del código haga una sola cosa y que sea fácil de probar.
-
-### 1. Patrón Repositorio (Repository Pattern)
-Es el puente entre el servicio y la base de datos.
-- **Herramienta Universal (Contrato):** Usamos interfaces (`IEntradasRepository`) para que al servicio no le importe de dónde vienen los datos.
-- **Inversión de Control:** El servicio recibe su repositorio por inyección de dependencias (`@Inject`). Esto permite que podamos cambiar de Supabase a una base de datos local en 5 minutos solo tocando el `TicketsModule`, sin romper el `TicketsService`.
-- **Independencia:** Si cambiamos de DB, solo creamos una nueva implementación de la interfaz.
-
-### 2. Patrón State (Estado Activo)
-Manejamos el ciclo de vida del ticket con objetos inteligentes en lugar de simples strings.
-- **Transiciones:** Cada estado (`Reservado`, `Pagado`, `Cancelado`) valida si el cambio es posible.
-- **Inyección:** Usamos una **Factory Inyectable** para que los estados puedan usar el Logger del sistema.
-
-### 3. Patrón Adapter (Mapeo de Datos)
-Es fundamental para desacoplarnos de la estructura de la base de datos.
-- **Mapeo:** El repositorio actúa como adaptador, transformando el `snake_case` de Supabase al `camelCase` de nuestro dominio.
-- **Protección:** Evita que un cambio en la tabla de la DB rompa todo el sistema.
-
-### 4. Patrón Strategy (Flexibilidad y Escalabilidad)
-Este patrón es nuestra navaja suiza para manejar diferentes lógicas sin ensuciar el código principal. Lo aplicamos en dos áreas críticas:
-- **Validación de Identidad:** Clases separadas para validar DNI o Pasaporte. Si el Mundial agrega un "ID de Fan", solo creamos una nueva estrategia.
-- **Pasarela de Pagos:** Implementamos una `IPaymentStrategy` que nos permite alternar entre `Stripe`, `MercadoPago` o una `SimulatedStrategy` para testing. Esto asegura que el sistema de tickets no dependa de un proveedor de pagos específico.
-
-### 5. Base Común (Common Patterns)
-Para no repetir código y que todo el proyecto hable el mismo idioma, creamos una carpeta `src/common/patterns`. Ahí guardamos los moldes (`interfaces`) de estos patrones para que cualquier otro módulo los pueda usar de entrada.
-
----
-
-## 🧩 Módulos Implementados y sus Responsabilidades
-
-Para mantener el principio de **Responsabilidad Única**, el sistema se divide en los siguientes módulos lógicos:
-
-1. **Users (Usuarios):** Gestiona el perfil del hincha. Su función principal es vincular la cuenta del usuario con su número de pasaporte validado.
-2. **Matches (Partidos):** Es el catálogo de eventos. Define qué selecciones juegan, en qué estadio y en qué fecha. Sin un partido, no se pueden emitir tickets.
-3. **Stadium-Sectors (Sectores del Estadio):** Controla el inventario y los precios base de la estructura física del estadio.
-4. **Passport-Credentials (Validación de Identidad):** Actúa como un "oráculo" de seguridad. Simula la conexión con una API externa para verificar pasaportes.
-5. **Tickets (Entradas y Reservas):** El corazón de la lógica de negocio. Maneja el estado del ticket, aplica la reserva de 15 minutos y hace cumplir la regla de "1 entrada por usuario".
-6. **Payments (Pagos):** Se encarga de la pasarela de pago. Una vez confirmado, ordena el cambio de estado a "Pagado".
-
----
-
-## 📊 Gestión Automatizada de Inventario (Match-Sector Logic)
-
-Esta funcionalidad es el núcleo de la estabilidad del sistema TicketAR. Permite que cada encuentro del Mundial gestione su propia disponibilidad de forma independiente y segura.
-
-### 1. El Concepto: Desacoplamiento de Stock
-Para evitar conflictos de concurrencia y permitir flexibilidad, hemos separado la definición física del estadio de la disponibilidad por encuentro:
-*   **Tabla `sectores_estadio` (El Molde):** Define la capacidad total teórica (ej: 20,000 lugares) y el precio base de un sector.
-*   **Tabla `partido_sectores` (El Inventario Real):** Es la tabla donde ocurre la magia. Guarda cuántos lugares quedan **específicamente** para un partido "X" en un sector "Y".
-
-### 2. Automatización mediante Trigger (Paso a Paso)
-Hemos implementado un patrón de **Automatización de Lado del Servidor (Supabase/Postgres)** para garantizar que nunca exista un partido sin entradas disponibles:
-
-1.  **Evento de Creación:** Un administrador o proceso automático inserta un nuevo registro en la tabla `partidos`.
-2.  **Disparo del Trigger (`tr_inicializar_inventario_partido`):** El motor de la base de datos detecta la inserción y detiene el proceso un milisegundo para ejecutar la lógica de inventario.
-3.  **Ejecución de Función (`fn_inicializar_inventario_partido`):**
-    *   La función recorre la tabla `sectores_estadio`.
-    *   Realiza un `INSERT` masivo en `partido_sectores`, "sembrando" el stock inicial basado en la capacidad total del sector.
-4.  **Disponibilidad Inmediata:** Al finalizar la transacción, el partido ya cuenta con su inventario de entradas listo para ser consumido por la API de NestJS.
-
----
-
-## 🚦 Endpoints de la API
-
-El backend corre en `http://localhost:3000` (desarrollo). Todas las peticiones deben incluir `Content-Type: application/json`.
-
-#### Partidos
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/partidos` | Lista todos los partidos |
-| GET | `/partidos/:id` | Detalle de un partido |
-| POST | `/partidos` | Crea un partido (body: `CrearPartidoDto`) |
-
-#### Sectores
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/sectores` | Lista todos los sectores |
-| GET | `/sectores/:id` | Detalle de un sector |
-| POST | `/sectores` | Crea un sector (body: `CrearSectorDto`) |
-
-#### Entradas
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/entradas` | Lista todas las entradas |
-| POST | `/entradas` | Reserva una entrada, bloquea 15 min (body: `CrearEntradaDto`) |
-
----
-
-## 🧠 Reglas de Negocio Críticas
-
-1. **La Regla de los 15 Minutos:** Al crear una entrada, el backend guarda `reservationExpiresAt = now + 15min`. Pasado ese tiempo, la entrada se cancela y el lugar se libera.
-2. **Validación de Pasaporte:** No se emite ninguna entrada si el usuario no tiene un pasaporte registrado y válido en la tabla `usuarios`.
-3. **Un Ticket por Partido:** El servicio verifica que el usuario no tenga ya una entrada activa (`RESERVADO` o `PAGADO`) para el mismo partido antes de crear una nueva.
+1.  **Branching:** `feat/`, `fix/`, `chore/`.
+2.  **Commits:** Seguir estándar semántico.
+3.  **Sync:** Rebase con `main` diariamente.
+4.  **Docs-as-Code:** Toda regla nueva debe reflejarse en `/docs`.
 
 ---
 
 ## 🤖 Protocolo Erwin (Cultura de Equipo)
-
-El proyecto TicketAR no solo se trata de código, sino de un proceso de aprendizaje continuo.
-- **Método Socrático:** La IA actúa como un mentor que guía al desarrollador mediante analogías y preguntas, asegurando que la arquitectura se entienda antes de implementarse.
-- **Foco en Patrones:** Priorizamos el "Por Qué" sobre el "Cómo". Si una lógica es compleja, se encapsula en un Patrón (State, Strategy, Adapter).
-- **Abstracción sobre Implementación:** "Programar para interfaces, no para implementaciones". Esta es la regla de oro que permite que TicketAR sea un sistema profesional y escalable para el Mundial 2026.
+- **Método Socrático:** Entender la arquitectura antes de tirar código.
+- **Abstracción:** Programar para interfaces, no para implementaciones.
+- **Foco en el "Por Qué":** Cada línea de código tiene una justificación técnica.
