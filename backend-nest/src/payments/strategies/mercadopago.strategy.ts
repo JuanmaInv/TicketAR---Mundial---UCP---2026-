@@ -65,9 +65,15 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
       this.logger.log(`✅ Preferencia creada exitosamente. ID: ${response.id}`);
       this.logger.log(`🔗 LINK DE PAGO: ${response.init_point}`);
 
+      if (!response.init_point) {
+        throw new Error(
+          'Mercado Pago no devolvio init_point para la preferencia',
+        );
+      }
+
       return {
         success: true,
-        paymentUrl: response.init_point!,
+        paymentUrl: response.init_point,
         transactionId: response.id,
       };
     } catch (error) {

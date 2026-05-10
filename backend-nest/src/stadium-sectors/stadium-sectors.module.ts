@@ -3,9 +3,10 @@ import { SectoresService } from './stadium-sectors.service';
 import { SupabaseModule } from '../common/supabase/supabase.module';
 import { SectoresController } from './stadium-sectors.controller';
 import { SupabaseSectoresRepository } from './repositories/supabase-stadium-sectors.repository';
+import { UsuariosModule } from '../usuarios/usuarios.module';
 
 @Module({
-  imports: [SupabaseModule],
+  imports: [SupabaseModule, UsuariosModule],
   controllers: [SectoresController],
   providers: [
     SectoresService,

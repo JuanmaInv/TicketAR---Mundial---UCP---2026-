@@ -217,7 +217,7 @@ export class EntradasService {
       ahora,
     )) as TicketExpirado[];
 
-    if (expiradas && expiradas.length > 0) {
+    if (expiradas.length > 0) {
       for (const row of expiradas) {
         try {
           // Mapeamos a entidad para tener el contexto completo

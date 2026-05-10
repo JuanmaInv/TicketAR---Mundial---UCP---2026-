@@ -50,7 +50,7 @@ export class ReservadoState implements TicketState {
     }
 
     this.logger.log(
-      `Pago procesado para ticket ${this.ticket.id}. Resultado: ${resultado.success ? 'EXITO' : 'FALLO'}.`,
+      `Pago procesado para ticket ${this.ticket.id}. Resultado: EXITO.`,
     );
 
     return resultado;

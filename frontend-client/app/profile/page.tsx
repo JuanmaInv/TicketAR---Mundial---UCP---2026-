@@ -68,7 +68,7 @@ function FormularioPerfil() {
         }
       }
     }
-    cargarPerfil();
+    void cargarPerfil();
   }, [isLoaded, user]);
 
   function manejarCambio(e: React.ChangeEvent<HTMLInputElement>) {
@@ -102,6 +102,7 @@ function FormularioPerfil() {
         });
       } else {
         await createUsuario(payload);
+        setExisteEnDB(true);
       }
       
       setExito(true);
@@ -318,3 +319,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

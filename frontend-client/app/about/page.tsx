@@ -25,9 +25,9 @@ export default function AboutPage() {
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {teamMembers.map((member, index) => (
+          {teamMembers.map((member) => (
             <article 
-              key={index}
+              key={member.name}
               className="group relative p-10 rounded-[3rem] bg-card border border-slate-200 dark:border-white/5 transition-all duration-500 hover:-translate-y-3 shadow-2xl dark:shadow-none"
             >
               <div className="flex flex-col items-center text-center">

@@ -4,7 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
-import { getTickets, getUsuario, getTicketQr, getSectores, getPartidos, pagarTicket, Sector } from '@/lib/api';
+import {
+  esRolAdmin,
+  getTickets,
+  getUsuario,
+  getTicketQr,
+  getSectores,
+  getPartidos,
+  pagarTicket,
+  Sector,
+} from '@/lib/api';
 import WorldCupLoader from '@/components/WorldCupLoader';
 import { Partido, Ticket } from '@/types/ticket';
 
@@ -35,6 +44,7 @@ export default function MyTicketsPage() {
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [esAdmin, setEsAdmin] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
@@ -51,6 +61,12 @@ export default function MyTicketsPage() {
       ]);
 
       if (datosUsuario?.id) {
+        if (esRolAdmin(datosUsuario.rol)) {
+          setEsAdmin(true);
+          setEntradas([]);
+          return;
+        }
+
         setSectores(sectoresApi);
         setPartidos(partidosApi);
         
@@ -71,7 +87,7 @@ export default function MyTicketsPage() {
   useEffect(() => {
     if (isLoaded) {
       if (user) {
-        cargarDatos();
+        void cargarDatos();
       } else {
         setCargando(false);
       }
@@ -92,6 +108,27 @@ export default function MyTicketsPage() {
         <h1 className="text-3xl font-black uppercase italic mb-4 text-foreground">Inicia sesión para ver tus entradas</h1>
         <Link href="/login" className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">Ir al Login</Link>
       </div>
+    );
+  }
+
+  if (esAdmin) {
+    return (
+      <main className="min-h-screen py-12 px-4 bg-background text-foreground">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-border bg-card p-10 text-center">
+          <h1 className="text-3xl font-black uppercase italic mb-3">
+            Panel de Administrador
+          </h1>
+          <p className="text-muted-foreground font-bold mb-6">
+            Esta cuenta administra partidos y no tiene entradas de compra.
+          </p>
+          <Link
+            href="/stats"
+            className="inline-block rounded-xl bg-blue-600 px-8 py-4 text-xs font-black uppercase tracking-widest text-white"
+          >
+            Ir a Estadisticas
+          </Link>
+        </div>
+      </main>
     );
   }
 
@@ -287,3 +324,4 @@ function TicketCard({ entrada, sectores, partidos, alActualizar }: { entrada: En
     </div>
   );
 }
+

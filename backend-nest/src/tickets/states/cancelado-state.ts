@@ -1,4 +1,4 @@
-import { BadRequestException, Logger } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import { TicketState } from './ticket-state.interface';
 import { TicketEntity } from '../entities/ticket.entity';
@@ -6,9 +6,10 @@ import { PaymentsService } from '../../payments/payments.service';
 import { PaymentResult } from '../../payments/strategies/payment-strategy.interface';
 
 export class CanceladoState implements TicketState {
-  private ticket: TicketEntity;
-
-  constructor(private readonly logger: Logger) {}
+  private ticket!: TicketEntity;
+  constructor(logger: unknown) {
+    void logger;
+  }
 
   setContext(ticket: TicketEntity): void {
     this.ticket = ticket;
@@ -18,7 +19,7 @@ export class CanceladoState implements TicketState {
     return TicketStatus.CANCELADO;
   }
 
-  async pagar(
+  pagar(
     paymentsService: PaymentsService,
     amount: number,
   ): Promise<PaymentResult> {

@@ -50,7 +50,7 @@ export class SupabasePartidosRepository implements IPartidosRepository {
       throw new Error(`Error al obtener partidos: ${error.message}`);
     }
 
-    return (data || []).map((item) => this.mapToEntity(item));
+    return data.map((item) => this.mapToEntity(item));
   }
 
   async obtenerUno(id: string): Promise<PartidoEntidad> {

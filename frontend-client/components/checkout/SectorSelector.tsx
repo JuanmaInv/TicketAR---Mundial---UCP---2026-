@@ -133,9 +133,9 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 bg-zinc-900/40 rounded-2xl p-6 border border-white/5 flex items-center justify-between">
           <div>
-            <label className="text-zinc-500 font-black text-[10px] uppercase tracking-widest mb-2 block">
+            <p className="text-zinc-500 font-black text-[10px] uppercase tracking-widest mb-2 block">
               Cantidad de Entradas
-            </label>
+            </p>
             <div className="flex items-center gap-6">
               <button
                 type="button"

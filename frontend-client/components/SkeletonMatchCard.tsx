@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function SkeletonMatchCard() {
   return (
     <div className="glass-panel p-8 rounded-[2.5rem] border border-gray-100 bg-white">
@@ -33,3 +31,4 @@ export default function SkeletonMatchCard() {
     </div>
   );
 }
+

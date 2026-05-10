@@ -87,9 +87,9 @@ export default function SectorSelector({ alContinuarCompra }: SectorSelectorProp
 
       {/* Selector de Cantidad */}
       <div className="bg-zinc-800/40 rounded-xl p-6 border border-zinc-700">
-        <label className="text-white font-bold text-lg mb-4 block">
+        <p className="text-white font-bold text-lg mb-4 block">
           Cantidad de Entradas
-        </label>
+        </p>
         <div className="flex items-center gap-6">
           <button
             type="button"

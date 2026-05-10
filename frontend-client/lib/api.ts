@@ -48,6 +48,36 @@ export interface Usuario {
   telefono?: string;
   provincia?: string;
   localidad?: string;
+  rol?: string;
+}
+
+export function esRolAdmin(rol?: string): boolean {
+  const normalizado = (rol ?? '').trim().toUpperCase();
+  return normalizado === 'ADMINISTRADOR' || normalizado === 'ADMIN';
+}
+
+export interface StatsPorSector {
+  sector: string;
+  cantidad: number;
+  ingresos: number;
+}
+
+export interface StatsPorPartido {
+  partido: string;
+  entradasVendidas: number;
+  ingresos: number;
+}
+
+export interface EstadisticasAdmin {
+  ingresosTotales: number;
+  entradasVendidas: number;
+  entradasPendientes: number;
+  desglosePorSector: StatsPorSector[];
+  ventasPorPartido: StatsPorPartido[];
+  proximoPartidoOcupacion: {
+    partido: string;
+    porcentaje: number;
+  };
 }
 
 interface AuthHeaders {
@@ -160,20 +190,24 @@ export async function getUsuario(
   return usuario.email.trim().toLowerCase() === emailSeguro ? usuario : null;
 }
 
-export async function createUsuario(usuario: Usuario): Promise<boolean> {
+export async function createUsuario(usuario: Usuario): Promise<void> {
   const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(usuario),
   });
-  return res.ok;
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(res, 'No pudimos crear tu perfil.'),
+    );
+  }
 }
 
 export async function updateUsuario(
   email: string,
   usuario: Usuario,
   auth: AuthHeaders,
-): Promise<boolean> {
+): Promise<void> {
   const emailSeguro = validarEmailSeguro(email);
   const res = await fetch(construirUrlApi('/usuarios'), {
     method: 'PUT',
@@ -186,7 +220,11 @@ export async function updateUsuario(
       email: emailSeguro,
     }),
   });
-  return res.ok;
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(res, 'No pudimos actualizar tu perfil.'),
+    );
+  }
 }
 
 export async function getTickets(): Promise<Ticket[]> {
@@ -227,4 +265,87 @@ export async function pagarTicket(id: string): Promise<RespuestaPago> {
     entrada: respuesta.ticket,
     resultadoPago: respuesta.paymentResult,
   };
+}
+
+export interface ActualizarPartidoPayload {
+  equipoLocal?: string;
+  equipoVisitante?: string;
+  fechaPartido?: string;
+  nombreEstadio?: string;
+  fase?: string;
+  precioBase?: number;
+}
+
+export async function actualizarPartidoAdmin(
+  partidoId: string,
+  payload: ActualizarPartidoPayload,
+  auth: AuthHeaders,
+): Promise<void> {
+  const res = await fetch(construirUrlApi(`/partidos/${partidoId}`), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...construirHeadersUsuario(auth),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos actualizar el partido en este momento.',
+      ),
+    );
+  }
+}
+
+export async function getEstadisticasAdmin(
+  auth: AuthHeaders,
+): Promise<EstadisticasAdmin> {
+  const res = await fetch(construirUrlApi('/estadisticas'), {
+    headers: construirHeadersUsuario(auth),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos cargar las estadisticas de administrador.',
+      ),
+    );
+  }
+  return (await res.json()) as EstadisticasAdmin;
+}
+
+export interface ActualizarSectorPartidoPayload {
+  precio?: number;
+  capacidadDisponible?: number;
+}
+
+export async function actualizarSectorPartidoAdmin(
+  partidoId: string,
+  sectorId: string,
+  payload: ActualizarSectorPartidoPayload,
+  auth: AuthHeaders,
+): Promise<void> {
+  const res = await fetch(
+    construirUrlApi(`/sectores/partido/${partidoId}/sector/${sectorId}`),
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...construirHeadersUsuario(auth),
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      await obtenerMensajeErrorApi(
+        res,
+        'No pudimos actualizar los datos del sector.',
+      ),
+    );
+  }
 }
