@@ -7,6 +7,7 @@ import SectorSelector from '@/components/checkout/SectorSelector';
 import CountdownTimer from '@/components/CountdownTimer';
 import {
   createTicket,
+  esRolAdmin,
   formatPrice,
   getPartidos,
   getSectoresPorPartido,
@@ -66,6 +67,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [guardandoDatos, setGuardandoDatos] = useState(false);
   const [terminosAceptados, setTerminosAceptados] = useState(false);
   const [formData, setFormData] = useState({ telefono: '', provincia: '', localidad: '' });
+  const [esAdmin, setEsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
@@ -96,6 +98,29 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       .finally(() => {
         setCargandoUsuario(false);
       });
+  }, [router, user]);
+
+  useEffect(() => {
+    async function validarAccesoAdmin() {
+      if (!user?.emailAddresses[0]?.emailAddress) return;
+      try {
+        const email = user.emailAddresses[0].emailAddress;
+        const perfil = await getUsuario(email, {
+          userId: user.id,
+          userEmail: email,
+        });
+        const admin = esRolAdmin(perfil?.rol);
+        setEsAdmin(admin);
+        if (admin) {
+          setMensajeError('Las cuentas administradoras no pueden ingresar al checkout.');
+          router.replace('/matches?adminCheckoutBloqueado=1');
+        }
+      } catch {
+        setEsAdmin(false);
+      }
+    }
+
+    void validarAccesoAdmin();
   }, [router, user]);
 
   useEffect(() => {
@@ -305,7 +330,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
   }
 
-  if (cargandoUsuario) {
+  if (cargandoUsuario || esAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6">

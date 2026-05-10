@@ -13,7 +13,11 @@ import { Partido } from '@/types/ticket';
 
 type EstadoVisual = 'disponible' | 'agotado' | 'cancelado';
 
-export default function CalendarComponent() {
+type CalendarComponentProps = {
+  esAdmin?: boolean;
+};
+
+export default function CalendarComponent({ esAdmin = false }: CalendarComponentProps) {
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectoresPorPartido, setSectoresPorPartido] = useState<Record<string, SectorPorPartido[]>>({});
   const [loading, setLoading] = useState(true);
@@ -155,7 +159,7 @@ export default function CalendarComponent() {
                   </div>
                 );
 
-                if (noDisponible) {
+                if (noDisponible || esAdmin) {
                   return <div key={partido.id}>{tarjeta}</div>;
                 }
 

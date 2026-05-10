@@ -396,11 +396,12 @@ export async function actualizarPartidoAdmin(
   });
 
   if (!res.ok) {
+    const detalle = await obtenerMensajeErrorApi(
+      res,
+      'No pudimos actualizar el partido en este momento.',
+    );
     throw new Error(
-      await obtenerMensajeErrorApi(
-        res,
-        'No pudimos actualizar el partido en este momento.',
-      ),
+      `Error ${res.status}: ${detalle}`,
     );
   }
 }
@@ -464,11 +465,12 @@ export async function actualizarSectorPartidoAdmin(
   });
 
   if (!res.ok) {
+    const detalle = await obtenerMensajeErrorApi(
+      res,
+      'No pudimos actualizar los datos del sector.',
+    );
     throw new Error(
-      await obtenerMensajeErrorApi(
-        res,
-        'No pudimos actualizar los datos del sector.',
-      ),
+      `Error ${res.status}: ${detalle}`,
     );
   }
 }

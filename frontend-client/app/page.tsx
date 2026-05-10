@@ -138,7 +138,7 @@ export default function Home() {
             </h2>
             <p className="text-muted mt-2 font-black uppercase tracking-widest text-[10px]">Calendario Oficial confirmado.</p>
           </div>
-          <ComponenteCalendario />
+          <ComponenteCalendario esAdmin={esAdmin} />
         </div>
       </section>
 

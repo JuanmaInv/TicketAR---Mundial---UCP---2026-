@@ -64,6 +64,23 @@ export default function MatchManagementModal({
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
 
+  async function cargarSectores(idPartido: string) {
+    setCargandoSectores(true);
+    setMensajeError('');
+    try {
+      const listaSectores = await getSectoresPorPartido(idPartido);
+      setSectores(listaSectores);
+    } catch (error) {
+      setMensajeError(
+        error instanceof Error
+          ? error.message
+          : 'No pudimos cargar los sectores del partido.',
+      );
+    } finally {
+      setCargandoSectores(false);
+    }
+  }
+
   useEffect(() => {
     if (!abierto || !partido) return;
 
@@ -83,22 +100,7 @@ export default function MatchManagementModal({
     if (!abierto || !partido) return;
 
     const timeoutId = setTimeout(() => {
-      setCargandoSectores(true);
-      setMensajeError('');
-      void (async () => {
-        try {
-          const listaSectores = await getSectoresPorPartido(partido.id);
-          setSectores(listaSectores);
-        } catch (error) {
-          setMensajeError(
-            error instanceof Error
-              ? error.message
-              : 'No pudimos cargar los sectores del partido.',
-          );
-        } finally {
-          setCargandoSectores(false);
-        }
-      })();
+      void cargarSectores(partido.id);
     }, 0);
 
     return () => clearTimeout(timeoutId);
@@ -200,6 +202,7 @@ export default function MatchManagementModal({
         },
         auth,
       );
+      await cargarSectores(partido.id);
       setMensajeExito(`Sector ${sector.nombre} actualizado correctamente.`);
     } catch (error) {
       setMensajeError(
@@ -388,4 +391,3 @@ export default function MatchManagementModal({
     </div>
   );
 }
-
