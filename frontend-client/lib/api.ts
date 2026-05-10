@@ -120,6 +120,15 @@ function validarEmailSeguro(email: string): string {
   return emailNormalizado;
 }
 
+function validarIdRutaSeguro(id: string, nombre: string): string {
+  const valor = id.trim();
+  const idSeguro = /^[a-zA-Z0-9_-]{1,80}$/;
+  if (!idSeguro.test(valor)) {
+    throw new Error(`El ${nombre} no es valido.`);
+  }
+  return valor;
+}
+
 async function obtenerMensajeErrorApi(respuesta: Response, mensajePorDefecto: string): Promise<string> {
   try {
     const datos = (await respuesta.json()) as { message?: string | string[] };
@@ -149,7 +158,10 @@ export async function getPartidos(): Promise<Partido[]> {
 }
 
 export async function getSectores(partidoId?: string): Promise<Sector[]> {
-  const ruta = partidoId ? `/sectores/partido/${partidoId}` : '/sectores';
+  const partidoIdSeguro = partidoId
+    ? validarIdRutaSeguro(partidoId, 'identificador de partido')
+    : undefined;
+  const ruta = partidoIdSeguro ? `/sectores/partido/${partidoIdSeguro}` : '/sectores';
   const res = await fetch(construirUrlApi(ruta));
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores'));
   const data = await res.json();
@@ -249,14 +261,16 @@ export async function eliminarMiCuenta(auth: AuthHeaders): Promise<void> {
 }
 
 export async function getTicketQr(id: string): Promise<string> {
-  const res = await fetch(construirUrlApi(`/entradas/${id}/qr`));
+  const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
+  const res = await fetch(construirUrlApi(`/entradas/${idSeguro}/qr`));
   if (!res.ok) throw new Error('QR no disponible');
   const data = await res.json();
   return data.qrDataUrl;
 }
 
 export async function pagarTicket(id: string): Promise<RespuestaPago> {
-  const res = await fetch(construirUrlApi(`/entradas/${id}/pagar`), {
+  const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
+  const res = await fetch(construirUrlApi(`/entradas/${idSeguro}/pagar`), {
     method: 'POST',
   });
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos procesar el pago.'));
@@ -281,7 +295,11 @@ export async function actualizarPartidoAdmin(
   payload: ActualizarPartidoPayload,
   auth: AuthHeaders,
 ): Promise<void> {
-  const res = await fetch(construirUrlApi(`/partidos/${partidoId}`), {
+  const partidoIdSeguro = validarIdRutaSeguro(
+    partidoId,
+    'identificador de partido',
+  );
+  const res = await fetch(construirUrlApi(`/partidos/${partidoIdSeguro}`), {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -328,8 +346,18 @@ export async function actualizarSectorPartidoAdmin(
   payload: ActualizarSectorPartidoPayload,
   auth: AuthHeaders,
 ): Promise<void> {
+  const partidoIdSeguro = validarIdRutaSeguro(
+    partidoId,
+    'identificador de partido',
+  );
+  const sectorIdSeguro = validarIdRutaSeguro(
+    sectorId,
+    'identificador de sector',
+  );
   const res = await fetch(
-    construirUrlApi(`/sectores/partido/${partidoId}/sector/${sectorId}`),
+    construirUrlApi(
+      `/sectores/partido/${partidoIdSeguro}/sector/${sectorIdSeguro}`,
+    ),
     {
       method: 'PATCH',
       headers: {
