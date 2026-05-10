@@ -23,16 +23,6 @@ function construirUrlApi(ruta: string): string {
   return new URL(ruta, BASE_API_SEGURA).toString();
 }
 
-function construirUrlApiPorSegmentos(segmentos: string[]): string {
-  const url = new URL(BASE_API_SEGURA.toString());
-  const segmentosLimpios = segmentos.map((segmento) =>
-    encodeURIComponent(segmento),
-  );
-  url.pathname = `/${segmentosLimpios.join('/')}`;
-  url.search = '';
-  return url.toString();
-}
-
 export const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -272,10 +262,11 @@ export async function eliminarMiCuenta(auth: AuthHeaders): Promise<void> {
 
 export async function getTicketQr(id: string): Promise<string> {
   const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
-  // nosemgrep: sanitized-id-used-in-safe-internal-url
-  const res = await fetch(
-    construirUrlApiPorSegmentos(['entradas', idSeguro, 'qr']),
-  );
+  const res = await fetch('/api/tickets/qr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idSeguro }),
+  });
   if (!res.ok) throw new Error('QR no disponible');
   const data = await res.json();
   return data.qrDataUrl;
@@ -283,9 +274,10 @@ export async function getTicketQr(id: string): Promise<string> {
 
 export async function pagarTicket(id: string): Promise<RespuestaPago> {
   const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
-  // nosemgrep: sanitized-id-used-in-safe-internal-url
-  const res = await fetch(construirUrlApiPorSegmentos(['entradas', idSeguro, 'pagar']), {
+  const res = await fetch('/api/tickets/pay', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: idSeguro }),
   });
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos procesar el pago.'));
   const respuesta = await res.json();
@@ -313,14 +305,14 @@ export async function actualizarPartidoAdmin(
     partidoId,
     'identificador de partido',
   );
-  // nosemgrep: sanitized-id-used-in-safe-internal-url
-  const res = await fetch(construirUrlApiPorSegmentos(['partidos', partidoIdSeguro]), {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      ...construirHeadersUsuario(auth),
-    },
-    body: JSON.stringify(payload),
+  const res = await fetch('/api/admin/matches/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      partidoId: partidoIdSeguro,
+      payload,
+      auth,
+    }),
   });
 
   if (!res.ok) {
@@ -369,24 +361,16 @@ export async function actualizarSectorPartidoAdmin(
     sectorId,
     'identificador de sector',
   );
-  // nosemgrep: sanitized-id-used-in-safe-internal-url
-  const res = await fetch(
-    construirUrlApiPorSegmentos([
-      'sectores',
-      'partido',
-      partidoIdSeguro,
-      'sector',
-      sectorIdSeguro,
-    ]),
-    {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...construirHeadersUsuario(auth),
-      },
-      body: JSON.stringify(payload),
-    },
-  );
+  const res = await fetch('/api/admin/matches/sector/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      partidoId: partidoIdSeguro,
+      sectorId: sectorIdSeguro,
+      payload,
+      auth,
+    }),
+  });
 
   if (!res.ok) {
     throw new Error(
