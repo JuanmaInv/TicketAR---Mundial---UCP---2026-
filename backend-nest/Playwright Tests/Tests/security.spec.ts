@@ -55,4 +55,25 @@ test.describe('Pruebas de Seguridad y Robustez', () => {
     expect(response.status()).not.toBe(200);
   });
 
+  // 2. ROBUSTEZ: PAYLOADS INVÁLIDOS
+  test('Debería fallar al crear una entrada con un UUID malformado', async ({ request }) => {
+    const response = await request.post('/entradas', {
+      data: {
+        idUsuario: 'no-soy-un-uuid',
+        idPartido: USER_1.id,
+        idSector: USER_1.id
+      }
+    });
+
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+
+    // NestJS devuelve 'message' como un array cuando hay fallos de validación
+    const messages = Array.isArray(body.message) ? body.message : [body.message];
+    const hasCorrectError = messages.some(m => m.toLowerCase().includes('uuid válido'));
+
+    expect(hasCorrectError).toBeTruthy();
+    console.log('Validación de UUID malformado confirmada.');
+  });
+
 });
