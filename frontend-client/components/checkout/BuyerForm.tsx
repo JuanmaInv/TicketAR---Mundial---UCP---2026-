@@ -4,6 +4,107 @@ import { useState } from 'react';
 import { DatosCompra } from '@/types/ticket';
 
 type CampoFormulario = Exclude<keyof DatosCompra, 'partidoId'>;
+type ErroresFormulario = Partial<Record<CampoFormulario, string>>;
+
+function obtenerValorCampo(datos: DatosCompra, campo: CampoFormulario): string | number {
+  switch (campo) {
+    case 'cantidad':
+      return datos.cantidad;
+    case 'nombre':
+      return datos.nombre;
+    case 'apellido':
+      return datos.apellido;
+    case 'documento':
+      return datos.documento;
+    case 'email':
+      return datos.email;
+    case 'telefono':
+      return datos.telefono;
+    case 'provincia':
+      return datos.provincia;
+    case 'localidad':
+      return datos.localidad;
+    default:
+      return '';
+  }
+}
+
+function obtenerErrorCampo(errores: ErroresFormulario, campo: CampoFormulario): string | undefined {
+  switch (campo) {
+    case 'cantidad':
+      return errores.cantidad;
+    case 'nombre':
+      return errores.nombre;
+    case 'apellido':
+      return errores.apellido;
+    case 'documento':
+      return errores.documento;
+    case 'email':
+      return errores.email;
+    case 'telefono':
+      return errores.telefono;
+    case 'provincia':
+      return errores.provincia;
+    case 'localidad':
+      return errores.localidad;
+    default:
+      return undefined;
+  }
+}
+
+function actualizarDato(
+  datos: DatosCompra,
+  campo: CampoFormulario,
+  valor: string | number,
+): DatosCompra {
+  switch (campo) {
+    case 'cantidad':
+      return { ...datos, cantidad: Number(valor) };
+    case 'nombre':
+      return { ...datos, nombre: String(valor) };
+    case 'apellido':
+      return { ...datos, apellido: String(valor) };
+    case 'documento':
+      return { ...datos, documento: String(valor) };
+    case 'email':
+      return { ...datos, email: String(valor) };
+    case 'telefono':
+      return { ...datos, telefono: String(valor) };
+    case 'provincia':
+      return { ...datos, provincia: String(valor) };
+    case 'localidad':
+      return { ...datos, localidad: String(valor) };
+    default:
+      return datos;
+  }
+}
+
+function actualizarError(
+  errores: ErroresFormulario,
+  campo: CampoFormulario,
+  mensaje: string,
+): ErroresFormulario {
+  switch (campo) {
+    case 'cantidad':
+      return { ...errores, cantidad: mensaje };
+    case 'nombre':
+      return { ...errores, nombre: mensaje };
+    case 'apellido':
+      return { ...errores, apellido: mensaje };
+    case 'documento':
+      return { ...errores, documento: mensaje };
+    case 'email':
+      return { ...errores, email: mensaje };
+    case 'telefono':
+      return { ...errores, telefono: mensaje };
+    case 'provincia':
+      return { ...errores, provincia: mensaje };
+    case 'localidad':
+      return { ...errores, localidad: mensaje };
+    default:
+      return errores;
+  }
+}
 
 export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoId: string; onValidacionExitosa: (datos: DatosCompra) => void }) {
   const [datosCompra, setDatosCompra] = useState<DatosCompra>({
@@ -18,7 +119,7 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
     localidad: '',
   });
 
-  const [errores, setErrores] = useState<Partial<Record<CampoFormulario, string>>>({});
+  const [errores, setErrores] = useState<ErroresFormulario>({});
 
   const provincias = [
     'Buenos Aires', 'Catamarca', 'Chaco', 'Chubut', 'Cordoba', 'Corrientes', 'Entre Rios',
@@ -60,20 +161,20 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
     const value = e.target.value;
     const nuevoValor = campo === 'cantidad' ? (value === '' ? 0 : parseInt(value, 10)) : value;
 
-    setDatosCompra((prev) => ({ ...prev, [campo]: nuevoValor }));
+    setDatosCompra((prev) => actualizarDato(prev, campo, nuevoValor));
 
     const errorDelCampo = validarCampo(campo, nuevoValor);
-    setErrores((prev) => ({ ...prev, [campo]: errorDelCampo }));
+    setErrores((prev) => actualizarError(prev, campo, errorDelCampo));
   };
 
   const validarFormulario = () => {
-    const nuevosErrores: Partial<Record<CampoFormulario, string>> = {};
+    const nuevosErrores: ErroresFormulario = {};
 
-    (Object.keys(datosCompra) as Array<keyof DatosCompra>).forEach((key) => {
-      if (key === 'partidoId') return;
-      const campo = key as CampoFormulario;
-      const errorMsg = validarCampo(campo, datosCompra[campo]);
-      if (errorMsg) nuevosErrores[campo] = errorMsg;
+    (['cantidad', 'nombre', 'apellido', 'documento', 'email', 'telefono', 'provincia', 'localidad'] as CampoFormulario[]).forEach((campo) => {
+      const errorMsg = validarCampo(campo, obtenerValorCampo(datosCompra, campo));
+      if (errorMsg) {
+        Object.assign(nuevosErrores, actualizarError(nuevosErrores, campo, errorMsg));
+      }
     });
 
     setErrores(nuevosErrores);
@@ -85,12 +186,14 @@ export default function BuyerForm({ partidoId, onValidacionExitosa }: { partidoI
     if (validarFormulario()) onValidacionExitosa(datosCompra);
   };
 
-  const getInputClass = (nombreCampo: CampoFormulario) =>
-    `w-full border rounded-lg px-4 py-2 focus:ring-2 outline-none transition-all text-zinc-900 ${
-      errores[nombreCampo]
+  const getInputClass = (nombreCampo: CampoFormulario) => {
+    const errorCampo = obtenerErrorCampo(errores, nombreCampo);
+    return `w-full border rounded-lg px-4 py-2 focus:ring-2 outline-none transition-all text-zinc-900 ${
+      errorCampo
         ? 'border-red-500 focus:ring-red-500 bg-red-50'
         : 'border-zinc-300 focus:ring-blue-500 bg-white'
     }`;
+  };
 
   return (
     <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-zinc-200">

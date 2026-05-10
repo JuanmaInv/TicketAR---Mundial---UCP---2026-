@@ -181,7 +181,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
             {/* PASO 1: CONFIRMACIÓN DE DATOS */}
             {paso === 1 && (
               <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <button type="button" onClick={() => router.back()} 
+                <button type="button" onClick={() => { router.back(); }} 
                   className="text-muted-foreground hover:text-foreground text-[10px] font-black uppercase tracking-[0.4em] mb-16 flex items-center gap-3 transition-colors group"
                 >
                   <span className="group-hover:-translate-x-3 transition-transform text-xl">←</span> VOLVER A SELECCIÓN DE PARTIDO
@@ -244,14 +244,14 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                         Tu perfil está incompleto. El Mundial exige validación de identidad oficial.
                       </p>
                     </div>
-                    <button type="button" onClick={() => router.push(`/profile?redirect=/checkout/${partidoId}`)}
+                    <button type="button" onClick={() => { router.push(`/profile?redirect=/checkout/${partidoId}`); }}
                       className="w-full bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-blue-500/20 text-lg"
                     >
                       Completar mi Perfil Ahora →
                     </button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => setPaso(2)}
+                  <button type="button" onClick={() => { setPaso(2); }}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-emerald-500/20 text-lg hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Confirmar Datos y Continuar →
@@ -263,7 +263,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
             {/* PASO 2: SELECCIÓN DE SECTOR */}
             {paso === 2 && (
               <div className="animate-in fade-in slide-in-from-right-8 duration-700">
-                <button type="button" onClick={() => setPaso(1)} 
+                <button type="button" onClick={() => { setPaso(1); }} 
                   className="text-muted-foreground hover:text-foreground text-[10px] font-black uppercase tracking-[0.3em] mb-12 flex items-center gap-2 transition-colors group"
                 >
                   <span className="group-hover:-translate-x-2 transition-transform">←</span> Volver a Confirmación de Datos
@@ -282,7 +282,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
 
             {paso === 3 && seleccionCompra && (
               <div className="animate-in fade-in slide-in-from-right-8 duration-700">
-                <button type="button" onClick={() => setPaso(2)}
+                <button type="button" onClick={() => { setPaso(2); }}
                   className="text-muted-foreground hover:text-foreground text-[10px] font-black uppercase tracking-[0.3em] mb-12 flex items-center gap-2 transition-colors group"
                 >
                   <span className="group-hover:-translate-x-2 transition-transform">←</span> Modificar ubicación

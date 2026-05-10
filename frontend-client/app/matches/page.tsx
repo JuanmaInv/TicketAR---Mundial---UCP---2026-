@@ -32,11 +32,11 @@ export default function MatchesPage() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [sectoresPorPartido, setSectoresPorPartido] = useState<
-    Record<string, Sector[]>
-  >({});
+    Map<string, Sector[]>
+  >(new Map());
   const [disponibilidad, setDisponibilidad] = useState<
-    Record<string, number | null | undefined>
-  >({});
+    Map<string, number | null | undefined>
+  >(new Map());
   const [cargando, setCargando] = useState(true);
   const [mensajeError, setMensajeError] = useState("");
   
@@ -74,10 +74,10 @@ export default function MatchesPage() {
             }
           }),
         );
-        const disponibilidadPorPartido = Object.fromEntries(
+        const disponibilidadPorPartido = new Map(
           datosPartidos.map(([id, disponibles]) => [id, disponibles]),
         );
-        const sectoresMap = Object.fromEntries(
+        const sectoresMap = new Map(
           datosPartidos.map(([id, , sectoresPartido]) => [id, sectoresPartido]),
         );
         setPartidos(dataPartidos);
@@ -110,7 +110,7 @@ export default function MatchesPage() {
   }, [isLoaded, user]);
 
   function getPrecioReal(matchId: string, precioBase: number): number {
-    const sectoresDelPartido = sectoresPorPartido[matchId] ?? sectores;
+    const sectoresDelPartido = sectoresPorPartido.get(matchId) ?? sectores;
     const sectoresValidos = sectoresDelPartido.filter(s => {
        const n = s.nombre.toLowerCase();
        return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
@@ -151,7 +151,7 @@ export default function MatchesPage() {
       precioBase: String(partido.precio_base ?? ''),
       fase: partido.fase ?? '',
     });
-    const sectoresDelPartido = sectoresPorPartido[partido.id] ?? [];
+    const sectoresDelPartido = sectoresPorPartido.get(partido.id) ?? [];
     setSectoresEdicion(
       sectoresDelPartido.map((s) => ({
         id: s.id,
@@ -234,9 +234,10 @@ export default function MatchesPage() {
             : p,
         ),
       );
-      setSectoresPorPartido((prev) => ({
-        ...prev,
-        [partidoEditando.id]: (prev[partidoEditando.id] ?? []).map((s) => {
+      setSectoresPorPartido((prev) => {
+        const siguiente = new Map(prev);
+        const sectoresActuales = prev.get(partidoEditando.id) ?? [];
+        const actualizados = sectoresActuales.map((s) => {
           const editado = sectoresEdicion.find((se) => se.id === s.id);
           if (!editado) return s;
           return {
@@ -244,8 +245,10 @@ export default function MatchesPage() {
             precio: Number(editado.precio),
             capacidadDisponible: Number(editado.capacidadDisponible),
           };
-        }),
-      }));
+        });
+        siguiente.set(partidoEditando.id, actualizados);
+        return siguiente;
+      });
       setPartidoEditando(null);
     } catch (error) {
       const msg =
@@ -273,7 +276,7 @@ export default function MatchesPage() {
              
              <div className="mb-12 relative">
                 <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-4 block">Seleccion Nacional</p>
-                <button type="button" onClick={() => setMenuAbierto(!menuAbierto)}
+                <button type="button" onClick={() => { setMenuAbierto(!menuAbierto); }}
                   className="w-full bg-background hover:bg-card text-foreground text-left px-6 py-4 rounded-xl text-sm font-bold transition-all flex justify-between items-center border border-border"
                 >
                   <span className="truncate">{filtroSeleccion || "Todas las naciones"}</span>
@@ -283,7 +286,7 @@ export default function MatchesPage() {
                 {menuAbierto && (
                   <>
                     {/* Backdrop para cerrar al hacer click fuera y asegurar que nada interfiera */}
-                    <button type="button" className="fixed inset-0 z-[90]" aria-label="Cerrar menu" onClick={() => setMenuAbierto(false)}></button>
+                    <button type="button" className="fixed inset-0 z-[90]" aria-label="Cerrar menu" onClick={() => { setMenuAbierto(false); }}></button>
                     <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] max-h-[350px] overflow-y-auto z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
                       <button type="button" onClick={() => { setFiltroSeleccion(""); setMenuAbierto(false); }}
                         className="w-full text-left px-6 py-4 text-xs font-black uppercase text-blue-600 dark:text-primary hover:bg-slate-50 dark:hover:bg-white/5 transition-all border-b border-slate-100 dark:border-white/5 sticky top-0 bg-white dark:bg-slate-900 z-10"
@@ -308,7 +311,7 @@ export default function MatchesPage() {
                 <div className="space-y-2">
                   {FASES.map(fase => (
                     <button type="button" key={fase} 
-                      onClick={() => setFaseSeleccionada(fase)}
+                      onClick={() => { setFaseSeleccionada(fase); }}
                       className={`w-full text-left px-6 py-3.5 rounded-xl text-xs font-black transition-all border-2 ${
                         faseSeleccionada === fase 
                         ? 'bg-blue-600 text-white border-blue-600 shadow-[0_10px_20px_rgba(37,99,235,0.3)] scale-105' 
@@ -341,7 +344,7 @@ export default function MatchesPage() {
               const precio = getPrecioReal(match.id, match.precio_base);
               const local = normalizeTeamLabel(match.equipo_local);
               const visitante = normalizeTeamLabel(match.equipo_visitante);
-              const disponibles = disponibilidad[match.id];
+              const disponibles = disponibilidad.get(match.id);
               const disponibilidadDesconocida = disponibles === null || disponibles === undefined;
               const agotado = !disponibilidadDesconocida && disponibles <= 0;
 
@@ -407,7 +410,7 @@ export default function MatchesPage() {
                           {esAdmin ? (
                             <button
                               type="button"
-                              onClick={() => abrirEdicion(match)}
+                              onClick={() => { abrirEdicion(match); }}
                               className="bg-blue-600 hover:bg-blue-500 text-white px-8 sm:px-14 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-blue-900/20 transition-all hover:scale-105 active:scale-95 text-center"
                             >
                               Editar Partido
@@ -459,9 +462,9 @@ export default function MatchesPage() {
                 id="admin-fecha"
                 type="datetime-local"
                 value={formEdicion.fechaPartido}
-                onChange={(e) =>
-                  setFormEdicion((prev) => ({ ...prev, fechaPartido: e.target.value }))
-                }
+                onChange={(e) => {
+                  setFormEdicion((prev) => ({ ...prev, fechaPartido: e.target.value }));
+                }}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3"
               />
             </div>
@@ -475,9 +478,9 @@ export default function MatchesPage() {
                 type="number"
                 min="1"
                 value={formEdicion.precioBase}
-                onChange={(e) =>
-                  setFormEdicion((prev) => ({ ...prev, precioBase: e.target.value }))
-                }
+                onChange={(e) => {
+                  setFormEdicion((prev) => ({ ...prev, precioBase: e.target.value }));
+                }}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3"
               />
             </div>
@@ -490,9 +493,9 @@ export default function MatchesPage() {
                 id="admin-fase"
                 type="text"
                 value={formEdicion.fase}
-                onChange={(e) =>
-                  setFormEdicion((prev) => ({ ...prev, fase: e.target.value }))
-                }
+                onChange={(e) => {
+                  setFormEdicion((prev) => ({ ...prev, fase: e.target.value }));
+                }}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3"
               />
             </div>
@@ -513,15 +516,15 @@ export default function MatchesPage() {
                           type="number"
                           min="0"
                           value={sector.precio}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setSectoresEdicion((prev) =>
                               prev.map((item, i) =>
                                 i === index
                                   ? { ...item, precio: e.target.value }
                                   : item,
                               ),
-                            )
-                          }
+                            );
+                          }}
                           className="w-full rounded-xl border border-border bg-card px-3 py-2"
                         />
                       </div>
@@ -533,7 +536,7 @@ export default function MatchesPage() {
                           type="number"
                           min="0"
                           value={sector.capacidadDisponible}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setSectoresEdicion((prev) =>
                               prev.map((item, i) =>
                                 i === index
@@ -543,8 +546,8 @@ export default function MatchesPage() {
                                     }
                                   : item,
                               ),
-                            )
-                          }
+                            );
+                          }}
                           className="w-full rounded-xl border border-border bg-card px-3 py-2"
                         />
                       </div>
@@ -557,7 +560,7 @@ export default function MatchesPage() {
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setPartidoEditando(null)}
+                onClick={() => { setPartidoEditando(null); }}
                 className="w-1/2 rounded-xl bg-muted py-3 text-sm font-black uppercase"
               >
                 Cancelar
