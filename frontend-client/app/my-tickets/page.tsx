@@ -91,10 +91,18 @@ export default function MyTicketsPage() {
         });
         setNombresSectorPorClave(mapaNombres);
 
-        const misEntradas = (entradasApi as EntradaApi[]).filter((entrada) =>
-          (entrada.idUsuario === datosUsuario.id || entrada.id_usuario === datosUsuario.id) &&
-          (entrada.estado === 'PAGADO' || entrada.estado === 'vendido'),
-        );
+        const misEntradas = (entradasApi as EntradaApi[]).filter((entrada) => {
+          const esDelUsuario =
+            entrada.idUsuario === datosUsuario.id ||
+            entrada.id_usuario === datosUsuario.id;
+          const estadoNormalizado = String(entrada.estado ?? '').trim().toUpperCase();
+          const estadoVisible =
+            estadoNormalizado === 'PAGADO' ||
+            estadoNormalizado === 'VENDIDO' ||
+            estadoNormalizado === 'RESERVADO';
+
+          return esDelUsuario && estadoVisible;
+        });
         setEntradas(misEntradas);
       }
     } catch {
