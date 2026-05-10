@@ -44,11 +44,15 @@ export default function StatsPage() {
         });
         setData(stats);
       } catch (e) {
-        setError(
+        const mensaje =
           e instanceof Error
             ? e.message
-            : 'No se pudieron cargar las estadisticas.',
-        );
+            : 'No se pudieron cargar las estadisticas.';
+        if (mensaje.includes('403') || mensaje.toLowerCase().includes('acceso denegado')) {
+          setError('No tienes permisos de administrador para ver esta seccion.');
+        } else {
+          setError(mensaje);
+        }
       } finally {
         setCargando(false);
       }

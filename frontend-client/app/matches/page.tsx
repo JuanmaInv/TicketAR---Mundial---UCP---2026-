@@ -6,9 +6,11 @@ import { useUser } from '@clerk/nextjs';
 import WorldCupLoader from '@/components/WorldCupLoader';
 import Bandera from '@/components/Bandera';
 import {
+  esRolAdmin,
   formatPrice,
   getPartidos,
   getSectoresDeTodosLosPartidos,
+  getUsuario,
   SectorPorPartido,
 } from '@/lib/api';
 import { Partido } from '@/types/ticket';
@@ -26,11 +28,12 @@ const FASES = ['Todas', 'Grupos', 'Octavos', 'Cuartos', 'Semifinal', 'Final'];
 type EstadoVisual = 'disponible' | 'agotado' | 'cancelado';
 
 export default function MatchesPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [sectoresPorPartido, setSectoresPorPartido] = useState<Record<string, SectorPorPartido[]>>({});
   const [cargando, setCargando] = useState(true);
   const [mensajeError, setMensajeError] = useState('');
+  const [esAdmin, setEsAdmin] = useState(false);
 
   const [filtroSeleccion, setFiltroSeleccion] = useState('');
   const [faseSeleccionada, setFaseSeleccionada] = useState('Todas');
@@ -60,6 +63,28 @@ export default function MatchesPage() {
 
     void cargarDatos();
   }, []);
+
+  useEffect(() => {
+    async function cargarRol() {
+      if (!isLoaded || !user?.emailAddresses[0]?.emailAddress) {
+        setEsAdmin(false);
+        return;
+      }
+
+      try {
+        const email = user.emailAddresses[0].emailAddress;
+        const perfil = await getUsuario(email, {
+          userId: user.id,
+          userEmail: email,
+        });
+        setEsAdmin(esRolAdmin(perfil?.rol));
+      } catch {
+        setEsAdmin(false);
+      }
+    }
+
+    void cargarRol();
+  }, [isLoaded, user]);
 
   function getEstadoVisual(match: Partido): EstadoVisual {
     const estado = (match.estado || '').trim().toLowerCase();
@@ -292,7 +317,23 @@ export default function MatchesPage() {
                               {formatPrice(precio)}
                             </p>
                           </div>
-                          {noDisponible ? (
+                          {esAdmin ? (
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                              <button
+                                type="button"
+                                disabled
+                                className="bg-zinc-800 text-zinc-500 px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl cursor-not-allowed border border-zinc-700"
+                              >
+                                Gestionar partido
+                              </button>
+                              <Link
+                                href="/stats"
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-blue-900/20 transition-all hover:scale-105 active:scale-95"
+                              >
+                                Ver estadisticas
+                              </Link>
+                            </div>
+                          ) : noDisponible ? (
                             <button
                               type="button"
                               disabled

@@ -8,7 +8,7 @@ type AuthHeaders = {
 
 type ActualizarSectorPartidoPayload = {
   precio?: number;
-  capacidadDisponible?: number;
+  asientosDisponibles?: number;
 };
 
 export async function POST(req: NextRequest) {
@@ -29,6 +29,16 @@ export async function POST(req: NextRequest) {
       'identificador de sector',
     );
 
+    const payloadCompat: {
+      precio?: number;
+      asientosDisponibles?: number;
+      capacidadDisponible?: number;
+    } = {
+      precio: body.payload?.precio,
+      asientosDisponibles: body.payload?.asientosDisponibles,
+      capacidadDisponible: body.payload?.asientosDisponibles,
+    };
+
     const respuesta = await fetch(
       construirBackendUrl([
         'sectores',
@@ -44,7 +54,7 @@ export async function POST(req: NextRequest) {
           'x-user-id': body.auth?.userId ?? '',
           'x-user-email': body.auth?.userEmail ?? '',
         },
-        body: JSON.stringify(body.payload ?? {}),
+        body: JSON.stringify(payloadCompat),
       },
     );
     const data = await respuesta.json();
