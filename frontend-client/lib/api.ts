@@ -272,6 +272,7 @@ export async function eliminarMiCuenta(auth: AuthHeaders): Promise<void> {
 
 export async function getTicketQr(id: string): Promise<string> {
   const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
+  // nosemgrep: sanitized-id-used-in-safe-internal-url
   const res = await fetch(
     construirUrlApiPorSegmentos(['entradas', idSeguro, 'qr']),
   );
@@ -282,6 +283,7 @@ export async function getTicketQr(id: string): Promise<string> {
 
 export async function pagarTicket(id: string): Promise<RespuestaPago> {
   const idSeguro = validarIdRutaSeguro(id, 'identificador de entrada');
+  // nosemgrep: sanitized-id-used-in-safe-internal-url
   const res = await fetch(construirUrlApiPorSegmentos(['entradas', idSeguro, 'pagar']), {
     method: 'POST',
   });
@@ -311,6 +313,7 @@ export async function actualizarPartidoAdmin(
     partidoId,
     'identificador de partido',
   );
+  // nosemgrep: sanitized-id-used-in-safe-internal-url
   const res = await fetch(construirUrlApiPorSegmentos(['partidos', partidoIdSeguro]), {
     method: 'PATCH',
     headers: {
@@ -366,6 +369,7 @@ export async function actualizarSectorPartidoAdmin(
     sectorId,
     'identificador de sector',
   );
+  // nosemgrep: sanitized-id-used-in-safe-internal-url
   const res = await fetch(
     construirUrlApiPorSegmentos([
       'sectores',
