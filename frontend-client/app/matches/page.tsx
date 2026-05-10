@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import WorldCupLoader from "@/components/WorldCupLoader";
 import Bandera from "@/components/Bandera";
-import { getPartidos, getSectores, formatPrice, Sector } from "@/lib/api";
+import { getPartidos, getSectoresDeTodosLosPartidos, formatPrice, SectorPorPartido } from "@/lib/api";
 import { Partido } from "@/types/ticket";
 
 const SELECCIONES_FIFA = [
@@ -21,7 +21,7 @@ const FASES = ["Todas", "Grupos", "Octavos", "Cuartos", "Semifinal", "Final"];
 export default function MatchesPage() {
   const { user } = useUser();
   const [partidos, setPartidos] = useState<Partido[]>([]);
-  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sectoresPorPartido, setSectoresPorPartido] = useState<Record<string, SectorPorPartido[]>>({});
   const [cargando, setCargando] = useState(true);
   
   const [filtroSeleccion, setFiltroSeleccion] = useState<string>("");
@@ -31,9 +31,15 @@ export default function MatchesPage() {
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [dataPartidos, dataSectores] = await Promise.all([getPartidos(), getSectores()]);
+        const [dataPartidos, dataSectores] = await Promise.all([getPartidos(), getSectoresDeTodosLosPartidos()]);
         setPartidos(dataPartidos);
-        setSectores(dataSectores);
+        
+        // Convertir array a mapa para acceso rápido
+        const mapaSectores: Record<string, SectorPorPartido[]> = {};
+        dataSectores.forEach(item => {
+          mapaSectores[item.idPartido] = item.sectores;
+        });
+        setSectoresPorPartido(mapaSectores);
       } catch (err) {
         console.error("Error:", err);
       } finally {
@@ -43,17 +49,24 @@ export default function MatchesPage() {
     cargarDatos();
   }, []);
 
-  const getPrecioReal = (matchId: string, precioBase: number) => {
-    const sectoresValidos = sectores.filter(s => {
-       const n = s.nombre.toLowerCase();
-       return (n.includes('palco') || n.includes('platea') || n.includes('popular')) && s.precio > 0;
-    });
-    if (sectoresValidos.length > 0) {
-      const precios = sectoresValidos.map(s => s.precio);
-      const minPrecio = Math.min(...precios);
-      if (precioBase < 1000) return minPrecio;
+  const getPrecioMinimoReal = (matchId: string) => {
+    const sectoresDelPartido = sectoresPorPartido[matchId] || [];
+    
+    // Filtrar sectores que tengan stock > 0
+    const sectoresDisponibles = sectoresDelPartido.filter(s => s.asientosDisponibles > 0);
+    
+    if (sectoresDisponibles.length > 0) {
+      const precios = sectoresDisponibles.map(s => s.precio);
+      return Math.min(...precios);
     }
-    return precioBase;
+    
+    // Si no hay stock, pero hay sectores, mostrar el menor precio (aunque esté agotado, informativamente)
+    if (sectoresDelPartido.length > 0) {
+      const precios = sectoresDelPartido.map(s => s.precio);
+      return Math.min(...precios);
+    }
+    
+    return 0; // Fallback
   };
 
   const normalizeTeamLabel = (label: string) => {
@@ -150,7 +163,7 @@ export default function MatchesPage() {
 
           <div className="space-y-12">
             {filteredPartidos.map((match) => {
-              const precio = getPrecioReal(match.id, match.precio_base);
+              const precio = getPrecioMinimoReal(match.id);
               const local = normalizeTeamLabel(match.equipo_local);
               const visitante = normalizeTeamLabel(match.equipo_visitante);
 

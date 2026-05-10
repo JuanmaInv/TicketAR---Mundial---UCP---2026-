@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getSectores, Sector, formatPrice } from '@/lib/api';
+import { getSectoresPorPartido, SectorPorPartido, formatPrice } from '@/lib/api';
 
 interface SectorSelectorProps {
   partidoId: string;
@@ -9,13 +9,13 @@ interface SectorSelectorProps {
 }
 
 export default function SectorSelector({ partidoId, onComprar }: SectorSelectorProps) {
-  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sectores, setSectores] = useState<SectorPorPartido[]>([]);
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    getSectores()
+    getSectoresPorPartido(partidoId)
       .then(datos => {
         // FILTRAR SOLO PALCO, PLATEA Y POPULAR (Ignorar Prensa y otros)
         const sectoresFiltrados = datos.filter(s => {
@@ -79,7 +79,7 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
               <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-2">Selecciona tu ubicación</h3>
               <div className="grid grid-cols-1 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                 {sectores.map((sector) => {
-                  const agotado = sector.capacidadDisponible <= 0;
+                  const agotado = sector.asientosDisponibles <= 0;
                   return (
                     <button
                       key={sector.id}
@@ -132,15 +132,15 @@ export default function SectorSelector({ partidoId, onComprar }: SectorSelectorP
               <p className="text-4xl font-black text-black tracking-tighter italic">{formatPrice(precioTotal)}</p>
             </div>
             <button
-              disabled={sectorActual.capacidadDisponible <= 0}
+              disabled={sectorActual.asientosDisponibles <= 0}
               onClick={handleComprar}
               className={`px-8 py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all transform ${
-                sectorActual.capacidadDisponible <= 0 
+                sectorActual.asientosDisponibles <= 0 
                 ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed' 
                 : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30'
               }`}
             >
-              {sectorActual.capacidadDisponible <= 0 ? 'AGOTADO' : 'COMPRAR AHORA →'}
+              {sectorActual.asientosDisponibles <= 0 ? 'AGOTADO' : 'COMPRAR AHORA →'}
             </button>
           </div>
         )}
