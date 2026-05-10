@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import SectorSelector from '@/components/checkout/SectorSelector';
 import CountdownTimer from '@/components/CountdownTimer';
-import { createTicket, getUsuario, pagarTicket, updateUsuario } from '@/lib/api';
+import { createTicket, getUsuario, pagarTicket, updateUsuario, getPartidos } from '@/lib/api';
+import { Partido } from '@/types/ticket';
+import Bandera from '@/components/Bandera';
 
 interface Usuario {
   id: string;
@@ -165,7 +167,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       const ticketResponse = await createTicket({
         idUsuario: userData?.id || '',
         idPartido: partidoId,
-        idSector: resumenCompra.sectorId
+        idSector: resumenCompra.sectorId,
+        cantidad: resumenCompra.cantidad
       });
       
       const paymentResponse = await pagarTicket(ticketResponse.id);
