@@ -26,19 +26,22 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
 
   /**
    * Genera una preferencia de pago en Mercado Pago (Checkout Pro).
-   * @param amount Monto a cobrar.
+   * @param unitPrice Precio unitario del sector (desde sectores_estadio.precio).
+   * @param cantidad Cantidad de entradas a comprar.
    * @param currency Moneda (ARS/USD).
    * @param metadata Datos adicionales, incluyendo el ticketId para trazabilidad.
    * @returns Resultado con la URL de redirección para el usuario.
    */
   async processPayment(
-    amount: number,
+    unitPrice: number,
+    cantidad: number,
     currency: string,
     metadata?: { ticketId: string },
   ): Promise<PaymentResult> {
     try {
       this.logger.log(
-        `Generando preferencia de Mercado Pago por ${amount} ${currency} para ticket ${metadata?.ticketId}`,
+        `Generando preferencia de Mercado Pago: UnitPrice=${unitPrice}, Cantidad=${cantidad}, ` +
+          `Total=${unitPrice * cantidad} ${currency} para ticket ${metadata?.ticketId}`,
       );
 
       const preference = new Preference(this.client);
@@ -49,8 +52,8 @@ export class MercadoPagoStrategy implements IPaymentStrategy {
             {
               id: metadata?.ticketId || 'ticket_generic',
               title: 'Entrada Mundial 2026 - TicketAR',
-              quantity: 1,
-              unit_price: amount,
+              quantity: cantidad,
+              unit_price: unitPrice,
               currency_id: currency === 'USD' ? 'USD' : 'ARS',
             },
           ],

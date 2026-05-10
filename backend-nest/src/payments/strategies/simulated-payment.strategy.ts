@@ -6,12 +6,16 @@ export class SimulatedPaymentStrategy implements IPaymentStrategy {
   private readonly logger = new Logger(SimulatedPaymentStrategy.name);
 
   async processPayment(
-    amount: number,
+    unitPrice: number,
+    cantidad: number,
     currency: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     metadata?: { ticketId: string },
   ): Promise<PaymentResult> {
-    this.logger.log(`Procesando pago simulado de ${amount} ${currency}...`);
+    const total = unitPrice * cantidad;
+    this.logger.log(
+      `Procesando pago simulado: UnitPrice=${unitPrice}, Cantidad=${cantidad}, Total=${total} ${currency}...`,
+    );
 
     // Simulamos una demora de red
     await new Promise((resolve) => setTimeout(resolve, 1000));

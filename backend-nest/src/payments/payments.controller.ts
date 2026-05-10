@@ -59,7 +59,7 @@ export class PaymentsController {
         );
 
         try {
-          await this.entradasService.marcarComoPagada(ticketId);
+          await this.entradasService.marcarComoPagada(ticketId, resourceId);
           this.logger.log(
             `Ticket ${ticketId} marcado como pagado exitosamente.`,
           );
