@@ -54,6 +54,14 @@ test.describe('Pruebas de Estrés (Stress Testing)', () => {
 
     // 2. El tiempo total de procesamiento para 50 peticiones no debería exceder los 10 segundos
     expect(duration).toBeLessThan(10000);
+
+    // 3. Verificamos que al menos una haya sido rechazada si superamos el límite de 6
+    if (NUMERO_PETICIONES > 6) {
+        expect(fallidas).toBeGreaterThan(0);
+        console.log('El sistema aplicó correctamente las reglas de negocio bajo carga.');
+    }
+
+    console.log('Test de Estrés finalizado: El backend se mantuvo estable.');
   });
 
 });
