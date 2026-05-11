@@ -1,16 +1,10 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-const esRutaProtegida = createRouteMatcher([
-  '/checkout(.*)',
-  '/profile(.*)',
-  '/stats(.*)',
-]);
-
-export default clerkMiddleware(async (auth, req) => {
-  if (esRutaProtegida(req)) {
-    await auth.protect();
-  }
-});
+export default function proxy() {
+  // Pass-through temporal para aislar 404 de plataforma en Vercel.
+  // Una vez confirmado, reactivamos Clerk sobre rutas protegidas.
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
