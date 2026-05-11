@@ -90,8 +90,8 @@ test.describe('E2E: Ciclo de Vida Completo del Hincha', () => {
       console.log(`Aviso: Estadisticas devolvieron ${resStats.status()} (requiere rol ADMINISTRADOR).`);
     }
 
-    // El servidor respondio sin colapsar - eso es lo que validamos aqui
-    expect(resStats.status()).not.toBe(500);
+    // El servidor respondio sin colapsar - cualquier respuesta que no sea 5xx es valida
+    expect(resStats.status()).toBeLessThan(500);
     console.log('FLUJO E2E COMPLETADO CON EXITO: Del partido al QR.');
   });
 
