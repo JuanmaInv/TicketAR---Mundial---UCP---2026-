@@ -21,8 +21,15 @@ async function bootstrap() {
   );
 
   // Configure el CORS para que el front pueda acceder al backend.
+  const frontendUrl = (process.env.FRONTEND_URL ?? '').trim().replace(/\/$/, '');
+  const originsPermitidos = [
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    ...(frontendUrl ? [frontendUrl] : []),
+  ];
+
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://127.0.0.1:3001'],
+    origin: originsPermitidos,
     methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     credentials: true, // permite que el backend guarde cookies del frontend.
   });
