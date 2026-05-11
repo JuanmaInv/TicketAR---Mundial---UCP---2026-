@@ -130,35 +130,47 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     idSector: string,
     cantidad: number,
   ): Promise<void> {
-    // Leer stock actual
-    const { data: current, error: readError } = await this.supabase
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+      throw new Error('INVALID_QUANTITY');
+    }
+
+    // Leer fila exacta del sector en el partido
+    const { data: fila, error: selectError } = await this.supabase
       .from('partido_sectores')
-      .select('asientos_disponibles')
+      .select('id, asientos_disponibles')
       .eq('id_partido', idPartido)
       .eq('id_sector', idSector)
       .single();
 
-    if (readError || !current) {
-      throw new Error('No se pudo leer el stock actual del sector');
+    if (selectError || !fila) {
+      throw new Error('SECTOR_NOT_FOUND');
     }
 
-    const stockAntes = Number(current.asientos_disponibles);
+    const stockAntes = Number(fila.asientos_disponibles);
+    if (Number.isNaN(stockAntes)) {
+      throw new Error('INVALID_STOCK_VALUE');
+    }
+
     const stockDespues = stockAntes - cantidad;
 
+    if (stockAntes < cantidad) {
+      throw new Error('INSUFFICIENT_STOCK');
+    }
+
     this.logger.log(
-      `[Stock] Decrementar: Partido=${idPartido}, Sector=${idSector}, ` +
-        `Cantidad=${cantidad}, StockAntes=${stockAntes}, StockDespues=${stockDespues}`,
+      `[Stock] Partido=${idPartido} Sector=${idSector} stockAntes=${stockAntes} cantidad=${cantidad} stockDespues=${stockDespues}`,
     );
 
-    const { error } = await this.supabase
+    const { error: updateError } = await this.supabase
       .from('partido_sectores')
       .update({ asientos_disponibles: stockDespues })
-      .eq('id_partido', idPartido)
-      .eq('id_sector', idSector);
+      .eq('id', fila.id);
 
-    if (error) {
-      throw new Error(`Error al decrementar stock: ${error.message}`);
+    if (updateError) {
+      throw new Error(`Error al decrementar stock: ${updateError.message}`);
     }
+
+    this.logger.log(`[Stock] update ok asientos_disponibles=${stockDespues}`);
   }
 
   /**

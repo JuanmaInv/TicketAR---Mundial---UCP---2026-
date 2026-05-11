@@ -38,6 +38,9 @@ export class EntradasService {
     this.logger.log(
       `[Reserva] Inicio — Partido=${idPartido}, Sector=${idSector}, Cantidad=${cantidad}, Usuario=${idUsuario}`,
     );
+    this.logger.log(`[CrearTicket] idPartido=${idPartido}`);
+    this.logger.log(`[CrearTicket] idSector=${idSector}`);
+    this.logger.log(`[CrearTicket] cantidad=${cantidad}`);
 
     // 1. VALIDACIÓN DE PASAPORTE
     const tienePasaporte =
@@ -78,6 +81,11 @@ export class EntradasService {
       `[Reserva] Stock actual — Sector=${idSector}, StockDisponible=${stock}, CantidadSolicitada=${cantidad}`,
     );
 
+    this.logger.log(`[Stock] Partido=${idPartido}`);
+    this.logger.log(`[Stock] Sector=${idSector}`);
+    this.logger.log(`[Stock] StockAntes=${stock}`);
+    this.logger.log(`[Stock] Cantidad=${cantidad}`);
+
     if (stock < cantidad) {
       throw new ConflictException(
         `No hay suficientes asientos disponibles. Stock: ${stock}, Solicitados: ${cantidad}.`,
@@ -93,30 +101,75 @@ export class EntradasService {
       `[Reserva] Precio — PrecioUnitario=${precioUnitario} (desde sectores_estadio), PrecioTotal=${precioTotal}`,
     );
 
-    // 5. CREACIÓN DE LA RESERVA
+    // 5. DECREMENTAR STOCK (reserva de disponibilidad)
+    try {
+      await this.entradasRepository.decrementarStock(
+        idPartido,
+        idSector,
+        cantidad,
+      );
+    } catch (error) {
+      const mensaje = (error as Error).message || '';
+      if (mensaje.includes('SECTOR_NOT_FOUND')) {
+        throw new NotFoundException(
+          'El sector seleccionado no pertenece a este partido.',
+        );
+      }
+      if (mensaje.includes('INVALID_STOCK_VALUE')) {
+        throw new ConflictException(
+          'El stock del sector tiene un valor invalido. Contacta soporte.',
+        );
+      }
+      if (mensaje.includes('INVALID_QUANTITY')) {
+        throw new BadRequestException(
+          'La cantidad solicitada no es valida para esta compra.',
+        );
+      }
+      if (
+        mensaje.includes('INSUFFICIENT_STOCK') ||
+        mensaje.toLowerCase().includes('stock')
+      ) {
+        throw new ConflictException(
+          'No hay suficientes entradas disponibles para este sector.',
+        );
+      }
+      throw new ConflictException(
+        'No pudimos reservar los asientos en este momento. Intenta nuevamente.',
+      );
+    }
+    this.logger.log('[CrearTicket] stock descontado OK');
+
+    // 6. CREACION DE LA RESERVA
     const fechaExpiracion = new Date();
     fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
 
-    const entrada = await this.entradasRepository.crear({
-      id_usuario: idUsuario,
-      id_partido: idPartido,
-      id_sector: idSector,
-      cantidad,
-      precio_unitario: precioUnitario,
-      precio_total: precioTotal,
-      estado: TicketStatus.RESERVADO,
-      fecha_expiracion_reserva: fechaExpiracion.toISOString(),
-    });
-
-    // 6. DECREMENTAR STOCK
-    await this.entradasRepository.decrementarStock(
-      idPartido,
-      idSector,
-      cantidad,
-    );
+    let entrada: TicketEntity;
+    try {
+      entrada = await this.entradasRepository.crear({
+        id_usuario: idUsuario,
+        id_partido: idPartido,
+        id_sector: idSector,
+        cantidad,
+        precio_unitario: precioUnitario,
+        precio_total: precioTotal,
+        estado: TicketStatus.RESERVADO,
+        fecha_expiracion_reserva: fechaExpiracion.toISOString(),
+      });
+    } catch (error) {
+      await this.entradasRepository.incrementarStock(
+        idPartido,
+        idSector,
+        cantidad,
+      );
+      throw new BadRequestException(
+        `No se pudo crear la reserva: ${(error as Error).message}`,
+      );
+    }
+    this.logger.log(`[CrearTicket] entrada creada ID=${entrada.id}`);
 
     // 7. RECALCULAR ESTADO DEL PARTIDO
     await this.entradasRepository.recalcularEstadoPartido(idPartido);
+    this.logger.log(`[Stock] StockDespues=${stock - cantidad}`);
 
     this.logger.log(
       `[Reserva] Completada — EntradaID=${entrada.id}, Cantidad=${cantidad}, Total=${precioTotal}`,

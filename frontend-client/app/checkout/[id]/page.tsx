@@ -46,15 +46,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const stepFromUrl = parseInt(searchParams.get('step') || '1', 10);
   const [paso, setPaso] = useState(stepFromUrl);
   const [procesando, setProcesando] = useState(false);
-  const [fechaExpiracion] = useState<Date>(() => {
-    if (typeof window === 'undefined') return new Date(Date.now() + 15 * 60 * 1000);
-    const claveAlmacenamiento = `ticketar-reserva-${partidoId}`;
-    const guardada = window.sessionStorage.getItem(claveAlmacenamiento);
-    if (guardada && Number(guardada) > Date.now()) return new Date(Number(guardada));
-    const nuevaFecha = Date.now() + 15 * 60 * 1000;
-    window.sessionStorage.setItem(claveAlmacenamiento, String(nuevaFecha));
-    return new Date(nuevaFecha);
-  });
+  const [fechaExpiracion] = useState<Date>(() => new Date(Date.now() + 15 * 60 * 1000));
 
   const [datosUsuario, setDatosUsuario] = useState<Usuario | null>(null);
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
@@ -184,10 +176,9 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       setReservaExpirada(true);
       setMensajeError('Tu reserva vencio. Volve a seleccionar partido y sector para continuar.');
       setProcesando(false);
-      window.sessionStorage.removeItem(`ticketar-reserva-${partidoId}`);
     });
     return unsubscribe;
-  }, [partidoId]);
+  }, []);
 
   const perfilIncompleto = !datosUsuario?.nombre ||
     !datosUsuario?.apellido ||
@@ -207,7 +198,6 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     if (typeof window === 'undefined') return;
     window.localStorage.removeItem(`checkout_paso_${partidoId}`);
     window.localStorage.removeItem(`checkout_resumen_${partidoId}`);
-    window.sessionStorage.removeItem(`ticketar-reserva-${partidoId}`);
   }
 
   async function handleGuardarDatos() {
@@ -312,7 +302,6 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       });
 
       const respuestaPago = await pagarTicket(ticket.id);
-      window.sessionStorage.removeItem(`ticketar-reserva-${partidoId}`);
 
       if (respuestaPago.resultadoPago?.paymentUrl) {
         const redireccionExitosa = redirigirPagoSeguro(respuestaPago.resultadoPago.paymentUrl);

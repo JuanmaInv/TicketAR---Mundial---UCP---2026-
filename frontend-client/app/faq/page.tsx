@@ -6,7 +6,6 @@ import { useState } from 'react';
 type FaqItem = {
   pregunta: string;
   respuesta: string;
-  icono: string;
 };
 
 const faqs: FaqItem[] = [
@@ -14,43 +13,36 @@ const faqs: FaqItem[] = [
     pregunta: 'Cuanto dura la reserva durante la compra?',
     respuesta:
       'La reserva dura 15 minutos. Durante ese tiempo tus entradas quedan apartadas para que completes tus datos y el pago.',
-    icono: '??',
   },
   {
     pregunta: 'Que pasa si vence el timer?',
     respuesta:
       'Si el tiempo llega a cero, la reserva expira y los asientos vuelven al stock general. Debes volver a seleccionar sector y continuar el proceso desde checkout.',
-    icono: '?',
   },
   {
     pregunta: 'Como recibo mi entrada y el codigo QR?',
     respuesta:
       'Cuando el pago se confirma, la entrada aparece en Mis Tickets con su QR correspondiente. El ingreso al estadio se valida con tu identidad y ese QR.',
-    icono: '??',
   },
   {
     pregunta: 'Que hago si Mercado Pago rechaza el pago?',
     respuesta:
       'Revisa el medio de pago e intenta nuevamente. Si el rechazo persiste, prueba con otro medio y verifica que la reserva siga vigente antes de reintentar.',
-    icono: '??',
   },
   {
     pregunta: 'Puedo cambiar mis datos antes de pagar?',
     respuesta:
       'Si. En el checkout puedes volver al paso de datos del comprador y editar la informacion antes de confirmar el pago final.',
-    icono: '??',
   },
   {
     pregunta: 'Que significa que un partido este agotado o cancelado?',
     respuesta:
       'Agotado significa que no hay stock disponible para compra. Cancelado significa que el partido fue bloqueado administrativamente y no permite compras.',
-    icono: '??',
   },
   {
     pregunta: 'Como elimino mi cuenta?',
     respuesta:
       'Desde tu perfil puedes gestionar la eliminacion de cuenta si la opcion esta habilitada para tu usuario. Si no la encuentras, contacta soporte oficial.',
-    icono: '??',
   },
 ];
 
@@ -65,7 +57,7 @@ export default function FAQPage() {
             href="/"
             className="text-muted-foreground hover:text-foreground text-[10px] font-black uppercase tracking-[0.4em] inline-flex items-center gap-3 transition-colors group"
           >
-            <span className="group-hover:-translate-x-2 transition-transform text-xl">?</span>
+            <span className="group-hover:-translate-x-2 transition-transform text-xl">←</span>
             VOLVER AL INICIO
           </Link>
         </div>
@@ -93,7 +85,7 @@ export default function FAQPage() {
             >
               <div className="flex items-center justify-between p-6 md:p-8">
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl">{faq.icono}</span>
+                  <span className="text-2xl">•</span>
                   <h3 className="text-base md:text-lg font-black text-foreground uppercase italic">
                     {faq.pregunta}
                   </h3>
@@ -103,7 +95,7 @@ export default function FAQPage() {
                     abierto === index ? 'rotate-180' : ''
                   }`}
                 >
-                  ?
+                  {abierto === index ? '▴' : '▾'}
                 </span>
               </div>
 
