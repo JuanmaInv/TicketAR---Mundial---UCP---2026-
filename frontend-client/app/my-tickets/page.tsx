@@ -414,35 +414,42 @@ function TicketCard({
       right.style.borderLeft = '1px dashed #94a3b8';
       right.style.paddingLeft = '20px';
 
-      const agregarFila = (label: string, value: string): void => {
+      const filasTicket: Array<{ label: string; value: string }> = [
+        { label: 'ID de entrada', value: entrada.id },
+        { label: 'Estado', value: estadoNormalizado },
+        { label: 'Partido', value: tituloPartido },
+        { label: 'Fecha', value: fechaPartido },
+        { label: 'Estadio', value: estadio },
+        { label: 'Sector', value: nombreSector },
+        { label: 'Cantidad', value: String(cantidad) },
+        { label: 'Precio unitario', value: precioUnitarioTexto },
+        { label: 'Total abonado', value: totalTexto },
+        {
+          label: 'Titular',
+          value: dniUsuario ? `DNI ${dniUsuario}` : 'DNI no disponible',
+        },
+      ];
+
+      filasTicket.forEach((fila) => {
         const l = doc.createElement('div');
-        l.textContent = label;
+        l.textContent = fila.label;
         l.style.fontSize = '11px';
         l.style.fontWeight = '700';
         l.style.color = '#475569';
         l.style.textTransform = 'uppercase';
         l.style.marginTop = '14px';
         l.style.letterSpacing = '.08em';
+
         const v = doc.createElement('div');
-        v.textContent = value;
+        v.textContent = fila.value;
         v.style.fontSize = '16px';
         v.style.fontWeight = '800';
         v.style.marginTop = '4px';
         v.style.color = '#0f172a';
+
         left.appendChild(l);
         left.appendChild(v);
-      };
-
-      agregarFila('ID de entrada', entrada.id);
-      agregarFila('Estado', estadoNormalizado);
-      agregarFila('Partido', tituloPartido);
-      agregarFila('Fecha', fechaPartido);
-      agregarFila('Estadio', estadio);
-      agregarFila('Sector', nombreSector);
-      agregarFila('Cantidad', String(cantidad));
-      agregarFila('Precio unitario', precioUnitarioTexto);
-      agregarFila('Total abonado', totalTexto);
-      agregarFila('Titular', dniUsuario ? `DNI ${dniUsuario}` : 'DNI no disponible');
+      });
 
       const badge = doc.createElement('div');
       badge.textContent = 'Ticket valido';
@@ -483,11 +490,10 @@ function TicketCard({
       ticket.appendChild(foot);
       body.appendChild(ticket);
 
-      const dispararImpresion = (): void => {
+      window.setTimeout(() => {
         ventanaSegura.focus();
         ventanaSegura.print();
-      };
-      window.setTimeout(dispararImpresion, 150);
+      }, 150);
       setMensajeAccion('PDF generado. Guarda el archivo desde el dialogo de impresion.');
     } catch {
       setMensajeAccion('No pudimos generar el PDF de la entrada. Intenta nuevamente.');
