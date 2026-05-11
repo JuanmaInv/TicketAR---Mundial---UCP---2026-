@@ -8,6 +8,10 @@ import { useUser } from "@clerk/nextjs";
 function FormularioPerfil() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const userId = user?.id ?? "";
+  const userEmail = user?.emailAddresses[0]?.emailAddress ?? "";
+  const userFirstName = user?.firstName ?? "";
+  const userLastName = user?.lastName ?? "";
   const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
   const searchParams = useSearchParams();
   const matchId = searchParams.get("matchId");
@@ -67,22 +71,19 @@ function FormularioPerfil() {
 
   useEffect(() => {
     async function cargarPerfil() {
-      if (!isLoaded || !user) return;
-
-      const emailClerk = user.emailAddresses[0]?.emailAddress || "";
-      const userIdClerk = user.id || "";
+      if (!isLoaded || !userId || !userEmail) return;
 
       try {
-        const usuarioDB = await getUsuario(emailClerk, {
-          userId: userIdClerk,
-          userEmail: emailClerk,
+        const usuarioDB = await getUsuario(userEmail, {
+          userId,
+          userEmail,
         });
 
         if (usuarioDB) {
           setDatos({
-            nombre: usuarioDB.nombre || user.firstName || "",
-            apellido: usuarioDB.apellido || user.lastName || "",
-            email: emailClerk,
+            nombre: usuarioDB.nombre || userFirstName,
+            apellido: usuarioDB.apellido || userLastName,
+            email: userEmail,
             documentacion: usuarioDB.numeroPasaporte || "",
             telefono: usuarioDB.telefono || "",
             localidad: usuarioDB.localidad || "",
@@ -92,24 +93,25 @@ function FormularioPerfil() {
         } else {
           setDatos((prev) => ({
             ...prev,
-            nombre: user.firstName || "",
-            apellido: user.lastName || "",
-            email: emailClerk,
+            nombre: userFirstName,
+            apellido: userLastName,
+            email: userEmail,
           }));
           setExisteEnDB(false);
         }
       } catch {
-        setDatos((prev) => ({ ...prev, email: emailClerk }));
+        setDatos((prev) => ({ ...prev, email: userEmail }));
       }
     }
 
     void cargarPerfil();
-  }, [isLoaded, user]);
+  }, [isLoaded, userEmail, userFirstName, userId, userLastName]);
 
   function manejarCambio(e: React.ChangeEvent<HTMLInputElement>) {
     setExito(false);
     setMensajeError("");
-    setDatos({ ...datos, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setDatos((prev) => ({ ...prev, [name]: value }));
   }
 
   function manejarBlur(e: React.FocusEvent<HTMLInputElement>) {
