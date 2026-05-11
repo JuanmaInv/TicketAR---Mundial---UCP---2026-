@@ -36,7 +36,15 @@ export interface Sector {
   nombre: string;
   precio: number;
   capacidad: number;
-  capacidadDisponible: number;
+  activo?: boolean;
+}
+
+export interface SectorPorPartido {
+  id: string;
+  idSector: string;
+  nombre: string;
+  precio: number;
+  asientosDisponibles: number;
 }
 
 export interface Usuario {
@@ -72,8 +80,21 @@ export interface EstadisticasAdmin {
   ingresosTotales: number;
   entradasVendidas: number;
   entradasPendientes: number;
+  entradasCanceladas: number;
   desglosePorSector: StatsPorSector[];
   ventasPorPartido: StatsPorPartido[];
+  detallePorPartidoSectorEstado: {
+    idPartido: string;
+    partido: string;
+    sectores: {
+      idSector: string;
+      sector: string;
+      pagadoCantidad: number;
+      reservadoCantidad: number;
+      canceladoCantidad: number;
+      ingresosPagado: number;
+    }[];
+  }[];
   proximoPartidoOcupacion: {
     partido: string;
     porcentaje: number;
@@ -102,11 +123,22 @@ export interface RespuestaPago {
   };
 }
 
-type SectorApi = {
+type SectorGeneralApi = {
   id: string;
   nombre: string;
   precio: number;
   capacidad: number;
+  activo?: boolean;
+};
+
+type SectorPorPartidoApi = {
+  id: string;
+  idSector?: string;
+  id_sector?: string;
+  nombre: string;
+  precio: number;
+  asientosDisponibles?: number;
+  asientos_disponibles?: number;
   capacidadDisponible?: number;
   capacidad_disponible?: number;
 };
@@ -124,6 +156,16 @@ function validarIdRutaSeguro(id: string, nombre: string): string {
   const valor = id.trim();
   const idSeguro = /^[a-zA-Z0-9_-]{1,80}$/;
   if (!idSeguro.test(valor)) {
+    throw new Error(`El ${nombre} no es valido.`);
+  }
+  return valor;
+}
+
+function validarUuidSeguro(id: string, nombre: string): string {
+  const valor = id.trim().toLowerCase();
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  if (!uuidRegex.test(valor)) {
     throw new Error(`El ${nombre} no es valido.`);
   }
   return valor;
@@ -150,40 +192,97 @@ export async function getPartidos(): Promise<Partido[]> {
     equipo_visitante: (p.equipo_visitante ?? p.equipoVisitante ?? '') as string,
     fecha_partido: (p.fecha_partido ?? p.fechaPartido ?? '') as string,
     nombre_estadio: (p.nombre_estadio ?? p.nombreEstadio ?? '') as string,
-    precio_base: (p.precio_base ?? p.precioBase ?? 0) as number,
     fase: (p.fase ?? '') as string,
     estado: (p.estado ?? '') as string,
     imagen_url: (p.imagen_url ?? p.imagenUrl ?? undefined) as string | undefined,
   }));
 }
 
-export async function getSectores(partidoId?: string): Promise<Sector[]> {
-  const partidoIdSeguro = partidoId
-    ? validarIdRutaSeguro(partidoId, 'identificador de partido')
-    : undefined;
-  const ruta = partidoIdSeguro ? `/sectores/partido/${partidoIdSeguro}` : '/sectores';
-  const res = await fetch(construirUrlApi(ruta));
+export async function getSectores(): Promise<Sector[]> {
+  const res = await fetch(construirUrlApi('/sectores'));
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores'));
   const data = await res.json();
   const lista = Array.isArray(data) ? data : (data.data ?? []);
-  return lista.map((s: SectorApi) => ({
+
+  return lista.map((s: SectorGeneralApi) => ({
     id: s.id,
     nombre: s.nombre,
     precio: s.precio,
     capacidad: s.capacidad,
-    capacidadDisponible: s.capacidadDisponible ?? s.capacidad_disponible
+    activo: s.activo,
   }));
 }
 
+export async function getSectoresPorPartido(idPartido: string): Promise<SectorPorPartido[]> {
+  const idPartidoSeguro = validarUuidSeguro(
+    validarIdRutaSeguro(idPartido, 'identificador de partido'),
+    'identificador de partido',
+  );
+  const ruta = `/sectores/partido/${encodeURIComponent(idPartidoSeguro)}`;
+  const res = await fetch(construirUrlApi(ruta));
+  if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores por partido'));
+  const data = await res.json();
+  const lista = Array.isArray(data) ? data : (data.data ?? []);
 
-export async function createTicket(entrada: { idUsuario: string, idPartido: string, idSector: string }): Promise<Ticket> {
+  return lista.map((s: SectorPorPartidoApi) => {
+    const idSector = s.idSector ?? s.id_sector;
+    if (!idSector) {
+      throw new Error('El sector recibido no incluye idSector.');
+    }
+
+    return {
+      id: s.id,
+      idSector,
+      nombre: s.nombre,
+      precio: s.precio,
+      asientosDisponibles:
+        s.asientosDisponibles ??
+        s.asientos_disponibles ??
+        s.capacidadDisponible ??
+        s.capacidad_disponible ??
+        0,
+    };
+  });
+}
+
+export async function getSectoresDeTodosLosPartidos(): Promise<{ idPartido: string; sectores: SectorPorPartido[] }[]> {
+  const res = await fetch(construirUrlApi('/sectores/todos-partidos'));
+  if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores de todos los partidos'));
+  const data = await res.json();
+  const lista = Array.isArray(data) ? data : (data.data ?? []);
+
+  return lista.map((item: { idPartido?: string; id_partido?: string; sectores?: SectorPorPartidoApi[] }) => ({
+    idPartido: (item.idPartido ?? item.id_partido ?? '') as string,
+    sectores: (item.sectores ?? []).map((s) => {
+      const idSector = s.idSector ?? s.id_sector;
+      if (!idSector) {
+        throw new Error('El sector recibido no incluye idSector.');
+      }
+
+      return {
+        id: s.id,
+        idSector,
+        nombre: s.nombre,
+        precio: s.precio,
+        asientosDisponibles:
+          s.asientosDisponibles ??
+          s.asientos_disponibles ??
+          s.capacidadDisponible ??
+          s.capacidad_disponible ??
+          0,
+      };
+    }),
+  }));
+}
+
+export async function createTicket(ticket: { idUsuario: string; idPartido: string; idSector: string; cantidad: number }): Promise<Ticket> {
   const res = await fetch(construirUrlApi('/entradas'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entrada),
+    body: JSON.stringify(ticket),
   });
   if (!res.ok) {
-    throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos reservar la entrada. Intentá nuevamente.'));
+    throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos reservar la entrada. Intenta nuevamente.'));
   }
   return res.json();
 }
@@ -239,6 +338,14 @@ export async function updateUsuario(
   }
 }
 
+export async function deleteUsuario(email: string): Promise<boolean> {
+  const emailSeguro = validarEmailSeguro(email);
+  const res = await fetch(construirUrlApi(`/usuarios/${encodeURIComponent(emailSeguro)}`), {
+    method: 'DELETE',
+  });
+  return res.ok;
+}
+
 export async function getTickets(): Promise<Ticket[]> {
   const res = await fetch(construirUrlApi('/entradas'));
   if (!res.ok) throw new Error('Error al traer entradas');
@@ -268,7 +375,7 @@ export async function getTicketQr(id: string): Promise<string> {
     body: JSON.stringify({ id: idSeguro }),
   });
   if (!res.ok) throw new Error('QR no disponible');
-  const data = await res.json();
+  const data = (await res.json()) as { qrDataUrl: string };
   return data.qrDataUrl;
 }
 
@@ -280,7 +387,7 @@ export async function pagarTicket(id: string): Promise<RespuestaPago> {
     body: JSON.stringify({ id: idSeguro }),
   });
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'No pudimos procesar el pago.'));
-  const respuesta = await res.json();
+  const respuesta = (await res.json()) as { ticket: Ticket; paymentResult?: RespuestaPago['resultadoPago'] };
   return {
     entrada: respuesta.ticket,
     resultadoPago: respuesta.paymentResult,
@@ -293,7 +400,7 @@ export interface ActualizarPartidoPayload {
   fechaPartido?: string;
   nombreEstadio?: string;
   fase?: string;
-  precioBase?: number;
+  estado?: string;
 }
 
 export async function actualizarPartidoAdmin(
@@ -316,11 +423,12 @@ export async function actualizarPartidoAdmin(
   });
 
   if (!res.ok) {
+    const detalle = await obtenerMensajeErrorApi(
+      res,
+      'No pudimos actualizar el partido en este momento.',
+    );
     throw new Error(
-      await obtenerMensajeErrorApi(
-        res,
-        'No pudimos actualizar el partido en este momento.',
-      ),
+      `Error ${res.status}: ${detalle}`,
     );
   }
 }
@@ -344,7 +452,7 @@ export async function getEstadisticasAdmin(
 
 export interface ActualizarSectorPartidoPayload {
   precio?: number;
-  capacidadDisponible?: number;
+  asientosDisponibles?: number;
 }
 
 export async function actualizarSectorPartidoAdmin(
@@ -361,23 +469,35 @@ export async function actualizarSectorPartidoAdmin(
     sectorId,
     'identificador de sector',
   );
+
+  const payloadCompat: {
+    precio?: number;
+    asientosDisponibles?: number;
+    capacidadDisponible?: number;
+  } = {
+    precio: payload.precio,
+    asientosDisponibles: payload.asientosDisponibles,
+    capacidadDisponible: payload.asientosDisponibles,
+  };
+
   const res = await fetch('/api/admin/matches/sector/update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       partidoId: partidoIdSeguro,
       sectorId: sectorIdSeguro,
-      payload,
+      payload: payloadCompat,
       auth,
     }),
   });
 
   if (!res.ok) {
+    const detalle = await obtenerMensajeErrorApi(
+      res,
+      'No pudimos actualizar los datos del sector.',
+    );
     throw new Error(
-      await obtenerMensajeErrorApi(
-        res,
-        'No pudimos actualizar los datos del sector.',
-      ),
+      `Error ${res.status}: ${detalle}`,
     );
   }
 }

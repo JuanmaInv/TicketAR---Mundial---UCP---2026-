@@ -1,6 +1,9 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CrearSectorDto } from './dto/create-stadium-sector.dto';
-import type { ISectoresRepository } from './repositories/stadium-sectors.repository.interface';
+import type {
+  ISectoresRepository,
+  SectorPorPartido,
+} from './repositories/stadium-sectors.repository.interface';
 import { SectorEstadioEntidad } from './entities/stadium-sector.entity';
 import { ActualizarSectorEnPartidoDto } from './dto/update-sector-in-match.dto';
 
@@ -23,16 +26,6 @@ export class SectoresService {
     return await this.sectoresRepository.obtenerTodos();
   }
 
-  async obtenerPorPartido(idPartido: string): Promise<SectorEstadioEntidad[]> {
-    const sectores = await this.sectoresRepository.obtenerPorPartido(idPartido);
-    if (!sectores.length) {
-      throw new NotFoundException(
-        'No hay entradas disponibles para este partido.',
-      );
-    }
-    return sectores;
-  }
-
   async obtenerUno(id: string): Promise<SectorEstadioEntidad> {
     try {
       const sector = await this.sectoresRepository.obtenerUno(id);
@@ -43,11 +36,34 @@ export class SectoresService {
     }
   }
 
+  /**
+   * Retorna los sectores disponibles para un partido con su stock real.
+   * Hace join entre partido_sectores y sectores_estadio.
+   */
+  async obtenerSectoresPorPartido(
+    idPartido: string,
+  ): Promise<SectorPorPartido[]> {
+    const sectores =
+      await this.sectoresRepository.obtenerSectoresPorPartido(idPartido);
+    if (!sectores.length) {
+      throw new NotFoundException(
+        'No hay sectores disponibles para este partido.',
+      );
+    }
+    return sectores;
+  }
+
+  async obtenerSectoresTodosLosPartidos(): Promise<
+    { idPartido: string; sectores: SectorPorPartido[] }[]
+  > {
+    return await this.sectoresRepository.obtenerSectoresTodosLosPartidos();
+  }
+
   async actualizarEnPartido(
     idPartido: string,
     idSector: string,
     datos: ActualizarSectorEnPartidoDto,
-  ): Promise<SectorEstadioEntidad> {
+  ): Promise<SectorPorPartido> {
     return this.sectoresRepository.actualizarEnPartido(
       idPartido,
       idSector,

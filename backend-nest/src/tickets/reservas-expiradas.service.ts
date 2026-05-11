@@ -1,13 +1,10 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { SupabaseEntradasRepository } from './repositories/supabase-entradas.repository';
 import { TicketStatus } from '../common/enums/ticket-status.enum';
-
-interface TicketExpirado {
-  id: string;
-  id_sector: string;
-  id_partido: string;
-}
+import type {
+  IEntradasRepository,
+  EntradaExpirada,
+} from './repositories/entradas.repository.interface';
 
 @Injectable()
 export class ReservasExpiradasService {
@@ -15,7 +12,7 @@ export class ReservasExpiradasService {
 
   constructor(
     @Inject('IEntradasRepository')
-    private readonly entradasRepository: SupabaseEntradasRepository,
+    private readonly entradasRepository: IEntradasRepository,
   ) {}
 
   /**
@@ -45,9 +42,7 @@ export class ReservasExpiradasService {
 
     // 2. Para cada reserva expirada, cancelamos el ticket y devolvemos el stock
     const resultados = await Promise.allSettled(
-      (expiradas as TicketExpirado[]).map((ticket) =>
-        this.procesarExpiracion(ticket),
-      ),
+      expiradas.map((ticket) => this.procesarExpiracion(ticket)),
     );
 
     // 3. Contamos éxitos y fallos para el log
@@ -62,9 +57,10 @@ export class ReservasExpiradasService {
   /**
    * Procesa la expiración de un ticket individual de forma atómica:
    * 1. Cambia el estado del ticket a CANCELADO.
-   * 2. Devuelve el asiento al stock del sector correspondiente.
+   * 2. Devuelve los asientos al stock del sector (usando entrada.cantidad).
+   * 3. Recalcula el estado del partido.
    */
-  private async procesarExpiracion(ticket: TicketExpirado): Promise<void> {
+  private async procesarExpiracion(ticket: EntradaExpirada): Promise<void> {
     try {
       // Cambiamos el estado a CANCELADO para liberar la reserva
       await this.entradasRepository.actualizarEstado(
@@ -72,14 +68,21 @@ export class ReservasExpiradasService {
         TicketStatus.CANCELADO,
       );
 
-      // Devolvemos el asiento al inventario del sector
+      // Devolvemos los asientos al inventario del sector (por cantidad)
       await this.entradasRepository.incrementarStock(
         ticket.id_partido,
         ticket.id_sector,
+        ticket.cantidad,
+      );
+
+      // Recalcular el estado del partido (agotado → disponible si se liberó stock)
+      await this.entradasRepository.recalcularEstadoPartido(
+        ticket.id_partido,
       );
 
       this.logger.log(
-        `[Cron] Reserva expirada liberada: Ticket ${ticket.id} (Partido: ${ticket.id_partido}, Sector: ${ticket.id_sector})`,
+        `[Cron] Reserva expirada liberada: Ticket ${ticket.id} ` +
+          `(Partido: ${ticket.id_partido}, Sector: ${ticket.id_sector}, Cantidad: ${ticket.cantidad})`,
       );
     } catch (error) {
       this.logger.error(

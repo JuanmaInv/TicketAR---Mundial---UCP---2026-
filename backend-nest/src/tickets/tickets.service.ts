@@ -18,13 +18,6 @@ import { TicketStateFactory } from './states/ticket-state.factory';
 import { QrService } from './qr.service';
 import { SectoresService } from '../stadium-sectors/stadium-sectors.service';
 
-interface TicketExpirado {
-  id: string;
-  id_partido: string;
-  id_sector: string;
-  estado: TicketStatus;
-}
-
 @Injectable()
 export class EntradasService {
   private readonly logger = new Logger(EntradasService.name);
@@ -40,35 +33,42 @@ export class EntradasService {
   ) {}
 
   async crear(crearEntradaDto: CrearEntradaDto): Promise<TicketEntity> {
+    const { idUsuario, idPartido, idSector, cantidad } = crearEntradaDto;
+
+    this.logger.log(
+      `[Reserva] Inicio — Partido=${idPartido}, Sector=${idSector}, Cantidad=${cantidad}, Usuario=${idUsuario}`,
+    );
+    this.logger.log(`[CrearTicket] idPartido=${idPartido}`);
+    this.logger.log(`[CrearTicket] idSector=${idSector}`);
+    this.logger.log(`[CrearTicket] cantidad=${cantidad}`);
+
     // 1. VALIDACIÓN DE PASAPORTE
     const tienePasaporte =
-      await this.entradasRepository.validarPasaporteUsuario(
-        crearEntradaDto.idUsuario,
-      );
+      await this.entradasRepository.validarPasaporteUsuario(idUsuario);
     if (!tienePasaporte) {
       throw new BadRequestException(
         'El usuario debe tener un pasaporte registrado para comprar.',
       );
     }
 
-    // 2. REGLA CRÍTICA: MÁXIMO 6 ENTRADAS POR CUENTA DE USUARIO POR PARTIDO
-    // Un usuario puede comprar hasta 6 entradas en nombre de su cuenta para un mismo partido.
-    // Todas las entradas quedan a nombre del titular que presenta su pasaporte en la puerta.
+    // 2. REGLA CRÍTICA: MÁXIMO 6 ENTRADAS POR CUENTA POR PARTIDO
     const LIMITE_ENTRADAS = 6;
     const totalActivas = await this.entradasRepository.contarEntradasActivas(
-      crearEntradaDto.idUsuario,
-      crearEntradaDto.idPartido,
+      idUsuario,
+      idPartido,
     );
-    if (totalActivas >= LIMITE_ENTRADAS) {
+
+    if (totalActivas + cantidad > LIMITE_ENTRADAS) {
       throw new ConflictException(
-        `Ya tenés ${totalActivas} entradas activas para este partido. El máximo permitido por cuenta es ${LIMITE_ENTRADAS} por partido.`,
+        `Ya tenés ${totalActivas} entradas activas para este partido. ` +
+          `Intentás comprar ${cantidad} más, pero el máximo por cuenta es ${LIMITE_ENTRADAS}.`,
       );
     }
 
     // 3. VERIFICACIÓN DE STOCK
     const stock = await this.entradasRepository.obtenerStockDisponible(
-      crearEntradaDto.idPartido,
-      crearEntradaDto.idSector,
+      idPartido,
+      idSector,
     );
 
     if (stock === null) {
@@ -77,30 +77,105 @@ export class EntradasService {
       );
     }
 
-    if (stock <= 0) {
+    this.logger.log(
+      `[Reserva] Stock actual — Sector=${idSector}, StockDisponible=${stock}, CantidadSolicitada=${cantidad}`,
+    );
+
+    this.logger.log(`[Stock] Partido=${idPartido}`);
+    this.logger.log(`[Stock] Sector=${idSector}`);
+    this.logger.log(`[Stock] StockAntes=${stock}`);
+    this.logger.log(`[Stock] Cantidad=${cantidad}`);
+
+    if (stock < cantidad) {
       throw new ConflictException(
-        'Lo sentimos, no quedan asientos disponibles en este sector.',
+        `No hay suficientes asientos disponibles. Stock: ${stock}, Solicitados: ${cantidad}.`,
       );
     }
 
-    // 4. CREACIÓN DE LA RESERVA
+    // 4. BUSCAR PRECIO DEL SECTOR DESDE SUPABASE
+    const sector = await this.sectoresService.obtenerUno(idSector);
+    const precioUnitario = sector.precio;
+    const precioTotal = cantidad * precioUnitario;
+
+    this.logger.log(
+      `[Reserva] Precio — PrecioUnitario=${precioUnitario} (desde sectores_estadio), PrecioTotal=${precioTotal}`,
+    );
+
+    // 5. DECREMENTAR STOCK (reserva de disponibilidad)
+    try {
+      await this.entradasRepository.decrementarStock(
+        idPartido,
+        idSector,
+        cantidad,
+      );
+    } catch (error) {
+      const mensaje = (error as Error).message || '';
+      if (mensaje.includes('SECTOR_NOT_FOUND')) {
+        throw new NotFoundException(
+          'El sector seleccionado no pertenece a este partido.',
+        );
+      }
+      if (mensaje.includes('INVALID_STOCK_VALUE')) {
+        throw new ConflictException(
+          'El stock del sector tiene un valor invalido. Contacta soporte.',
+        );
+      }
+      if (mensaje.includes('INVALID_QUANTITY')) {
+        throw new BadRequestException(
+          'La cantidad solicitada no es valida para esta compra.',
+        );
+      }
+      if (
+        mensaje.includes('INSUFFICIENT_STOCK') ||
+        mensaje.toLowerCase().includes('stock')
+      ) {
+        throw new ConflictException(
+          'No hay suficientes entradas disponibles para este sector.',
+        );
+      }
+      throw new ConflictException(
+        'No pudimos reservar los asientos en este momento. Intenta nuevamente.',
+      );
+    }
+    this.logger.log('[CrearTicket] stock descontado OK');
+
+    // 6. CREACION DE LA RESERVA
     const fechaExpiracion = new Date();
     fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
 
-    const ticket = await this.entradasRepository.crear({
-      id_usuario: crearEntradaDto.idUsuario,
-      id_partido: crearEntradaDto.idPartido,
-      id_sector: crearEntradaDto.idSector,
-      estado: TicketStatus.RESERVADO,
-      fecha_expiracion_reserva: fechaExpiracion.toISOString(),
-    });
+    let entrada: TicketEntity;
+    try {
+      entrada = await this.entradasRepository.crear({
+        id_usuario: idUsuario,
+        id_partido: idPartido,
+        id_sector: idSector,
+        cantidad,
+        precio_unitario: precioUnitario,
+        precio_total: precioTotal,
+        estado: TicketStatus.RESERVADO,
+        fecha_expiracion_reserva: fechaExpiracion.toISOString(),
+      });
+    } catch (error) {
+      await this.entradasRepository.incrementarStock(
+        idPartido,
+        idSector,
+        cantidad,
+      );
+      throw new BadRequestException(
+        `No se pudo crear la reserva: ${(error as Error).message}`,
+      );
+    }
+    this.logger.log(`[CrearTicket] entrada creada ID=${entrada.id}`);
 
-    await this.entradasRepository.decrementarStock(
-      crearEntradaDto.idPartido,
-      crearEntradaDto.idSector,
+    // 7. RECALCULAR ESTADO DEL PARTIDO
+    await this.entradasRepository.recalcularEstadoPartido(idPartido);
+    this.logger.log(`[Stock] StockDespues=${stock - cantidad}`);
+
+    this.logger.log(
+      `[Reserva] Completada — EntradaID=${entrada.id}, Cantidad=${cantidad}, Total=${precioTotal}`,
     );
 
-    return ticket;
+    return entrada;
   }
 
   async obtenerTodas(): Promise<TicketEntity[]> {
@@ -111,7 +186,10 @@ export class EntradasService {
     return this.entradasRepository.obtenerUna(id);
   }
 
-  async marcarComoPagada(id: string): Promise<TicketEntity> {
+  async marcarComoPagada(
+    id: string,
+    paymentId?: string,
+  ): Promise<TicketEntity> {
     const ticket = await this.entradasRepository.obtenerUna(id);
     if (!ticket) {
       throw new NotFoundException('Reserva no encontrada.');
@@ -123,6 +201,11 @@ export class EntradasService {
 
     // Validamos que el ticket se pueda confirmar (ej: que no esté cancelado o expirado)
     estadoActual.confirmarPago();
+
+    // Guardar payment ID si existe
+    if (paymentId) {
+      await this.entradasRepository.guardarPaymentId(id, paymentId);
+    }
 
     const ticketPagado = await this.entradasRepository.actualizarEstado(
       id,
@@ -180,12 +263,17 @@ export class EntradasService {
     const estado = this.ticketStateFactory.create(ticket.estado);
     estado.setContext(ticket);
 
-    // Obtenemos el precio real del sector desde el repositorio de sectores
-    const sector = await this.sectoresService.obtenerUno(ticket.idSector);
-    const precioFinal = sector.precio;
+    // Usamos precioUnitario y cantidad del ticket (calculados al reservar)
+    this.logger.log(
+      `[Pago] Ticket=${id}, Cantidad=${ticket.cantidad}, PrecioUnitario=${ticket.precioUnitario}, PrecioTotal=${ticket.precioTotal}`,
+    );
 
     // El estado procesa el pago usando el servicio de pagos (Strategy)
-    const paymentResult = await estado.pagar(this.paymentsService, precioFinal);
+    const paymentResult = await estado.pagar(
+      this.paymentsService,
+      ticket.precioUnitario,
+      ticket.cantidad,
+    );
 
     // Si NO hay paymentUrl y el pago fue exitoso, es un pago inmediato (Simulado)
     if (!paymentResult.paymentUrl && paymentResult.success) {
@@ -213,9 +301,7 @@ export class EntradasService {
   @Cron(CronExpression.EVERY_MINUTE)
   async manejarReservasExpiradas() {
     const ahora = new Date().toISOString();
-    const expiradas = (await this.entradasRepository.obtenerExpiradas(
-      ahora,
-    )) as TicketExpirado[];
+    const expiradas = await this.entradasRepository.obtenerExpiradas(ahora);
 
     if (expiradas.length > 0) {
       for (const row of expiradas) {
@@ -233,12 +319,18 @@ export class EntradasService {
           await this.entradasRepository.incrementarStock(
             ticket.idPartido,
             ticket.idSector,
+            ticket.cantidad,
           );
 
           // Marcamos como CANCELADO
           await this.entradasRepository.actualizarEstado(
             ticket.id,
             TicketStatus.CANCELADO,
+          );
+
+          // Recalcular estado del partido
+          await this.entradasRepository.recalcularEstadoPartido(
+            ticket.idPartido,
           );
         } catch (err) {
           this.logger.error(
@@ -248,5 +340,42 @@ export class EntradasService {
         }
       }
     }
+  }
+
+  /**
+   * Cancela una reserva y devuelve el stock.
+   */
+  async cancelar(id: string): Promise<TicketEntity> {
+    const ticket = await this.entradasRepository.obtenerUna(id);
+    if (!ticket) {
+      throw new NotFoundException(`Entrada ${id} no encontrada.`);
+    }
+
+    // Validar con patrón State
+    const estadoActual = this.ticketStateFactory.create(ticket.estado);
+    estadoActual.setContext(ticket);
+    estadoActual.cancelar();
+
+    // Marcar como cancelado
+    const ticketCancelado = await this.entradasRepository.actualizarEstado(
+      id,
+      TicketStatus.CANCELADO,
+    );
+
+    // Devolver stock
+    await this.entradasRepository.incrementarStock(
+      ticket.idPartido,
+      ticket.idSector,
+      ticket.cantidad,
+    );
+
+    // Recalcular estado del partido
+    await this.entradasRepository.recalcularEstadoPartido(ticket.idPartido);
+
+    this.logger.log(
+      `[Cancelación] Entrada ${id} cancelada. Stock devuelto: ${ticket.cantidad}`,
+    );
+
+    return ticketCancelado;
   }
 }

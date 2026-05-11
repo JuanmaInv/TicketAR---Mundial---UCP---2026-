@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ISectoresRepository } from './stadium-sectors.repository.interface';
+import {
+  ISectoresRepository,
+  SectorPorPartido,
+} from './stadium-sectors.repository.interface';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { SectorEstadioEntidad } from '../entities/stadium-sector.entity';
 import { CrearSectorDto } from '../dto/create-stadium-sector.dto';
@@ -8,24 +11,6 @@ import { ActualizarSectorEnPartidoDto } from '../dto/update-sector-in-match.dto'
 @Injectable()
 export class SupabaseSectoresRepository implements ISectoresRepository {
   private readonly TABLE_NAME = 'sectores_estadio';
-  private static readonly mapearSectorDb = (
-    sector: unknown,
-  ): {
-    id: string;
-    nombre: string;
-    capacidad: number;
-    capacidad_disponible: number;
-    precio: number;
-    fecha_creacion: Date;
-  } =>
-    sector as {
-      id: string;
-      nombre: string;
-      capacidad: number;
-      capacidad_disponible: number;
-      precio: number;
-      fecha_creacion: Date;
-    };
 
   constructor(private readonly supabaseService: SupabaseService) {}
 
@@ -37,7 +22,6 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
         {
           nombre: dto.nombre,
           capacidad: dto.capacidad,
-          capacidad_disponible: dto.capacidad,
           precio: dto.precio,
         },
       ])
@@ -80,64 +64,98 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
     return this.mapToEntity(data);
   }
 
-  async obtenerPorPartido(idPartido: string): Promise<SectorEstadioEntidad[]> {
-    const { data: disponibilidad, error: errorDisponibilidad } =
-      await this.supabaseService
+  /**
+   * Obtiene los sectores disponibles para un partido específico.
+   * Hace join entre partido_sectores y sectores_estadio usando la relación id_sector.
+   * Retorna nombre, precio y asientos_disponibles por sector para ese partido.
+   */
+  async obtenerSectoresPorPartido(
+    idPartido: string,
+  ): Promise<SectorPorPartido[]> {
+    const [sectoresData, partidoSectoresData] = await Promise.all([
+      this.supabaseService.getClient().from('sectores_estadio').select('*'),
+      this.supabaseService
         .getClient()
         .from('partido_sectores')
-        .select('id_sector, asientos_disponibles')
-        .eq('id_partido', idPartido);
+        .select('*')
+        .eq('id_partido', idPartido),
+    ]);
 
-    if (errorDisponibilidad) {
+    if (sectoresData.error)
       throw new Error(
-        `Error al obtener disponibilidad: ${errorDisponibilidad.message}`,
+        `Error al obtener sectores de estadio: ${sectoresData.error.message}`,
       );
-    }
-
-    const filasDisponibilidad = (disponibilidad ?? []) as Array<{
-      id_sector: string;
-      asientos_disponibles: number;
-    }>;
-
-    if (!filasDisponibilidad.length) return [];
-
-    const idsSectores = filasDisponibilidad.map((fila) => fila.id_sector);
-    const { data: sectores, error: errorSectores } = await this.supabaseService
-      .getClient()
-      .from(this.TABLE_NAME)
-      .select('*')
-      .in('id', idsSectores);
-
-    if (errorSectores) {
+    if (partidoSectoresData.error)
       throw new Error(
-        `Error al obtener sectores de partido: ${errorSectores.message}`,
+        `Error al obtener sectores del partido ${idPartido}: ${partidoSectoresData.error.message}`,
       );
-    }
 
-    const sectoresDb = (sectores ?? []).map(
-      SupabaseSectoresRepository.mapearSectorDb,
-    );
-    const mapaSectores = new Map(
-      sectoresDb.map((sector) => [sector.id, sector]),
-    );
+    const sectoresMap = new Map(sectoresData.data.map((s) => [s.id, s]));
 
-    return filasDisponibilidad
-      .map((fila) => {
-        const sector = mapaSectores.get(fila.id_sector);
-        if (!sector) return null;
-        return this.mapToEntity({
-          ...sector,
-          capacidad_disponible: fila.asientos_disponibles,
-        });
+    return (partidoSectoresData.data || [])
+      .map((row) => {
+        const sector = sectoresMap.get(row.id_sector as string);
+        if (!sector || sector.activo === false) return null;
+
+        return {
+          id: row.id as string,
+          idSector: row.id_sector as string,
+          nombre: sector.nombre as string,
+          precio: sector.precio as number,
+          asientosDisponibles: Number(row.asientos_disponibles),
+        };
       })
-      .filter((sector): sector is SectorEstadioEntidad => sector !== null);
+      .filter((s): s is SectorPorPartido => s !== null);
+  }
+
+  async obtenerSectoresTodosLosPartidos(): Promise<
+    { idPartido: string; sectores: SectorPorPartido[] }[]
+  > {
+    const [sectoresData, partidoSectoresData] = await Promise.all([
+      this.supabaseService.getClient().from('sectores_estadio').select('*'),
+      this.supabaseService.getClient().from('partido_sectores').select('*'),
+    ]);
+
+    if (sectoresData.error)
+      throw new Error(
+        `Error al obtener sectores de estadio: ${sectoresData.error.message}`,
+      );
+    if (partidoSectoresData.error)
+      throw new Error(
+        `Error al obtener sectores de todos los partidos: ${partidoSectoresData.error.message}`,
+      );
+
+    const sectoresMap = new Map(sectoresData.data.map((s) => [s.id, s]));
+    const map = new Map<string, SectorPorPartido[]>();
+
+    (partidoSectoresData.data || []).forEach((row) => {
+      const sector = sectoresMap.get(row.id_sector as string);
+
+      if (sector && sector.activo !== false) {
+        const idPartido = row.id_partido as string;
+        const sectoresPartido = map.get(idPartido) ?? [];
+        sectoresPartido.push({
+          id: row.id as string,
+          idSector: row.id_sector as string,
+          nombre: sector.nombre as string,
+          precio: sector.precio as number,
+          asientosDisponibles: Number(row.asientos_disponibles),
+        });
+        map.set(idPartido, sectoresPartido);
+      }
+    });
+
+    return Array.from(map.entries()).map(([idPartido, sectores]) => ({
+      idPartido,
+      sectores,
+    }));
   }
 
   async actualizarEnPartido(
     idPartido: string,
     idSector: string,
     datos: ActualizarSectorEnPartidoDto,
-  ): Promise<SectorEstadioEntidad> {
+  ): Promise<SectorPorPartido> {
     if (datos.precio !== undefined) {
       const { error: errorPrecio } = await this.supabaseService
         .getClient()
@@ -152,11 +170,13 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
       }
     }
 
-    if (datos.capacidadDisponible !== undefined) {
+    const nuevoStock = datos.asientosDisponibles ?? datos.capacidadDisponible;
+
+    if (nuevoStock !== undefined) {
       const { error: errorDisponibilidad } = await this.supabaseService
         .getClient()
         .from('partido_sectores')
-        .update({ asientos_disponibles: datos.capacidadDisponible })
+        .update({ asientos_disponibles: nuevoStock })
         .eq('id_partido', idPartido)
         .eq('id_sector', idSector);
 
@@ -167,8 +187,9 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
       }
     }
 
-    const sectoresActualizados = await this.obtenerPorPartido(idPartido);
-    const sector = sectoresActualizados.find((s) => s.id === idSector);
+    const sectoresActualizados =
+      await this.obtenerSectoresPorPartido(idPartido);
+    const sector = sectoresActualizados.find((s) => s.idSector === idSector);
     if (!sector) {
       throw new Error('Sector no encontrado para el partido indicado');
     }
@@ -180,18 +201,22 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
       id: string;
       nombre: string;
       capacidad: number;
-      capacidad_disponible: number;
       precio: number;
-      fecha_creacion: Date;
+      activo: boolean;
+      created_at: string;
+      updated_at?: string;
     };
 
     return {
       id: data.id,
       nombre: data.nombre,
       capacidad: data.capacidad,
-      capacidadDisponible: data.capacidad_disponible,
       precio: data.precio,
-      fechaCreacion: data.fecha_creacion,
+      activo: data.activo !== false, // Default true si es null
+      fechaCreacion: new Date(data.created_at),
+      fechaActualizacion: data.updated_at
+        ? new Date(data.updated_at)
+        : undefined,
     };
   }
 }

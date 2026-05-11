@@ -12,7 +12,7 @@ type ActualizarPartidoPayload = {
   fechaPartido?: string;
   nombreEstadio?: string;
   fase?: string;
-  precioBase?: number;
+  estado?: string;
 };
 
 export async function POST(req: NextRequest) {

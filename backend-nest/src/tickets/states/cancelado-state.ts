@@ -19,12 +19,14 @@ export class CanceladoState implements TicketState {
     return TicketStatus.CANCELADO;
   }
 
-  pagar(
-    paymentsService: PaymentsService,
-    amount: number,
+  async pagar(
+    _paymentsService: PaymentsService,
+    _amount: number,
+    _cantidad: number,
   ): Promise<PaymentResult> {
-    void paymentsService;
-    void amount;
+    void _paymentsService;
+    void _amount;
+    void _cantidad;
     return Promise.reject(
       new BadRequestException(
         'No se puede pagar un ticket que ha sido cancelado.',

@@ -1,4 +1,4 @@
-import { IsString, IsDateString, IsNumber, Min } from 'class-validator';
+import { IsString, IsDateString } from 'class-validator';
 
 export class CrearPartidoDto {
   @IsString({ message: 'El equipo local es obligatorio' })
@@ -18,8 +18,4 @@ export class CrearPartidoDto {
 
   @IsString({ message: 'La fase es obligatoria (ej: Grupos, Final)' })
   fase: string;
-
-  @IsNumber({}, { message: 'El precio base debe ser un número' })
-  @Min(0, { message: 'El precio base no puede ser negativo' })
-  precioBase: number;
 }

@@ -5,7 +5,6 @@ export interface Partido {
   equipo_visitante: string;  // Cambiado
   fecha_partido: string;     // Cambiado
   nombre_estadio: string;    // Cambiado
-  precio_base: number;       // Cambiado
   fase: string;
   estado: string;
   imagen_url?: string;       // Nuevo campo para imagen (agregar a DB de partidos)
@@ -28,10 +27,19 @@ export interface DatosCompra {
 
 // Interfaz para los sectores del estadio (Ubicaciones)
 export interface Sector {
+  id: string;
   nombre: string;     // Ej: "Platea Alta", "General"
   precio: number;
   capacidad: number;
-  disponibles: number;
+}
+
+// Sector por Partido (con stock real)
+export interface SectorPorPartido {
+  id: string; // ID en partido_sectores
+  idSector: string; // ID en sectores_estadio
+  nombre: string;
+  precio: number;
+  asientosDisponibles: number;
 }
 
 // Interfaz para el Paso 3: Ticket generado y estado de pago

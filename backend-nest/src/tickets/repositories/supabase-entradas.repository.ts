@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
-  DatosCrearEntrada,
-  EntradaExpirada,
   IEntradasRepository,
+  CrearEntradaDatos,
+  EntradaExpirada,
 } from './entradas.repository.interface';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { TicketEntity } from '../entities/ticket.entity';
@@ -10,6 +10,7 @@ import { TicketStatus } from '../../common/enums/ticket-status.enum';
 
 @Injectable()
 export class SupabaseEntradasRepository implements IEntradasRepository {
+  private readonly logger = new Logger(SupabaseEntradasRepository.name);
   constructor(private readonly supabaseService: SupabaseService) {}
 
   private get supabase() {
@@ -28,22 +29,24 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
   }
 
   /**
-   * Cuenta todas las entradas activas (RESERVADO o PAGADO) de un usuario para un partido específico.
-   * Un usuario puede tener hasta 6 entradas por partido.
+   * Cuenta las entradas activas (RESERVADO o PAGADO) de un usuario para un partido.
+   * Suma el campo cantidad de cada fila porque las entradas son agrupadas.
    */
   async contarEntradasActivas(
     idUsuario: string,
     idPartido: string,
   ): Promise<number> {
-    const { count, error } = await this.supabase
+    const { data, error } = await this.supabase
       .from('entradas')
-      .select('id', { count: 'exact', head: true })
+      .select('cantidad')
       .eq('id_usuario', idUsuario)
       .eq('id_partido', idPartido)
       .neq('estado', TicketStatus.CANCELADO);
 
-    if (error || count === null) return 0;
-    return count;
+    if (error || !data) return 0;
+
+    // Sumar el campo cantidad de cada fila activa
+    return data.reduce((total, row) => total + (Number(row.cantidad) || 0), 0);
   }
 
   async obtenerStockDisponible(
@@ -61,7 +64,7 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return Number(data.asientos_disponibles);
   }
 
-  async crear(datos: DatosCrearEntrada): Promise<TicketEntity> {
+  async crear(datos: CrearEntradaDatos): Promise<TicketEntity> {
     const { data, error } = (await this.supabase
       .from('entradas')
       .insert([datos])
@@ -105,33 +108,200 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
     return this.mapearTicket(data);
   }
 
+  async guardarPaymentId(id: string, paymentId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('entradas')
+      .update({ mercadopago_payment_id: paymentId })
+      .eq('id', id);
+
+    if (error) {
+      this.logger.error(
+        `Error al guardar payment ID ${paymentId} en entrada ${id}: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Decrementa stock usando UPDATE directo (no RPC).
+   * Lee el valor actual y resta la cantidad.
+   */
+  async decrementarStock(
+    idPartido: string,
+    idSector: string,
+    cantidad: number,
+  ): Promise<void> {
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+      throw new Error('INVALID_QUANTITY');
+    }
+
+    // Leer fila exacta del sector en el partido
+    const { data: fila, error: selectError } = await this.supabase
+      .from('partido_sectores')
+      .select('id, asientos_disponibles')
+      .eq('id_partido', idPartido)
+      .eq('id_sector', idSector)
+      .single();
+
+    if (selectError || !fila) {
+      throw new Error('SECTOR_NOT_FOUND');
+    }
+
+    const stockAntes = Number(fila.asientos_disponibles);
+    if (Number.isNaN(stockAntes)) {
+      throw new Error('INVALID_STOCK_VALUE');
+    }
+
+    const stockDespues = stockAntes - cantidad;
+
+    if (stockAntes < cantidad) {
+      throw new Error('INSUFFICIENT_STOCK');
+    }
+
+    this.logger.log(
+      `[Stock] Partido=${idPartido} Sector=${idSector} stockAntes=${stockAntes} cantidad=${cantidad} stockDespues=${stockDespues}`,
+    );
+
+    const { error: updateError } = await this.supabase
+      .from('partido_sectores')
+      .update({ asientos_disponibles: stockDespues })
+      .eq('id', fila.id);
+
+    if (updateError) {
+      throw new Error(`Error al decrementar stock: ${updateError.message}`);
+    }
+
+    this.logger.log(`[Stock] update ok asientos_disponibles=${stockDespues}`);
+  }
+
+  /**
+   * Incrementa stock usando UPDATE directo (no RPC).
+   * Lee el valor actual y suma la cantidad.
+   */
+  async incrementarStock(
+    idPartido: string,
+    idSector: string,
+    cantidad: number,
+  ): Promise<void> {
+    // Leer stock actual
+    const { data: current, error: readError } = await this.supabase
+      .from('partido_sectores')
+      .select('asientos_disponibles')
+      .eq('id_partido', idPartido)
+      .eq('id_sector', idSector)
+      .single();
+
+    if (readError || !current) {
+      throw new Error('No se pudo leer el stock actual del sector');
+    }
+
+    const stockAntes = Number(current.asientos_disponibles);
+    const stockDespues = stockAntes + cantidad;
+
+    this.logger.log(
+      `[Stock] Incrementar: Partido=${idPartido}, Sector=${idSector}, ` +
+        `Cantidad=${cantidad}, StockAntes=${stockAntes}, StockDespues=${stockDespues}`,
+    );
+
+    const { error } = await this.supabase
+      .from('partido_sectores')
+      .update({ asientos_disponibles: stockDespues })
+      .eq('id_partido', idPartido)
+      .eq('id_sector', idSector);
+
+    if (error) {
+      throw new Error(`Error al incrementar stock: ${error.message}`);
+    }
+  }
+
   async obtenerExpiradas(fechaReferencia: string): Promise<EntradaExpirada[]> {
     const { data, error } = await this.supabase
       .from('entradas')
-      .select('id, id_sector, id_partido')
+      .select('id, id_sector, id_partido, cantidad')
       .eq('estado', TicketStatus.RESERVADO)
       .lt('fecha_expiracion_reserva', fechaReferencia);
 
     if (error) return [];
-    return data as EntradaExpirada[];
+    return (data || []).map((row) => ({
+      id: row.id as string,
+      id_partido: row.id_partido as string,
+      id_sector: row.id_sector as string,
+      cantidad: Number(row.cantidad) || 1,
+    }));
   }
 
-  async decrementarStock(idPartido: string, idSector: string): Promise<void> {
-    const stock = await this.obtenerStockDisponible(idPartido, idSector);
-    if (stock === null || stock <= 0) return;
+  /**
+   * Recalcula el estado del partido según el stock total.
+   * - Si estado = "cancelado" → no modifica.
+   * - Si stock_total = 0 → actualiza a "agotado".
+   * - Si stock_total > 0 → actualiza a "disponible".
+   */
+  async recalcularEstadoPartido(idPartido: string): Promise<void> {
+    // 1. Leer estado actual del partido
+    const { data: partido, error: partidoError } = await this.supabase
+      .from('partidos')
+      .select('estado')
+      .eq('id', idPartido)
+      .single();
 
-    await this.supabase
+    if (partidoError || !partido) {
+      this.logger.warn(
+        `[RecalcularEstado] No se encontró el partido ${idPartido}`,
+      );
+      return;
+    }
+
+    const estadoActual = (partido.estado as string) || '';
+
+    // Si está cancelado, no tocamos
+    if (estadoActual === 'cancelado') {
+      this.logger.log(
+        `[RecalcularEstado] Partido ${idPartido} está cancelado. No se modifica.`,
+      );
+      return;
+    }
+
+    // 2. Calcular stock total sumando asientos_disponibles de todos los sectores
+    const { data: sectores, error: sectoresError } = await this.supabase
       .from('partido_sectores')
-      .update({ asientos_disponibles: stock - 1 })
-      .eq('id_partido', idPartido)
-      .eq('id_sector', idSector);
-  }
+      .select('asientos_disponibles')
+      .eq('id_partido', idPartido);
 
-  async incrementarStock(idPartido: string, idSector: string): Promise<void> {
-    await this.supabase.rpc('incrementar_stock_sector', {
-      p_partido_id: idPartido,
-      p_sector_id: idSector,
-    });
+    if (sectoresError || !sectores) {
+      this.logger.warn(
+        `[RecalcularEstado] No se pudieron obtener sectores del partido ${idPartido}`,
+      );
+      return;
+    }
+
+    const stockTotal = sectores.reduce(
+      (sum, row) => sum + (Number(row.asientos_disponibles) || 0),
+      0,
+    );
+
+    // 3. Determinar nuevo estado
+    const nuevoEstado = stockTotal === 0 ? 'agotado' : 'disponible';
+
+    if (nuevoEstado !== estadoActual) {
+      this.logger.log(
+        `[RecalcularEstado] Partido ${idPartido}: StockTotal=${stockTotal}, ` +
+          `EstadoAntes=${estadoActual}, EstadoDespues=${nuevoEstado}`,
+      );
+
+      const { error: updateError } = await this.supabase
+        .from('partidos')
+        .update({ estado: nuevoEstado })
+        .eq('id', idPartido);
+
+      if (updateError) {
+        this.logger.error(
+          `[RecalcularEstado] Error al actualizar estado: ${updateError.message}`,
+        );
+      }
+    } else {
+      this.logger.log(
+        `[RecalcularEstado] Partido ${idPartido}: StockTotal=${stockTotal}, Estado=${estadoActual} (sin cambio)`,
+      );
+    }
   }
 
   private mapearTicket(data: unknown): TicketEntity {
@@ -140,11 +310,14 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
       id_usuario: string;
       id_partido: string;
       id_sector: string;
+      cantidad: number;
+      precio_unitario: number;
+      precio_total: number;
       estado: TicketStatus;
       fecha_expiracion_reserva?: string;
-      created_at?: string;
+      codigo_qr?: string;
+      mercadopago_payment_id?: string;
       fecha_creacion?: string;
-      updated_at?: string;
       fecha_actualizacion?: string;
     };
 
@@ -153,14 +326,17 @@ export class SupabaseEntradasRepository implements IEntradasRepository {
       idUsuario: d.id_usuario,
       idPartido: d.id_partido,
       idSector: d.id_sector,
+      cantidad: Number(d.cantidad) || 1,
+      precioUnitario: Number(d.precio_unitario) || 0,
+      precioTotal: Number(d.precio_total) || 0,
       estado: d.estado,
       fechaExpiracionReserva: d.fecha_expiracion_reserva
         ? new Date(d.fecha_expiracion_reserva)
         : undefined,
-      fechaCreacion: new Date(d.created_at || d.fecha_creacion || new Date()),
-      fechaActualizacion: new Date(
-        d.updated_at || d.fecha_actualizacion || new Date(),
-      ),
+      codigoQr: d.codigo_qr,
+      mercadopagoPaymentId: d.mercadopago_payment_id,
+      fechaCreacion: new Date(d.fecha_creacion || new Date()),
+      fechaActualizacion: new Date(d.fecha_actualizacion || new Date()),
     };
   }
 }

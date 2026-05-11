@@ -1,39 +1,79 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { getSectores, Sector, formatPrice } from '@/lib/api';
+import { formatPrice, getSectoresPorPartido, SectorPorPartido } from '@/lib/api';
 
 interface SectorSelectorProps {
   partidoId: string;
-  alContinuarCompra: (sector: Sector, cantidad: number, total: number) => void;
+  onComprar?: (sectorId: string, cantidad: number, total: number) => void;
+  alContinuarCompra?: (sectorId: string, cantidad: number, total: number) => void;
 }
 
-export default function SectorSelector({ partidoId, alContinuarCompra }: SectorSelectorProps) {
-  const [sectores, setSectores] = useState<Sector[]>([]);
+export default function SectorSelector({
+  partidoId,
+  onComprar,
+  alContinuarCompra,
+}: SectorSelectorProps) {
+  const [sectores, setSectores] = useState<SectorPorPartido[]>([]);
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getSectores(partidoId)
-      .then((datos) => {
-        const sectoresFiltrados = datos.filter((s) => {
-          const nombre = s.nombre.toLowerCase();
-          return nombre.includes('palco') || nombre.includes('platea') || nombre.includes('popular');
-        });
-        const primerDisponible = sectoresFiltrados.find((s) => s.capacidadDisponible > 0);
+    let activo = true;
 
-        setSectores(sectoresFiltrados);
-        if (primerDisponible) setSectorSeleccionado(primerDisponible.id);
-        if (!primerDisponible) setError('No quedan entradas disponibles para este partido.');
-        setCargando(false);
-      })
-      .catch((errorCarga) => {
-        setError(errorCarga instanceof Error ? errorCarga.message : 'No pudimos consultar la disponibilidad.');
-        setCargando(false);
-      });
+    const inicio = setTimeout(() => {
+      if (!activo) return;
+
+      setCargando(true);
+      setError('');
+
+      getSectoresPorPartido(partidoId)
+        .then((datos) => {
+          if (!activo) return;
+
+          const sectoresFiltrados = datos.filter((s) => {
+            const nombre = s.nombre.toLowerCase();
+            return (
+              nombre.includes('popular') ||
+              nombre.includes('palco') ||
+              nombre.includes('vip') ||
+              nombre.includes('platea')
+            );
+          });
+
+          const primerDisponible = sectoresFiltrados.find((s) => s.asientosDisponibles > 0);
+
+          setSectores(sectoresFiltrados);
+          setSectorSeleccionado(primerDisponible ? primerDisponible.id : null);
+          setCantidad(1);
+
+          if (!primerDisponible) {
+            setError('No quedan entradas disponibles para este partido.');
+          }
+        })
+        .catch((errorCarga) => {
+          if (!activo) return;
+
+          setError(
+            errorCarga instanceof Error
+              ? errorCarga.message
+              : 'No pudimos consultar la disponibilidad.',
+          );
+        })
+        .finally(() => {
+          if (activo) {
+            setCargando(false);
+          }
+        });
+    }, 0);
+
+    return () => {
+      activo = false;
+      clearTimeout(inicio);
+    };
   }, [partidoId]);
 
   const sectorActual = sectores.find((s) => s.id === sectorSeleccionado);
@@ -42,7 +82,7 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
   function obtenerColorSector(nombre: string): string {
     const nombreNormalizado = nombre.toLowerCase();
     if (nombreNormalizado.includes('palco')) return 'bg-purple-600 shadow-purple-900/40';
-    if (nombreNormalizado.includes('platea')) return 'bg-blue-600 shadow-blue-900/40';
+    if (nombreNormalizado.includes('vip') || nombreNormalizado.includes('platea')) return 'bg-blue-600 shadow-blue-900/40';
     if (nombreNormalizado.includes('popular')) return 'bg-amber-500 shadow-amber-900/40';
     return 'bg-zinc-600 shadow-black';
   }
@@ -52,16 +92,33 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
       setError('Elegi un sector disponible para continuar.');
       return;
     }
-    if (sectorActual.capacidadDisponible < cantidad) {
-      setError(`Solo quedan ${sectorActual.capacidadDisponible} entradas en ${sectorActual.nombre}.`);
+
+    if (sectorActual.asientosDisponibles <= 0) {
+      setError(`No hay stock disponible en ${sectorActual.nombre}.`);
       return;
     }
+
+    if (cantidad > sectorActual.asientosDisponibles) {
+      setError(`Solo quedan ${sectorActual.asientosDisponibles} entradas en ${sectorActual.nombre}.`);
+      return;
+    }
+
+    const callback = onComprar ?? alContinuarCompra;
+    if (!callback) {
+      setError('No se encontro el paso de confirmacion de compra.');
+      return;
+    }
+
     setError('');
-    alContinuarCompra(sectorActual, cantidad, precioTotal);
+    callback(sectorActual.idSector, cantidad, precioTotal);
   }
 
   if (cargando) {
-    return <div className="text-white text-center py-10 animate-pulse font-black uppercase tracking-widest text-xs">Cargando mapa oficial...</div>;
+    return (
+      <div className="text-white text-center py-10 animate-pulse font-black uppercase tracking-widest text-xs">
+        Cargando mapa oficial...
+      </div>
+    );
   }
 
   return (
@@ -91,7 +148,7 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
               <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-2">Selecciona tu ubicacion</h3>
               <div className="grid grid-cols-1 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                 {sectores.map((sector) => {
-                  const agotado = sector.capacidadDisponible <= 0;
+                  const agotado = sector.asientosDisponibles <= 0;
                   return (
                     <button
                       key={sector.id}
@@ -100,6 +157,8 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
                       onClick={() => {
                         if (!agotado) {
                           setSectorSeleccionado(sector.id);
+                          setError('');
+                          setCantidad(1);
                         }
                       }}
                       className={`relative rounded-2xl px-5 py-4 text-left transition-all duration-300 border ${
@@ -117,7 +176,7 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
                           <span className="bg-red-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">Agotado</span>
                         ) : (
                           <span className="bg-white/20 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                            {sector.capacidadDisponible} disp.
+                            {sector.asientosDisponibles} disp.
                           </span>
                         )}
                       </div>
@@ -133,9 +192,7 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 bg-zinc-900/40 rounded-2xl p-6 border border-white/5 flex items-center justify-between">
           <div>
-            <p className="text-zinc-500 font-black text-[10px] uppercase tracking-widest mb-2 block">
-              Cantidad de Entradas
-            </p>
+            <p className="text-zinc-500 font-black text-[10px] uppercase tracking-widest mb-2 block">Cantidad de Entradas</p>
             <div className="flex items-center gap-6">
               <button
                 type="button"
@@ -152,7 +209,9 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
                 type="button"
                 aria-label="Sumar entrada"
                 onClick={() => {
-                  setCantidad(Math.min(6, sectorActual?.capacidadDisponible ?? 6, cantidad + 1));
+                  const stockSector = sectorActual?.asientosDisponibles ?? 0;
+                  const maximo = Math.min(6, Math.max(0, stockSector));
+                  setCantidad(Math.min(maximo > 0 ? maximo : 1, cantidad + 1));
                 }}
                 className="text-2xl font-bold text-white hover:text-emerald-500 transition-colors"
               >
@@ -170,15 +229,15 @@ export default function SectorSelector({ partidoId, alContinuarCompra }: SectorS
             </div>
             <button
               type="button"
-              disabled={sectorActual.capacidadDisponible <= 0}
+              disabled={!sectorActual || sectorActual.asientosDisponibles <= 0}
               onClick={continuarCompra}
               className={`px-8 py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all transform ${
-                sectorActual.capacidadDisponible <= 0
+                !sectorActual || sectorActual.asientosDisponibles <= 0
                   ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30'
               }`}
             >
-              {sectorActual.capacidadDisponible <= 0 ? 'AGOTADO' : 'REVISAR COMPRA ->'}
+              {!sectorActual || sectorActual.asientosDisponibles <= 0 ? 'AGOTADO' : 'REVISAR COMPRA ->'}
             </button>
           </div>
         )}

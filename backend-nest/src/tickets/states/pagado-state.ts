@@ -19,12 +19,14 @@ export class PagadoState implements TicketState {
     return TicketStatus.PAGADO;
   }
 
-  pagar(
-    paymentsService: PaymentsService,
-    amount: number,
+  async pagar(
+    _paymentsService: PaymentsService,
+    _amount: number,
+    _cantidad: number,
   ): Promise<PaymentResult> {
-    void paymentsService;
-    void amount;
+    void _paymentsService;
+    void _amount;
+    void _cantidad;
     return Promise.reject(
       new BadRequestException('Este ticket ya ha sido pagado.'),
     );

@@ -35,13 +35,17 @@ export class PaymentsService {
   }
 
   async processTicketPayment(
-    amount: number,
+    unitPrice: number,
+    cantidad: number,
     ticketId: string,
   ): Promise<PaymentResult> {
     this.logger.log(
-      `Iniciando procesamiento de pago por ${amount} ARS (Ticket: ${ticketId})`,
+      `Iniciando procesamiento de pago: UnitPrice=${unitPrice}, Cantidad=${cantidad}, ` +
+        `Total=${unitPrice * cantidad} ARS (Ticket: ${ticketId})`,
     );
-    return this.strategy.processPayment(amount, 'ARS', { ticketId });
+    return this.strategy.processPayment(unitPrice, cantidad, 'ARS', {
+      ticketId,
+    });
   }
 
   /**

@@ -5,8 +5,7 @@ export class PartidoEntidad {
   fechaPartido: string;
   nombreEstadio: string;
   fase: string;
-  estado: string;
-  precioBase: number;
+  estado: string; // disponible, agotado, cancelado
   fechaCreacion?: string;
   fechaActualizacion?: string;
 }

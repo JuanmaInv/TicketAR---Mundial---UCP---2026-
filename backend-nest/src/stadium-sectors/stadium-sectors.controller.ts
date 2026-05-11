@@ -24,9 +24,18 @@ export class SectoresController {
     return this.sectoresService.obtenerTodos();
   }
 
+  /**
+   * Retorna los sectores disponibles para un partido con stock real.
+   * Endpoint usado por el frontend para mostrar sectores en el checkout.
+   */
   @Get('partido/:idPartido')
-  obtenerPorPartido(@Param('idPartido') idPartido: string) {
-    return this.sectoresService.obtenerPorPartido(idPartido);
+  obtenerSectoresPorPartido(@Param('idPartido') idPartido: string) {
+    return this.sectoresService.obtenerSectoresPorPartido(idPartido);
+  }
+
+  @Get('todos-partidos')
+  obtenerSectoresTodosLosPartidos() {
+    return this.sectoresService.obtenerSectoresTodosLosPartidos();
   }
 
   @Get(':id')
@@ -35,6 +44,8 @@ export class SectoresController {
   }
 
   @Post()
+  @UseGuards(AuthenticatedUserGuard, RolesGuard)
+  @Roles(RolUsuario.ADMINISTRADOR)
   crear(@Body() crearSectorDto: CrearSectorDto) {
     return this.sectoresService.crear(crearSectorDto);
   }

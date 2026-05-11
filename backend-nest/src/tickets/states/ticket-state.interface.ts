@@ -9,6 +9,7 @@ export interface TicketState extends IState<TicketEntity> {
   pagar(
     paymentsService: PaymentsService,
     amount: number,
+    cantidad: number,
   ): Promise<PaymentResult>;
   confirmarPago(): void;
   cancelar(): void;

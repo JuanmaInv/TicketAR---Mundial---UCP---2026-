@@ -10,4 +10,9 @@ export class ActualizarSectorEnPartidoDto {
   @IsInt({ message: 'La cantidad disponible debe ser un entero' })
   @Min(0, { message: 'La cantidad disponible no puede ser negativa' })
   capacidadDisponible?: number;
+
+  @IsOptional()
+  @IsInt({ message: 'Los asientos disponibles deben ser un entero' })
+  @Min(0, { message: 'Los asientos disponibles no pueden ser negativos' })
+  asientosDisponibles?: number;
 }
