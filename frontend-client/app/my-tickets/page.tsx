@@ -32,15 +32,6 @@ type EntradaApi = Ticket & {
   precio_total?: number;
 };
 
-function escapeHtml(valor: string): string {
-  return valor
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 function redirigirPagoSeguro(urlPago: string): boolean {
   try {
     const url = new URL(urlPago, window.location.origin);
@@ -372,72 +363,131 @@ function TicketCard({
         typeof totalPagado === 'number'
           ? `ARS $${totalPagado.toLocaleString()}`
           : 'No disponible';
-      const nombreSectorSeguro = escapeHtml(nombreSector);
-
-      const html = `<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <title>Entrada ${entrada.id}</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #0f172a; color: #0f172a; }
-    .ticket { width: 860px; margin: 24px auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 2px solid #1d4ed8; }
-    .head { background: linear-gradient(135deg,#1d4ed8,#0f766e); color: #fff; padding: 24px; }
-    .title { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: 1px; }
-    .sub { margin-top: 8px; font-size: 14px; opacity: .95; }
-    .content { display: flex; gap: 24px; padding: 24px; }
-    .left { flex: 1; }
-    .right { width: 250px; text-align: center; border-left: 1px dashed #94a3b8; padding-left: 20px; }
-    .label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-top: 14px; letter-spacing: .08em; }
-    .value { font-size: 16px; font-weight: 800; margin-top: 4px; color: #0f172a; }
-    .badge { display:inline-block; margin-top: 12px; padding: 6px 10px; border-radius: 999px; background:#dcfce7; color:#166534; font-size:11px; font-weight:900; letter-spacing:.08em; }
-    .foot { padding: 16px 24px 24px; font-size: 12px; color: #334155; }
-    .qr { width: 220px; height: 220px; background:#fff; border:1px solid #cbd5e1; border-radius: 12px; padding: 8px; box-sizing: border-box; }
-  </style>
-</head>
-<body>
-  <div class="ticket">
-    <div class="head">
-      <h1 class="title">TicketAR</h1>
-      <div class="sub">Entrada oficial Mundial 2026</div>
-    </div>
-    <div class="content">
-      <div class="left">
-        <div class="label">ID de entrada</div><div class="value">${escapeHtml(entrada.id)}</div>
-        <div class="label">Estado</div><div class="value">${escapeHtml(estadoNormalizado)}</div>
-        <div class="label">Partido</div><div class="value">${escapeHtml(tituloPartido)}</div>
-        <div class="label">Fecha</div><div class="value">${escapeHtml(fechaPartido)}</div>
-        <div class="label">Estadio</div><div class="value">${escapeHtml(estadio)}</div>
-        <div class="label">Sector</div><div class="value">${nombreSectorSeguro}</div>
-        <div class="label">Cantidad</div><div class="value">${cantidad}</div>
-        <div class="label">Precio unitario</div><div class="value">${escapeHtml(precioUnitarioTexto)}</div>
-        <div class="label">Total abonado</div><div class="value">${escapeHtml(totalTexto)}</div>
-        <div class="label">Titular</div><div class="value">${escapeHtml(dniUsuario ? `DNI ${dniUsuario}` : 'DNI no disponible')}</div>
-      </div>
-      <div class="right">
-        <div class="badge">Ticket valido</div>
-        <img class="qr" src="${qrData}" alt="QR de entrada" />
-      </div>
-    </div>
-    <div class="foot">
-      Presentar este codigo QR al ingresar al estadio.
-    </div>
-  </div>
-</body>
-</html>`;
-
-      const htmlDataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
-      const ventana = window.open(htmlDataUrl, '_blank', 'noopener,noreferrer');
+      const ventana = window.open('', '_blank', 'noopener,noreferrer');
       if (!ventana) {
         throw new Error('No pudimos abrir la ventana para descargar el PDF.');
       }
       const ventanaSegura = ventana;
-      function dispararImpresion(): void {
+      const doc = ventanaSegura.document;
+      doc.title = 'Entrada TicketAR';
+      doc.body.innerHTML = '';
+
+      const body = doc.body;
+      body.style.fontFamily = 'Arial, sans-serif';
+      body.style.margin = '0';
+      body.style.background = '#0f172a';
+
+      const ticket = doc.createElement('div');
+      ticket.style.width = '860px';
+      ticket.style.margin = '24px auto';
+      ticket.style.background = '#ffffff';
+      ticket.style.borderRadius = '20px';
+      ticket.style.overflow = 'hidden';
+      ticket.style.border = '2px solid #1d4ed8';
+
+      const head = doc.createElement('div');
+      head.style.background = 'linear-gradient(135deg,#1d4ed8,#0f766e)';
+      head.style.color = '#fff';
+      head.style.padding = '24px';
+      const title = doc.createElement('h1');
+      title.textContent = 'TicketAR';
+      title.style.fontSize = '32px';
+      title.style.fontWeight = '900';
+      title.style.margin = '0';
+      const subtitle = doc.createElement('div');
+      subtitle.textContent = 'Entrada oficial Mundial 2026';
+      subtitle.style.marginTop = '8px';
+      subtitle.style.fontSize = '14px';
+      head.appendChild(title);
+      head.appendChild(subtitle);
+
+      const content = doc.createElement('div');
+      content.style.display = 'flex';
+      content.style.gap = '24px';
+      content.style.padding = '24px';
+
+      const left = doc.createElement('div');
+      left.style.flex = '1';
+      const right = doc.createElement('div');
+      right.style.width = '250px';
+      right.style.textAlign = 'center';
+      right.style.borderLeft = '1px dashed #94a3b8';
+      right.style.paddingLeft = '20px';
+
+      const agregarFila = (label: string, value: string): void => {
+        const l = doc.createElement('div');
+        l.textContent = label;
+        l.style.fontSize = '11px';
+        l.style.fontWeight = '700';
+        l.style.color = '#475569';
+        l.style.textTransform = 'uppercase';
+        l.style.marginTop = '14px';
+        l.style.letterSpacing = '.08em';
+        const v = doc.createElement('div');
+        v.textContent = value;
+        v.style.fontSize = '16px';
+        v.style.fontWeight = '800';
+        v.style.marginTop = '4px';
+        v.style.color = '#0f172a';
+        left.appendChild(l);
+        left.appendChild(v);
+      };
+
+      agregarFila('ID de entrada', entrada.id);
+      agregarFila('Estado', estadoNormalizado);
+      agregarFila('Partido', tituloPartido);
+      agregarFila('Fecha', fechaPartido);
+      agregarFila('Estadio', estadio);
+      agregarFila('Sector', nombreSector);
+      agregarFila('Cantidad', String(cantidad));
+      agregarFila('Precio unitario', precioUnitarioTexto);
+      agregarFila('Total abonado', totalTexto);
+      agregarFila('Titular', dniUsuario ? `DNI ${dniUsuario}` : 'DNI no disponible');
+
+      const badge = doc.createElement('div');
+      badge.textContent = 'Ticket valido';
+      badge.style.display = 'inline-block';
+      badge.style.marginTop = '12px';
+      badge.style.padding = '6px 10px';
+      badge.style.borderRadius = '999px';
+      badge.style.background = '#dcfce7';
+      badge.style.color = '#166534';
+      badge.style.fontSize = '11px';
+      badge.style.fontWeight = '900';
+      badge.style.letterSpacing = '.08em';
+
+      const qrImage = doc.createElement('img');
+      qrImage.src = qrData;
+      qrImage.alt = 'QR de entrada';
+      qrImage.style.width = '220px';
+      qrImage.style.height = '220px';
+      qrImage.style.background = '#fff';
+      qrImage.style.border = '1px solid #cbd5e1';
+      qrImage.style.borderRadius = '12px';
+      qrImage.style.padding = '8px';
+      qrImage.style.boxSizing = 'border-box';
+
+      right.appendChild(badge);
+      right.appendChild(qrImage);
+      content.appendChild(left);
+      content.appendChild(right);
+
+      const foot = doc.createElement('div');
+      foot.textContent = 'Presentar este codigo QR al ingresar al estadio.';
+      foot.style.padding = '16px 24px 24px';
+      foot.style.fontSize = '12px';
+      foot.style.color = '#334155';
+
+      ticket.appendChild(head);
+      ticket.appendChild(content);
+      ticket.appendChild(foot);
+      body.appendChild(ticket);
+
+      const dispararImpresion = (): void => {
         ventanaSegura.focus();
         ventanaSegura.print();
-      }
-
-      ventanaSegura.addEventListener('load', dispararImpresion, { once: true });
+      };
+      window.setTimeout(dispararImpresion, 150);
       setMensajeAccion('PDF generado. Guarda el archivo desde el dialogo de impresion.');
     } catch {
       setMensajeAccion('No pudimos generar el PDF de la entrada. Intenta nuevamente.');
