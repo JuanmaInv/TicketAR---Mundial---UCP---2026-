@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { UsuarioEntidad } from './entities/usuario.entidad';
 import type { IUsuariosRepository } from './repositories/usuarios.repository.interface';
@@ -48,6 +53,14 @@ export class UsuariosService {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
 
-    await this.usuariosRepository.eliminar(id);
+    try {
+      await this.usuariosRepository.eliminar(id);
+    } catch (error) {
+      const detalle =
+        error instanceof Error ? error.message : 'Error desconocido';
+      throw new BadRequestException(
+        `No se pudo eliminar la cuenta en este momento. ${detalle}`,
+      );
+    }
   }
 }
