@@ -97,6 +97,20 @@ export class SupabaseUsuariosRepository implements IUsuariosRepository {
    * La eliminación en cascada (entradas, reservas) es manejada por ON DELETE CASCADE en la DB.
    */
   async eliminar(id: string): Promise<void> {
+    // Limpieza defensiva: si la base no tiene ON DELETE CASCADE
+    // evitamos violaciones de FK eliminando primero las entradas del usuario.
+    const { error: errorEntradas } = await this.supabaseService
+      .getClient()
+      .from('entradas')
+      .delete()
+      .eq('id_usuario', id);
+
+    if (errorEntradas) {
+      throw new Error(
+        `No se pudieron eliminar las entradas asociadas al usuario ${id}: ${errorEntradas.message}`,
+      );
+    }
+
     const { error } = await this.supabaseService
       .getClient()
       .from('usuarios')
