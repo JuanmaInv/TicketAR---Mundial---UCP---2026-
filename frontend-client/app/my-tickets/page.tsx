@@ -341,12 +341,16 @@ function TicketCard({
     }
   }
 
-  async function descargarPdf() {
-    if (!esPagado) return;
-
+  async function descargarPdfEnVentana(ventanaSegura: Window) {
     setDescargandoPdf(true);
     setMensajeAccion('');
+
     try {
+      const doc = ventanaSegura.document;
+      doc.title = 'Entrada TicketAR';
+      doc.body.innerHTML = '';
+      doc.body.textContent = 'Generando vista imprimible...';
+
       const qrData = await getTicketQr(entrada.id);
       const tituloPartido = partido
         ? `${partido.equipo_local} vs ${partido.equipo_visitante}`
@@ -363,13 +367,6 @@ function TicketCard({
         typeof totalPagado === 'number'
           ? `ARS $${totalPagado.toLocaleString()}`
           : 'No disponible';
-      const ventana = window.open('', '_blank', 'noopener,noreferrer');
-      if (!ventana) {
-        throw new Error('No pudimos abrir la ventana para descargar el PDF.');
-      }
-      const ventanaSegura = ventana;
-      const doc = ventanaSegura.document;
-      doc.title = 'Entrada TicketAR';
       doc.body.innerHTML = '';
 
       const body = doc.body;
@@ -490,16 +487,41 @@ function TicketCard({
       ticket.appendChild(foot);
       body.appendChild(ticket);
 
+      let impresionDisparada = false;
+      qrImage.addEventListener(
+        'load',
+        () => {
+          if (impresionDisparada) return;
+          impresionDisparada = true;
+          ventanaSegura.focus();
+          ventanaSegura.print();
+        },
+        { once: true },
+      );
+
       window.setTimeout(() => {
+        if (impresionDisparada) return;
+        impresionDisparada = true;
         ventanaSegura.focus();
         ventanaSegura.print();
-      }, 150);
+      }, 900);
       setMensajeAccion('PDF generado. Guarda el archivo desde el dialogo de impresion.');
     } catch {
+      ventanaSegura.document.body.textContent = 'No pudimos generar la vista imprimible en este momento.';
       setMensajeAccion('No pudimos generar el PDF de la entrada. Intenta nuevamente.');
     } finally {
       setDescargandoPdf(false);
     }
+  }
+
+  function manejarDescargaPdf(): void {
+    if (!esPagado) return;
+    const ventana = window.open('about:blank', '_blank');
+    if (!ventana) {
+      setMensajeAccion('Tu navegador bloqueo la ventana de impresion. Habilita popups e intenta nuevamente.');
+      return;
+    }
+    void descargarPdfEnVentana(ventana);
   }
 
   const cargarQr = async () => {
@@ -617,9 +639,7 @@ function TicketCard({
           {esPagado && (
             <button
               type="button"
-              onClick={() => {
-                void descargarPdf();
-              }}
+              onClick={manejarDescargaPdf}
               disabled={descargandoPdf}
               className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
