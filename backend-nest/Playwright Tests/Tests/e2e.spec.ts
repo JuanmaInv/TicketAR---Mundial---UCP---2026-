@@ -37,6 +37,20 @@ test.describe('E2E: Ciclo de Vida Completo del Hincha', () => {
     console.log('PASO 1: Consultando disponibilidad de partidos...');
     const resPartidos = await request.get('/partidos');
     expect(resPartidos.status()).toBe(200);
+
+    // 2. RESERVA: Iniciar proceso de compra
+    console.log('PASO 2: Realizando reserva de entrada...');
+    const resReserva = await request.post('/entradas', {
+      data: {
+        idUsuario: USER.id,
+        idPartido: PARTIDO_ID,
+        idSector: SECTOR_ID,
+        cantidad: 1
+      }
+    });
+    expect(resReserva.status()).toBe(201);
+    const ticket = await resReserva.json();
+    ticketId = ticket.id;
   });
 
 });
