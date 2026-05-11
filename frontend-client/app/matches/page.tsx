@@ -52,20 +52,22 @@ export default function MatchesPage() {
   useEffect(() => {
     async function cargarDatos() {
       try {
-        const [dataPartidos, dataSectores] = await Promise.all([
-          getPartidos(),
-          getSectoresDeTodosLosPartidos(),
-        ]);
+        const dataPartidos = await getPartidos();
 
         setPartidos(dataPartidos);
+      } catch {
+        setMensajeError('No pudimos cargar los partidos. Intenta nuevamente en unos minutos.');
+      }
 
+      try {
+        const dataSectores = await getSectoresDeTodosLosPartidos();
         const mapaSectores: Record<string, SectorPorPartido[]> = {};
         dataSectores.forEach((item) => {
           mapaSectores[item.idPartido] = item.sectores;
         });
         setSectoresPorPartido(mapaSectores);
       } catch {
-        setMensajeError('No pudimos cargar los partidos. Intenta nuevamente en unos minutos.');
+        // Los sectores enriquecen precio/stock visual, pero no deben bloquear listado de partidos.
       } finally {
         setCargando(false);
       }
