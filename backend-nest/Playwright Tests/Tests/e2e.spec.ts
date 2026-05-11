@@ -63,6 +63,15 @@ test.describe('E2E: Ciclo de Vida Completo del Hincha', () => {
       .from('entradas')
       .update({ estado: 'PAGADO' })
       .eq('id', ticketId);
+
+    // 4. CONSUMO: Obtener el QR final
+    console.log('PASO 4: Generando QR de acceso...');
+    await new Promise(r => setTimeout(r, 2000));
+    
+    const resQrFinal = await request.get(`/entradas/${ticketId}/qr`);
+    expect(resQrFinal.status()).toBe(200);
+    const qrData = await resQrFinal.json();
+    expect(qrData.qrDataUrl).toContain('data:image/png;base64');
   });
 
 });
