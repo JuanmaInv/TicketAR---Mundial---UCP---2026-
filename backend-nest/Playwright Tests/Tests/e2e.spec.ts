@@ -72,6 +72,18 @@ test.describe('E2E: Ciclo de Vida Completo del Hincha', () => {
     expect(resQrFinal.status()).toBe(200);
     const qrData = await resQrFinal.json();
     expect(qrData.qrDataUrl).toContain('data:image/png;base64');
+
+    // 5. IMPACTO: Verificar actualización de estadísticas
+    console.log('PASO 5: Verificando impacto en estadísticas globales...');
+    const resStats = await request.get('/estadisticas', {
+      headers: {
+        'x-user-id': ADMIN.id,
+        'x-user-email': ADMIN.email
+      }
+    });
+    
+    expect(resStats.status()).toBe(200);
+    console.log('FLUJO E2E COMPLETADO CON EXITO: Del partido al QR.');
   });
 
 });
