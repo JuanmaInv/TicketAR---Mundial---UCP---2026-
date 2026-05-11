@@ -93,6 +93,138 @@ Aplicacion Next.js (App Router) con:
 
 ---
 
+## Diagrama UML de clases (alto nivel)
+
+```mermaid
+classDiagram
+direction LR
+
+class AppModule
+class UsuariosController
+class UsuariosService
+class UsuariosRepositoryInterface
+class SupabaseUsuariosRepository
+class Usuario
+
+class MatchesController
+class MatchesService
+class MatchesRepositoryInterface
+class SupabaseMatchesRepository
+class Match
+
+class StadiumSectorsController
+class StadiumSectorsService
+class StadiumSectorsRepositoryInterface
+class SupabaseStadiumSectorsRepository
+class StadiumSector
+
+class TicketsController
+class TicketsService
+class EntradasRepositoryInterface
+class SupabaseEntradasRepository
+class Ticket
+class ReservadoState
+class PagadoState
+class CanceladoState
+class TicketStateFactory
+class TicketStateInterface
+class QrService
+class ReservasExpiradasService
+
+class PaymentsController
+class PaymentsService
+class PaymentStrategyInterface
+class MercadoPagoStrategy
+class SimulatedPaymentStrategy
+
+class PassportCredentialsController
+class PassportCredentialsService
+class PassportCredential
+class ValidacionDocumentoStrategy
+class DniValidacionStrategy
+class PasaporteValidacionStrategy
+class ValidadorDocumentosService
+
+class StatsController
+class StatsService
+class NotificationsService
+
+class FrontendApp
+class ApiClient
+class CheckoutPage
+class MyTicketsPage
+class StatsPage
+class BuyerForm
+class SectorSelector
+class ResumenCompra
+
+AppModule --> UsuariosService
+AppModule --> MatchesService
+AppModule --> StadiumSectorsService
+AppModule --> TicketsService
+AppModule --> PaymentsService
+AppModule --> PassportCredentialsService
+AppModule --> StatsService
+AppModule --> NotificationsService
+
+UsuariosController --> UsuariosService
+UsuariosService --> UsuariosRepositoryInterface
+SupabaseUsuariosRepository ..|> UsuariosRepositoryInterface
+UsuariosService --> Usuario
+
+MatchesController --> MatchesService
+MatchesService --> MatchesRepositoryInterface
+SupabaseMatchesRepository ..|> MatchesRepositoryInterface
+MatchesService --> Match
+
+StadiumSectorsController --> StadiumSectorsService
+StadiumSectorsService --> StadiumSectorsRepositoryInterface
+SupabaseStadiumSectorsRepository ..|> StadiumSectorsRepositoryInterface
+StadiumSectorsService --> StadiumSector
+
+TicketsController --> TicketsService
+TicketsService --> EntradasRepositoryInterface
+SupabaseEntradasRepository ..|> EntradasRepositoryInterface
+TicketsService --> Ticket
+TicketsService --> TicketStateFactory
+TicketStateFactory --> TicketStateInterface
+ReservadoState ..|> TicketStateInterface
+PagadoState ..|> TicketStateInterface
+CanceladoState ..|> TicketStateInterface
+TicketsService --> QrService
+TicketsService --> ReservasExpiradasService
+
+PaymentsController --> PaymentsService
+PaymentsService --> PaymentStrategyInterface
+MercadoPagoStrategy ..|> PaymentStrategyInterface
+SimulatedPaymentStrategy ..|> PaymentStrategyInterface
+PaymentsService --> TicketsService
+
+PassportCredentialsController --> PassportCredentialsService
+PassportCredentialsService --> PassportCredential
+PassportCredentialsService --> ValidadorDocumentosService
+ValidadorDocumentosService --> ValidacionDocumentoStrategy
+DniValidacionStrategy ..|> ValidacionDocumentoStrategy
+PasaporteValidacionStrategy ..|> ValidacionDocumentoStrategy
+
+StatsController --> StatsService
+StatsService --> TicketsService
+StatsService --> MatchesService
+
+FrontendApp --> ApiClient
+CheckoutPage --> BuyerForm
+CheckoutPage --> SectorSelector
+CheckoutPage --> ResumenCompra
+MyTicketsPage --> ApiClient
+StatsPage --> ApiClient
+ApiClient --> TicketsController
+ApiClient --> MatchesController
+ApiClient --> PaymentsController
+ApiClient --> StatsController
+```
+
+---
+
 ## Patrones de diseno aplicados
 
 - `State Pattern`: ciclo de vida del ticket (`reservado`, `pagado`, `cancelado`)
