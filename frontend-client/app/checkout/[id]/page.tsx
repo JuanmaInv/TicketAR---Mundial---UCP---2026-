@@ -61,6 +61,13 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [formData, setFormData] = useState({ telefono: '', provincia: '', localidad: '' });
   const [esAdmin, setEsAdmin] = useState(false);
 
+  function obtenerNombreSectorSeguro(sectorId: string): string | undefined {
+    if (Object.prototype.hasOwnProperty.call(mapaSectores, sectorId)) {
+      return mapaSectores[sectorId];
+    }
+    return undefined;
+  }
+
   useEffect(() => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
 
@@ -248,7 +255,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     if (reservaExpirada) return;
     setSeleccionCompra({
       sectorId,
-      sectorNombre: mapaSectores[sectorId],
+      sectorNombre: obtenerNombreSectorSeguro(sectorId),
       cantidad,
       total,
     });
@@ -411,12 +418,15 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                       <p className="text-2xl font-black text-foreground italic uppercase">{datosUsuario?.email || user?.emailAddresses[0]?.emailAddress}</p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Telefono</label>
+                      <label htmlFor="checkout_telefono" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Telefono</label>
                       {editandoDatos ? (
                         <input
                           type="text"
                           value={formData.telefono}
-                          onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, telefono: e.target.value });
+                          }}
+                          id="checkout_telefono"
                           className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
                           placeholder="Ej: +54 11 1234 5678"
                         />
@@ -427,12 +437,15 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Provincia</label>
+                      <label htmlFor="checkout_provincia" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Provincia</label>
                       {editandoDatos ? (
                         <input
                           type="text"
                           value={formData.provincia}
-                          onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, provincia: e.target.value });
+                          }}
+                          id="checkout_provincia"
                           className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
                           placeholder="Ej: Buenos Aires"
                         />
@@ -443,12 +456,15 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Localidad</label>
+                      <label htmlFor="checkout_localidad" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] block">Localidad</label>
                       {editandoDatos ? (
                         <input
                           type="text"
                           value={formData.localidad}
-                          onChange={(e) => setFormData({ ...formData, localidad: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, localidad: e.target.value });
+                          }}
+                          id="checkout_localidad"
                           className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
                           placeholder="Ej: CABA"
                         />
@@ -484,14 +500,18 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                   <div className="flex flex-col md:flex-row gap-4">
                     <button
                       type="button"
-                      onClick={() => setEditandoDatos(true)}
+                      onClick={() => {
+                        setEditandoDatos(true);
+                      }}
                       className="md:w-1/3 bg-zinc-800 hover:bg-zinc-700 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all text-sm"
                     >
                       EDITAR MIS DATOS
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPaso(2)}
+                      onClick={() => {
+                        setPaso(2);
+                      }}
                       disabled={reservaExpirada}
                       className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic transition-all shadow-xl shadow-blue-500/20 text-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
                     >
@@ -585,7 +605,9 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                     type="checkbox"
                     id="terminos_checkout"
                     checked={terminosAceptados}
-                    onChange={(e) => setTerminosAceptados(e.target.checked)}
+                    onChange={(e) => {
+                      setTerminosAceptados(e.target.checked);
+                    }}
                     className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-background cursor-pointer"
                   />
                   <label htmlFor="terminos_checkout" className="text-xs text-zinc-400 font-medium leading-relaxed cursor-pointer">

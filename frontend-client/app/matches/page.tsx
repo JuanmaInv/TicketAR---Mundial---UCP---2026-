@@ -42,6 +42,13 @@ export default function MatchesPage() {
   const [faseSeleccionada, setFaseSeleccionada] = useState('Todas');
   const [menuAbierto, setMenuAbierto] = useState(false);
 
+  function obtenerSectoresPorPartidoSeguro(matchId: string): SectorPorPartido[] {
+    if (Object.prototype.hasOwnProperty.call(sectoresPorPartido, matchId)) {
+      return sectoresPorPartido[matchId] ?? [];
+    }
+    return [];
+  }
+
   useEffect(() => {
     async function cargarDatos() {
       try {
@@ -94,7 +101,7 @@ export default function MatchesPage() {
     if (estado === 'cancelado') return 'cancelado';
     if (estado === 'agotado') return 'agotado';
 
-    const sectoresDelPartido = sectoresPorPartido[match.id] || [];
+    const sectoresDelPartido = obtenerSectoresPorPartidoSeguro(match.id);
     const hayStockReal = sectoresDelPartido.some((s) => s.asientosDisponibles > 0);
     if (!hayStockReal) return 'agotado';
 
@@ -102,7 +109,7 @@ export default function MatchesPage() {
   }
 
   function getPrecioMinimoReal(matchId: string): number {
-    const sectoresDelPartido = sectoresPorPartido[matchId] || [];
+    const sectoresDelPartido = obtenerSectoresPorPartidoSeguro(matchId);
 
     const sectoresDisponibles = sectoresDelPartido.filter(
       (s) => s.asientosDisponibles > 0,

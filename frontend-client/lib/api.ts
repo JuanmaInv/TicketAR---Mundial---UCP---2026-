@@ -161,6 +161,16 @@ function validarIdRutaSeguro(id: string, nombre: string): string {
   return valor;
 }
 
+function validarUuidSeguro(id: string, nombre: string): string {
+  const valor = id.trim().toLowerCase();
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  if (!uuidRegex.test(valor)) {
+    throw new Error(`El ${nombre} no es valido.`);
+  }
+  return valor;
+}
+
 async function obtenerMensajeErrorApi(respuesta: Response, mensajePorDefecto: string): Promise<string> {
   try {
     const datos = (await respuesta.json()) as { message?: string | string[] };
@@ -204,8 +214,12 @@ export async function getSectores(): Promise<Sector[]> {
 }
 
 export async function getSectoresPorPartido(idPartido: string): Promise<SectorPorPartido[]> {
-  const idPartidoSeguro = validarIdRutaSeguro(idPartido, 'identificador de partido');
-  const res = await fetch(construirUrlApi(`/sectores/partido/${idPartidoSeguro}`));
+  const idPartidoSeguro = validarUuidSeguro(
+    validarIdRutaSeguro(idPartido, 'identificador de partido'),
+    'identificador de partido',
+  );
+  const ruta = `/sectores/partido/${encodeURIComponent(idPartidoSeguro)}`;
+  const res = await fetch(construirUrlApi(ruta));
   if (!res.ok) throw new Error(await obtenerMensajeErrorApi(res, 'Error al traer sectores por partido'));
   const data = await res.json();
   const lista = Array.isArray(data) ? data : (data.data ?? []);

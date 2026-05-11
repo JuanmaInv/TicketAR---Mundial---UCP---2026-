@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   actualizarPartidoAdmin,
   actualizarSectorPartidoAdmin,
@@ -64,7 +64,7 @@ export default function MatchManagementModal({
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
 
-  async function cargarSectores(idPartido: string) {
+  const cargarSectores = useCallback(async (idPartido: string) => {
     setCargandoSectores(true);
     setMensajeError('');
     try {
@@ -79,10 +79,15 @@ export default function MatchManagementModal({
     } finally {
       setCargandoSectores(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     if (!abierto || !partido) return;
+
+    const estadoNormalizado = partido.estado?.toLowerCase();
+    const estadoSeguro: EstadoPartido = ESTADOS.includes(estadoNormalizado as EstadoPartido)
+      ? (estadoNormalizado as EstadoPartido)
+      : 'disponible';
 
     setFormPartido({
       equipoLocal: partido.equipo_local,
@@ -90,7 +95,7 @@ export default function MatchManagementModal({
       fechaPartido: normalizarFechaLocal(partido.fecha_partido),
       nombreEstadio: partido.nombre_estadio,
       fase: partido.fase,
-      estado: (partido.estado?.toLowerCase() as EstadoPartido) || 'disponible',
+      estado: estadoSeguro,
     });
     setMensajeError('');
     setMensajeExito('');
@@ -103,8 +108,10 @@ export default function MatchManagementModal({
       void cargarSectores(partido.id);
     }, 0);
 
-    return () => clearTimeout(timeoutId);
-  }, [abierto, partido]);
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [abierto, cargarSectores, partido]);
 
   const puedeGuardar = useMemo(
     () => Boolean(auth?.userEmail && auth.userId && partido?.id),
@@ -259,7 +266,9 @@ export default function MatchManagementModal({
               <input
                 type="text"
                 value={formPartido.equipoLocal}
-                onChange={(e) => actualizarCampoPartido('equipoLocal', e.target.value)}
+                onChange={(e) => {
+                  actualizarCampoPartido('equipoLocal', e.target.value);
+                }}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               />
             </label>
@@ -268,7 +277,9 @@ export default function MatchManagementModal({
               <input
                 type="text"
                 value={formPartido.equipoVisitante}
-                onChange={(e) => actualizarCampoPartido('equipoVisitante', e.target.value)}
+                onChange={(e) => {
+                  actualizarCampoPartido('equipoVisitante', e.target.value);
+                }}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               />
             </label>
@@ -277,7 +288,9 @@ export default function MatchManagementModal({
               <input
                 type="datetime-local"
                 value={formPartido.fechaPartido}
-                onChange={(e) => actualizarCampoPartido('fechaPartido', e.target.value)}
+                onChange={(e) => {
+                  actualizarCampoPartido('fechaPartido', e.target.value);
+                }}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               />
             </label>
@@ -286,7 +299,9 @@ export default function MatchManagementModal({
               <input
                 type="text"
                 value={formPartido.nombreEstadio}
-                onChange={(e) => actualizarCampoPartido('nombreEstadio', e.target.value)}
+                onChange={(e) => {
+                  actualizarCampoPartido('nombreEstadio', e.target.value);
+                }}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               />
             </label>
@@ -295,7 +310,9 @@ export default function MatchManagementModal({
               <input
                 type="text"
                 value={formPartido.fase}
-                onChange={(e) => actualizarCampoPartido('fase', e.target.value)}
+                onChange={(e) => {
+                  actualizarCampoPartido('fase', e.target.value);
+                }}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               />
             </label>
@@ -303,7 +320,9 @@ export default function MatchManagementModal({
               <span className="mb-1 block text-xs font-bold uppercase text-slate-300">Estado</span>
               <select
                 value={formPartido.estado}
-                onChange={(e) => actualizarCampoPartido('estado', e.target.value)}
+                onChange={(e) => {
+                  actualizarCampoPartido('estado', e.target.value);
+                }}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               >
                 {ESTADOS.map((estado) => (
@@ -318,7 +337,9 @@ export default function MatchManagementModal({
           <div className="mt-5">
             <button
               type="button"
-              onClick={() => void guardarPartido()}
+              onClick={() => {
+                void guardarPartido();
+              }}
               disabled={!puedeGuardar || guardandoPartido}
               className="rounded-xl bg-blue-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -376,7 +397,9 @@ export default function MatchManagementModal({
                   </label>
                   <button
                     type="button"
-                    onClick={() => void guardarSector(sector)}
+                    onClick={() => {
+                      void guardarSector(sector);
+                    }}
                     disabled={!puedeGuardar || guardandoSectores[sector.id]}
                     className="rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
                   >

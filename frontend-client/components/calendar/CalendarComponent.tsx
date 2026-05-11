@@ -23,6 +23,13 @@ export default function CalendarComponent({ esAdmin = false }: CalendarComponent
   const [loading, setLoading] = useState(true);
   const [mensajeError, setMensajeError] = useState('');
 
+  function obtenerSectoresPorPartidoSeguro(matchId: string): SectorPorPartido[] {
+    if (Object.prototype.hasOwnProperty.call(sectoresPorPartido, matchId)) {
+      return sectoresPorPartido[matchId] ?? [];
+    }
+    return [];
+  }
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -53,7 +60,7 @@ export default function CalendarComponent({ esAdmin = false }: CalendarComponent
     if (estado === 'cancelado') return 'cancelado';
     if (estado === 'agotado') return 'agotado';
 
-    const sectoresDelPartido = sectoresPorPartido[match.id] || [];
+    const sectoresDelPartido = obtenerSectoresPorPartidoSeguro(match.id);
     const hayStockReal = sectoresDelPartido.some((s) => s.asientosDisponibles > 0);
     if (!hayStockReal) return 'agotado';
 
@@ -61,7 +68,7 @@ export default function CalendarComponent({ esAdmin = false }: CalendarComponent
   }
 
   function getPrecioMinimoReal(matchId: string): number {
-    const sectoresDelPartido = sectoresPorPartido[matchId] || [];
+    const sectoresDelPartido = obtenerSectoresPorPartidoSeguro(matchId);
     const sectoresDisponibles = sectoresDelPartido.filter((s) => s.asientosDisponibles > 0);
 
     if (sectoresDisponibles.length > 0) {

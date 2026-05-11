@@ -55,15 +55,15 @@ export default function CountdownTimer({ tiempoExpiracion, onExpirar }: Countdow
   const formatoMinutos = minutos < 10 ? `0${minutos}` : minutos;
   const formatoSegundos = segundos < 10 ? `0${segundos}` : segundos;
   const vencido = tiempoRestante <= 0;
+  const warningActivo = vencido || (minutos === 0 && segundos <= 30);
+  const claseTiempo = warningActivo
+    ? "text-red-500 animate-pulse"
+    : "text-white";
 
   return (
     <div className="flex flex-col items-center justify-center p-4 bg-black border border-zinc-800 rounded-lg shadow-sm">
       <span className="text-sm font-medium text-white mb-1">Tiempo restante para abonar:</span>
-      <span
-        className={`text-4xl font-black font-mono tracking-wider ${
-          vencido || (minutos === 0 && segundos <= 30) ? "text-red-500 animate-pulse" : "text-white"
-        }`}
-      >
+      <span className={`text-4xl font-black font-mono tracking-wider ${claseTiempo}`}>
         {formatoMinutos}:{formatoSegundos}
       </span>
       {vencido ? (

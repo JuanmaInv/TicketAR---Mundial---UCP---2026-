@@ -133,16 +133,15 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
 
       if (sector && sector.activo !== false) {
         const idPartido = row.id_partido as string;
-        if (!map.has(idPartido)) {
-          map.set(idPartido, []);
-        }
-        map.get(idPartido)!.push({
+        const sectoresPartido = map.get(idPartido) ?? [];
+        sectoresPartido.push({
           id: row.id as string,
           idSector: row.id_sector as string,
           nombre: sector.nombre as string,
           precio: sector.precio as number,
           asientosDisponibles: Number(row.asientos_disponibles),
         });
+        map.set(idPartido, sectoresPartido);
       }
     });
 
@@ -171,8 +170,7 @@ export class SupabaseSectoresRepository implements ISectoresRepository {
       }
     }
 
-    const nuevoStock =
-      (datos as any).asientosDisponibles ?? datos.capacidadDisponible;
+    const nuevoStock = datos.asientosDisponibles ?? datos.capacidadDisponible;
 
     if (nuevoStock !== undefined) {
       const { error: errorDisponibilidad } = await this.supabaseService

@@ -107,8 +107,8 @@ export class SupabasePartidosRepository implements IPartidosRepository {
     if (datos.fase !== undefined) updatePayload.fase = datos.fase;
 
     // Soporte para estado
-    if ((datos as any).estado !== undefined) {
-      updatePayload.estado = (datos as any).estado;
+    if (datos.estado !== undefined) {
+      updatePayload.estado = datos.estado;
     }
 
     const { data, error } = (await this.supabaseService

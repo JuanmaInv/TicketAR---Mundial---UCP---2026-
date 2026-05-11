@@ -426,15 +426,22 @@ function TicketCard({
 </body>
 </html>`;
 
-      const ventana = window.open('', '_blank');
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const urlBlob = URL.createObjectURL(blob);
+      const ventana = window.open(urlBlob, '_blank', 'noopener,noreferrer');
       if (!ventana) {
         throw new Error('No pudimos abrir la ventana para descargar el PDF.');
       }
-      ventana.document.open();
-      ventana.document.write(html);
-      ventana.document.close();
-      ventana.focus();
-      ventana.print();
+      const dispararImpresion = () => {
+        try {
+          ventana.focus();
+          ventana.print();
+        } finally {
+          URL.revokeObjectURL(urlBlob);
+        }
+      };
+
+      ventana.addEventListener('load', dispararImpresion, { once: true });
       setMensajeAccion('PDF generado. Guarda el archivo desde el dialogo de impresion.');
     } catch {
       setMensajeAccion('No pudimos generar el PDF de la entrada. Intenta nuevamente.');
