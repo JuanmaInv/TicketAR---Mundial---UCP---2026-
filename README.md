@@ -10,7 +10,7 @@ El proyecto está dividido en dos partes principales:
 
 ## Patrones de Diseño Aplicados
 
-Para cumplir con los estándares de ingeniería de software, se han implementado los siguientes patrones de diseño:
+Se han implementado los siguientes patrones de diseño:
 
 1.  **State Pattern**: Gestiona y define los diferentes estados de los tickets.
 2.  **Strategy Pattern**: Define los diferentes métodos de pago (y otras funcionalidades que requieran distintos comportamientos).
