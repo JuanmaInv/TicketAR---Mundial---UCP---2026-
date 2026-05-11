@@ -24,10 +24,10 @@ export default function CalendarComponent({ esAdmin = false }: CalendarComponent
   const [mensajeError, setMensajeError] = useState('');
 
   function obtenerSectoresPorPartidoSeguro(matchId: string): SectorPorPartido[] {
-    if (Object.prototype.hasOwnProperty.call(sectoresPorPartido, matchId)) {
-      return sectoresPorPartido[matchId] ?? [];
-    }
-    return [];
+    const entrada = Object.entries(sectoresPorPartido).find(
+      ([idPartido]) => idPartido === matchId,
+    );
+    return entrada?.[1] ?? [];
   }
 
   useEffect(() => {

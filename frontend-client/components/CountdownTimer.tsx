@@ -22,7 +22,7 @@ export default function CountdownTimer({ tiempoExpiracion, onExpirar }: Countdow
     expiroRef.current = false;
     let intervalo: ReturnType<typeof setInterval> | null = null;
 
-    const tick = () => {
+    function tick(): void {
       const restante = calcularTiempoRestante(tiempoExpiracion);
       setTiempoRestante(restante);
 
@@ -34,7 +34,7 @@ export default function CountdownTimer({ tiempoExpiracion, onExpirar }: Countdow
         }
         onExpirar();
       }
-    };
+    }
 
     const inicio = setTimeout(() => {
       tick();

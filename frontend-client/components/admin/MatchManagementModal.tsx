@@ -373,11 +373,11 @@ export default function MatchManagementModal({
                       type="number"
                       min={0}
                       value={sector.precio}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         actualizarCampoSector(sector.id, {
                           precio: Number(e.target.value),
-                        })
-                      }
+                        });
+                      }}
                       className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                     />
                   </label>
@@ -387,11 +387,11 @@ export default function MatchManagementModal({
                       type="number"
                       min={0}
                       value={sector.asientosDisponibles}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         actualizarCampoSector(sector.id, {
                           asientosDisponibles: Number(e.target.value),
-                        })
-                      }
+                        });
+                      }}
                       className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                     />
                   </label>

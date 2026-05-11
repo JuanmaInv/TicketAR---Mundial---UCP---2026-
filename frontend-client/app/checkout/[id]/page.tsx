@@ -62,10 +62,10 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const [esAdmin, setEsAdmin] = useState(false);
 
   function obtenerNombreSectorSeguro(sectorId: string): string | undefined {
-    if (Object.prototype.hasOwnProperty.call(mapaSectores, sectorId)) {
-      return mapaSectores[sectorId];
-    }
-    return undefined;
+    const entrada = Object.entries(mapaSectores).find(
+      ([idSector]) => idSector === sectorId,
+    );
+    return entrada?.[1];
   }
 
   useEffect(() => {

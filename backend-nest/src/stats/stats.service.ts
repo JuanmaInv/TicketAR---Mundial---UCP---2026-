@@ -170,49 +170,58 @@ export class StatsService {
       }
       const detalleSector = detalleSectorMap?.get(sectorId);
 
-      if (entry.estado === TicketStatus.PAGADO) {
-        stats.entradasVendidas += cantidad;
-        stats.ingresosTotales += ingreso;
-        if (detalleSector) {
-          detalleSector.pagadoCantidad += cantidad;
-          detalleSector.ingresosPagado += ingreso;
-        }
+      switch (entry.estado) {
+        case TicketStatus.PAGADO: {
+          stats.entradasVendidas += cantidad;
+          stats.ingresosTotales += ingreso;
+          if (detalleSector) {
+            detalleSector.pagadoCantidad += cantidad;
+            detalleSector.ingresosPagado += ingreso;
+          }
 
-        if (!sectorMap.has(sectorId)) {
-          sectorMap.set(sectorId, {
-            sector: sectorNombre,
-            cantidad: 0,
-            ingresos: 0,
-          });
-        }
-        const sectorStats = sectorMap.get(sectorId);
-        if (sectorStats) {
-          sectorStats.cantidad += cantidad;
-          sectorStats.ingresos += ingreso;
-        }
+          if (!sectorMap.has(sectorId)) {
+            sectorMap.set(sectorId, {
+              sector: sectorNombre,
+              cantidad: 0,
+              ingresos: 0,
+            });
+          }
+          const sectorStats = sectorMap.get(sectorId);
+          if (sectorStats) {
+            sectorStats.cantidad += cantidad;
+            sectorStats.ingresos += ingreso;
+          }
 
-        if (!partidoMap.has(partidoNombre)) {
-          partidoMap.set(partidoNombre, {
-            partido: partidoNombre,
-            entradasVendidas: 0,
-            ingresos: 0,
-          });
+          if (!partidoMap.has(partidoNombre)) {
+            partidoMap.set(partidoNombre, {
+              partido: partidoNombre,
+              entradasVendidas: 0,
+              ingresos: 0,
+            });
+          }
+          const partidoStats = partidoMap.get(partidoNombre);
+          if (partidoStats) {
+            partidoStats.entradasVendidas += cantidad;
+            partidoStats.ingresos += ingreso;
+          }
+          break;
         }
-        const partidoStats = partidoMap.get(partidoNombre);
-        if (partidoStats) {
-          partidoStats.entradasVendidas += cantidad;
-          partidoStats.ingresos += ingreso;
+        case TicketStatus.RESERVADO: {
+          stats.entradasPendientes += cantidad;
+          if (detalleSector) {
+            detalleSector.reservadoCantidad += cantidad;
+          }
+          break;
         }
-      } else if (entry.estado === TicketStatus.RESERVADO) {
-        stats.entradasPendientes += cantidad;
-        if (detalleSector) {
-          detalleSector.reservadoCantidad += cantidad;
+        case TicketStatus.CANCELADO: {
+          stats.entradasCanceladas += cantidad;
+          if (detalleSector) {
+            detalleSector.canceladoCantidad += cantidad;
+          }
+          break;
         }
-      } else if (entry.estado === TicketStatus.CANCELADO) {
-        stats.entradasCanceladas += cantidad;
-        if (detalleSector) {
-          detalleSector.canceladoCantidad += cantidad;
-        }
+        default:
+          break;
       }
     });
 
