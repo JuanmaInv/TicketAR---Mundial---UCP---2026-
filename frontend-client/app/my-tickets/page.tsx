@@ -414,7 +414,7 @@ function TicketCard({
       right.style.borderLeft = '1px dashed #94a3b8';
       right.style.paddingLeft = '20px';
 
-      const agregarFila = (label: string, value: string): void => {
+      function agregarFila(label: string, value: string): void {
         const l = doc.createElement('div');
         l.textContent = label;
         l.style.fontSize = '11px';
@@ -431,7 +431,7 @@ function TicketCard({
         v.style.color = '#0f172a';
         left.appendChild(l);
         left.appendChild(v);
-      };
+      }
 
       agregarFila('ID de entrada', entrada.id);
       agregarFila('Estado', estadoNormalizado);
@@ -483,10 +483,10 @@ function TicketCard({
       ticket.appendChild(foot);
       body.appendChild(ticket);
 
-      const dispararImpresion = (): void => {
+      function dispararImpresion(): void {
         ventanaSegura.focus();
         ventanaSegura.print();
-      };
+      }
       window.setTimeout(dispararImpresion, 150);
       setMensajeAccion('PDF generado. Guarda el archivo desde el dialogo de impresion.');
     } catch {
