@@ -51,6 +51,18 @@ test.describe('E2E: Ciclo de Vida Completo del Hincha', () => {
     expect(resReserva.status()).toBe(201);
     const ticket = await resReserva.json();
     ticketId = ticket.id;
+
+    // 3. PAGO: Procesar transacción exitosa
+    console.log('PASO 3: Procesando pago de la entrada...');
+    const resPago = await request.post(`/entradas/${ticketId}/pagar`);
+    expect(resPago.status()).toBe(201);
+    
+    // SIMULACIÓN DE WEBHOOK: Forzamos estado PAGADO en DB para continuar el E2E
+    console.log('Simulando confirmacion de pago en base de datos...');
+    await supabase
+      .from('entradas')
+      .update({ estado: 'PAGADO' })
+      .eq('id', ticketId);
   });
 
 });
