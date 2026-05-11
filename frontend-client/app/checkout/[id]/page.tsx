@@ -42,6 +42,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const userEmail = user?.emailAddresses[0]?.emailAddress;
 
   const stepFromUrl = parseInt(searchParams.get('step') || '1', 10);
   const [paso, setPaso] = useState(stepFromUrl);
@@ -69,9 +70,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
   }
 
   useEffect(() => {
-    if (!user?.emailAddresses[0]?.emailAddress) return;
-
-    const userEmail = user.emailAddresses[0].emailAddress;
+    if (!userEmail || !user?.id) return;
     getUsuario(userEmail, {
       userId: user.id,
       userEmail,
@@ -97,16 +96,15 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
       .finally(() => {
         setCargandoUsuario(false);
       });
-  }, [router, user]);
+  }, [router, user?.id, userEmail]);
 
   useEffect(() => {
     async function validarAccesoAdmin() {
-      if (!user?.emailAddresses[0]?.emailAddress) return;
+      if (!userEmail || !user?.id) return;
       try {
-        const email = user.emailAddresses[0].emailAddress;
-        const perfil = await getUsuario(email, {
+        const perfil = await getUsuario(userEmail, {
           userId: user.id,
-          userEmail: email,
+          userEmail,
         });
         const admin = esRolAdmin(perfil?.rol);
         setEsAdmin(admin);
@@ -120,7 +118,7 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
     }
 
     void validarAccesoAdmin();
-  }, [router, user]);
+  }, [router, user?.id, userEmail]);
 
   useEffect(() => {
     getPartidos()
@@ -424,7 +422,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                           type="text"
                           value={formData.telefono}
                           onChange={(e) => {
-                            setFormData({ ...formData, telefono: e.target.value });
+                            const value = e.target.value;
+                            setFormData((prev) => ({ ...prev, telefono: value }));
                           }}
                           id="checkout_telefono"
                           className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
@@ -443,7 +442,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                           type="text"
                           value={formData.provincia}
                           onChange={(e) => {
-                            setFormData({ ...formData, provincia: e.target.value });
+                            const value = e.target.value;
+                            setFormData((prev) => ({ ...prev, provincia: value }));
                           }}
                           id="checkout_provincia"
                           className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
@@ -462,7 +462,8 @@ function CheckoutContent({ partidoId }: { partidoId: string }) {
                           type="text"
                           value={formData.localidad}
                           onChange={(e) => {
-                            setFormData({ ...formData, localidad: e.target.value });
+                            const value = e.target.value;
+                            setFormData((prev) => ({ ...prev, localidad: value }));
                           }}
                           id="checkout_localidad"
                           className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
