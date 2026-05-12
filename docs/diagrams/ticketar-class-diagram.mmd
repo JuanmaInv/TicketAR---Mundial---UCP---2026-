@@ -1,0 +1,136 @@
+classDiagram
+direction LR
+
+class PartidoEntidad {
+  +String id
+  +String equipoLocal
+  +String equipoVisitante
+  +String fechaPartido
+  +String nombreEstadio
+}
+
+class UsuarioEntidad {
+  +String id
+  +String email
+  +String nombre
+  +String apellido
+  +String numeroPasaporte
+}
+
+class TicketEntity {
+  +String id
+  +String idUsuario
+  +String idPartido
+  +String idSector
+  +number cantidad
+  +number precioTotal
+  +TicketStatus estado
+}
+
+class EntradasService {
+  -IEntradasRepository entradasRepository
+  -TicketStateFactory ticketStateFactory
+  -PaymentsService paymentsService
+  +crear(dto)
+  +obtenerTodas()
+  +pagar(id)
+  +cancelar(id)
+}
+
+class IEntradasRepository {
+  <<interface>>
+  +crear(datos)
+  +obtenerTodas()
+  +obtenerUna(id)
+  +actualizarEstado(id, estado)
+}
+
+class SupabaseEntradasRepository {
+  +crear(datos)
+  +obtenerTodas()
+  +obtenerUna(id)
+  +actualizarEstado(id, estado)
+}
+
+class PaymentsService {
+  -IPaymentStrategy strategy
+  +useProvider(provider)
+  +processTicketPayment(unitPrice, cantidad, ticketId)
+  +verifyPayment(transactionId)
+}
+
+class IPaymentStrategy {
+  <<interface>>
+  +processPayment(unitPrice, cantidad, currency, metadata)
+  +verifyPayment(transactionId)
+}
+
+class MercadoPagoStrategy {
+  +processPayment()
+  +verifyPayment()
+}
+
+class SimulatedPaymentStrategy {
+  +processPayment()
+  +verifyPayment()
+}
+
+class TicketStateFactory {
+  +create(status)
+}
+
+class TicketState {
+  <<interface>>
+  +pagar(paymentsService, amount, cantidad)
+  +confirmarPago()
+  +cancelar()
+}
+
+class ReservadoState {
+  +pagar()
+  +confirmarPago()
+  +cancelar()
+}
+
+class PagadoState {
+  +pagar()
+  +confirmarPago()
+  +cancelar()
+}
+
+class CanceladoState {
+  +pagar()
+  +confirmarPago()
+  +cancelar()
+}
+
+class QrService {
+  +generarQrBase64(ticketId)
+}
+
+class NotificationsService {
+  +handleTicketPagado(payload)
+}
+
+PartidoEntidad "1" --> "0..*" TicketEntity
+UsuarioEntidad "1" --> "0..*" TicketEntity
+
+EntradasService ..> IEntradasRepository
+SupabaseEntradasRepository ..|> IEntradasRepository
+
+EntradasService ..> PaymentsService
+PaymentsService ..> IPaymentStrategy
+MercadoPagoStrategy ..|> IPaymentStrategy
+SimulatedPaymentStrategy ..|> IPaymentStrategy
+
+EntradasService ..> TicketStateFactory
+TicketStateFactory ..> TicketState
+
+ReservadoState ..|> TicketState
+PagadoState ..|> TicketState
+CanceladoState ..|> TicketState
+
+TicketEntity --> TicketState : estado actual
+
+QrService ..> TicketEntity
+NotificationsService ..> TicketEntity : ticket pagado
