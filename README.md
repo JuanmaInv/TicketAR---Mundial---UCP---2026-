@@ -34,7 +34,14 @@
 
 Plataforma web para gestion y compra de entradas del Mundial 2026.
 
----
+Contribuidores
+
+
+
+
+  <img src="https://contrib.rocks/image?repo=JuanmaInv/TicketAR---Mundial---UCP---2026-" />
+</a>
+
 
 ## Comienza aqui
 
